@@ -1,0 +1,163 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{290078F0-3B63-47BF-A2A9-E1AF5411F5E7}</ProjectGuid>
+    <RootNamespace>liblinphone</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.30501.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\coreapi\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>Release\</OutDir>
+    <IntDir>Release\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\oRTP\include;..\..\mediastreamer2\include;..\..\osip\include;..\..\eXosip\include;..\..\;..\..\crypt\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBLINPHONE_EXPORTS;IN_LINPHONE;OSIP_MT;ENABLE_TRACE;LOG_DOMAIN="QfishPhoneCore";LIBSIPUA3_NAME="QfishPhone";LINPHONE_VERSION="3.0";LINPHONE_PLUGINS_DIR="plugins";VIDEO_ENABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader />
+      <AssemblerOutput />
+      <ProgramDataBaseFileName>$(IntDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>eXosip2.lib;mediastreamer2.lib;ortp.lib;osip2.lib;osipparser2.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration);..\..\3rdparty\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ModuleDefinitionFile>libsipua3.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y $(OutDir)*.dll $(SolutionDir)..\..\bin</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\..\oRTP\include:..\..\mediastreamer2\include:..\..\..\..\linphone-builder\osip\include::..\..\..\..\linphone-builder\eXosip::..\..\..\..\linphone-builder\speex\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBLINPHONE_EXPORTS; OSIP_MT: ENABLE_TRACE:LOG_DOMAIN="LinphoneCore":ORTP_STATIC:;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <ModuleDefinitionFile>libsipua3.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\linphone\console\linphonec.h" />
+    <ClInclude Include="..\..\linphone\coreapi\enum.h" />
+    <ClInclude Include="..\..\linphone\coreapi\exevents.h" />
+    <ClInclude Include="..\..\linphone\coreapi\linphonecore.h" />
+    <ClInclude Include="..\..\linphone\coreapi\lpconfig.h" />
+    <ClInclude Include="..\..\linphone\coreapi\offeranswer.h" />
+    <ClInclude Include="..\..\linphone\coreapi\private.h" />
+    <ClInclude Include="..\..\linphone\coreapi\sal_eXosip2.h" />
+    <ClInclude Include="..\..\linphone\coreapi\sdphandler.h" />
+    <ClInclude Include="..\..\linphone\coreapi\sipsetup.h" />
+    <ClInclude Include="..\..\linphone\coreapi\sip_sal.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="version.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\linphone\console\commands.c" />
+    <ClCompile Include="..\..\linphone\console\linphonec.c" />
+    <ClCompile Include="..\..\linphone\coreapi\address.c" />
+    <ClCompile Include="..\..\linphone\coreapi\authentication.c" />
+    <ClCompile Include="..\..\linphone\coreapi\callbacks.c" />
+    <ClCompile Include="..\..\linphone\coreapi\chat.c" />
+    <ClCompile Include="..\..\linphone\coreapi\conference.c" />
+    <ClCompile Include="..\..\linphone\coreapi\enum.c" />
+    <ClCompile Include="..\..\linphone\coreapi\friend.c" />
+    <ClCompile Include="..\..\linphone\coreapi\general_state.c" />
+    <ClCompile Include="..\..\linphone\coreapi\linphonecall.c" />
+    <ClCompile Include="..\..\linphone\coreapi\linphonecore.c" />
+    <ClCompile Include="..\..\linphone\coreapi\linphone_tunnel.cc" />
+    <ClCompile Include="..\..\linphone\coreapi\linphone_tunnel_config.c" />
+    <ClCompile Include="..\..\linphone\coreapi\linphone_tunnel_stubs.c" />
+    <ClCompile Include="..\..\linphone\coreapi\lpconfig.c" />
+    <ClCompile Include="..\..\linphone\coreapi\message_storage.c" />
+    <ClCompile Include="..\..\linphone\coreapi\misc.c" />
+    <ClCompile Include="..\..\linphone\coreapi\offeranswer.c" />
+    <ClCompile Include="..\..\linphone\coreapi\presence.c" />
+    <ClCompile Include="..\..\linphone\coreapi\proxy.c" />
+    <ClCompile Include="..\..\linphone\coreapi\sal.c" />
+    <ClCompile Include="..\..\linphone\coreapi\sal_eXosip2.c" />
+    <ClCompile Include="..\..\linphone\coreapi\sal_eXosip2_presence.c" />
+    <ClCompile Include="..\..\linphone\coreapi\sal_eXosip2_sdp.c" />
+    <ClCompile Include="..\..\linphone\coreapi\siplogin.c" />
+    <ClCompile Include="..\..\linphone\coreapi\sipsetup.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="libsipua3.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\eXosip\platform\vsnet\eXosip.vcxproj">
+      <Project>{4ea67539-9ee9-4065-bd39-87e517fd8262}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\mediastreamer2\build\win32-novideo\mediastreamer2.vcxproj">
+      <Project>{4a07bb2b-f56e-4f1b-a729-d28b782ac128}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\oRTP\build\win32native\oRTP.vcxproj">
+      <Project>{4a07bb2b-f56e-4f1b-a719-d28b782ac128}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\osip\platform\vsnet\osip2.vcxproj">
+      <Project>{85255507-5d16-4218-85e2-f683bb2f04da}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{0A07DB23-1A12-4DD5-92EA-A80C21EDD0F5}</ProjectGuid>
+    <RootNamespace>libilbc</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.30501.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_DEPRECATE;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)libilbc.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>false</OmitFramePointers>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_DEPRECATE;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <DebugInformationFormat />
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)libilbc.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\ilbc\anaFilter.c" />
+    <ClCompile Include="..\..\ilbc\constants.c" />
+    <ClCompile Include="..\..\ilbc\createCB.c" />
+    <ClCompile Include="..\..\ilbc\doCPLC.c" />
+    <ClCompile Include="..\..\ilbc\enhancer.c" />
+    <ClCompile Include="..\..\ilbc\filter.c" />
+    <ClCompile Include="..\..\ilbc\FrameClassify.c" />
+    <ClCompile Include="..\..\ilbc\gainquant.c" />
+    <ClCompile Include="..\..\ilbc\getCBvec.c" />
+    <ClCompile Include="..\..\ilbc\helpfun.c" />
+    <ClCompile Include="..\..\ilbc\hpInput.c" />
+    <ClCompile Include="..\..\ilbc\hpOutput.c" />
+    <ClCompile Include="..\..\ilbc\iCBConstruct.c" />
+    <ClCompile Include="..\..\ilbc\iCBSearch.c" />
+    <ClCompile Include="..\..\ilbc\iLBC_decode.c" />
+    <ClCompile Include="..\..\ilbc\iLBC_encode.c" />
+    <ClCompile Include="..\..\ilbc\LPCdecode.c" />
+    <ClCompile Include="..\..\ilbc\LPCencode.c" />
+    <ClCompile Include="..\..\ilbc\lsf.c" />
+    <ClCompile Include="..\..\ilbc\packing.c" />
+    <ClCompile Include="..\..\ilbc\StateConstructW.c" />
+    <ClCompile Include="..\..\ilbc\StateSearchW.c" />
+    <ClCompile Include="..\..\ilbc\syntFilter.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\ilbc\anaFilter.h" />
+    <ClInclude Include="..\..\ilbc\constants.h" />
+    <ClInclude Include="..\..\ilbc\createCB.h" />
+    <ClInclude Include="..\..\ilbc\doCPLC.h" />
+    <ClInclude Include="..\..\ilbc\enhancer.h" />
+    <ClInclude Include="..\..\ilbc\filter.h" />
+    <ClInclude Include="..\..\ilbc\FrameClassify.h" />
+    <ClInclude Include="..\..\ilbc\gainquant.h" />
+    <ClInclude Include="..\..\ilbc\getCBvec.h" />
+    <ClInclude Include="..\..\ilbc\helpfun.h" />
+    <ClInclude Include="..\..\ilbc\hpInput.h" />
+    <ClInclude Include="..\..\ilbc\hpOutput.h" />
+    <ClInclude Include="..\..\ilbc\iCBConstruct.h" />
+    <ClInclude Include="..\..\ilbc\iCBSearch.h" />
+    <ClInclude Include="..\..\ilbc\iLBC_decode.h" />
+    <ClInclude Include="..\..\ilbc\iLBC_define.h" />
+    <ClInclude Include="..\..\ilbc\iLBC_encode.h" />
+    <ClInclude Include="..\..\ilbc\LPCdecode.h" />
+    <ClInclude Include="..\..\ilbc\LPCencode.h" />
+    <ClInclude Include="..\..\ilbc\lsf.h" />
+    <ClInclude Include="..\..\ilbc\packing.h" />
+    <ClInclude Include="..\..\ilbc\StateConstructW.h" />
+    <ClInclude Include="..\..\ilbc\StateSearchW.h" />
+    <ClInclude Include="..\..\ilbc\syntFilter.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,198 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>eXosip2</ProjectName>
+    <ProjectGuid>{4EA67539-9EE9-4065-BD39-87E517FD8262}</ProjectGuid>
+    <RootNamespace>eXosip</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.30501.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\.libs/eXosip.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\..\osip\include;..\..\include;..\..\..\crypt\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SRV_RECORD;_CRT_SECURE_NO_DEPRECATE;NOT_HAVE_OPENSSL_SSL_H;EXOSIP_EXPORTS;_DEBUG;ENABLE_TRACE;WIN32;_WINDOWS;_USRDLL;OSIP_MT;_MT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling />
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader />
+      <AssemblerListingLocation>$(Configuration)/</AssemblerListingLocation>
+      <ObjectFileName>$(Configuration)/</ObjectFileName>
+      <ProgramDataBaseFileName>$(OutDir)eXosip.pdb</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x040c</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>osip2.lib;osipparser2.lib;ws2_32.lib;Dnsapi.lib;IPHlpApi.Lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ModuleDefinitionFile>eXosip2.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\.libs/eXosip.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>..\..\..\osip\include;..\..\include;..\..\..\win32-bin\include;..\..\..\crypt\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SRV_RECORD;_CRT_SECURE_NO_DEPRECATE;HAVE_OPENSSL_SSL_H_NO;EXOSIP_EXPORTS;NDEBUG;ENABLE_TRACE;WIN32;_WINDOWS;_USRDLL;OSIP_MT;_MT;ENABLE_MYCRYPT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling />
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader />
+      <AssemblerListingLocation>Debug/</AssemblerListingLocation>
+      <ObjectFileName>Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>$(OutDir)eXosip.pdb</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CallingConvention>Cdecl</CallingConvention>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x040c</Culture>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\eXcall_api.c" />
+    <ClCompile Include="..\..\src\eXconf.c" />
+    <ClCompile Include="..\..\src\eXinsubscription_api.c" />
+    <ClCompile Include="..\..\src\eXmessage_api.c" />
+    <ClCompile Include="..\..\src\eXoptions_api.c" />
+    <ClCompile Include="..\..\src\eXosip.c" />
+    <ClCompile Include="..\..\src\eXpublish_api.c" />
+    <ClCompile Include="..\..\src\eXrefer_api.c" />
+    <ClCompile Include="..\..\src\eXregister_api.c" />
+    <ClCompile Include="..\..\src\eXsubscription_api.c" />
+    <ClCompile Include="..\..\src\eXtl.c" />
+    <ClCompile Include="..\..\src\eXtl_dtls.c" />
+    <ClCompile Include="..\..\src\eXtl_tcp.c" />
+    <ClCompile Include="..\..\src\eXtl_tls.c" />
+    <ClCompile Include="..\..\src\eXtl_udp.c" />
+    <ClCompile Include="..\..\src\eXtransport.c" />
+    <ClCompile Include="..\..\src\eXutils.c" />
+    <ClCompile Include="..\..\src\inet_ntop.c" />
+    <ClCompile Include="..\..\src\jauth.c" />
+    <ClCompile Include="..\..\src\jcall.c" />
+    <ClCompile Include="..\..\src\jcallback.c" />
+    <ClCompile Include="..\..\src\jdialog.c" />
+    <ClCompile Include="..\..\src\jevents.c" />
+    <ClCompile Include="..\..\src\jnotify.c" />
+    <ClCompile Include="..\..\src\jpipe.c" />
+    <ClCompile Include="..\..\src\jpublish.c" />
+    <ClCompile Include="..\..\src\jreg.c" />
+    <ClCompile Include="..\..\src\jrequest.c" />
+    <ClCompile Include="..\..\src\jresponse.c" />
+    <ClCompile Include="..\..\src\jsubscribe.c" />
+    <ClCompile Include="..\..\src\milenage.c" />
+    <ClCompile Include="..\..\src\misc.c" />
+    <ClCompile Include="..\..\src\rijndael.c" />
+    <ClCompile Include="..\..\src\sdp_offans.c" />
+    <ClCompile Include="..\..\src\udp.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\eXosip2\eXosip.h" />
+    <ClInclude Include="..\..\include\eXosip2\eX_call.h" />
+    <ClInclude Include="..\..\include\eXosip2\eX_message.h" />
+    <ClInclude Include="..\..\include\eXosip2\eX_options.h" />
+    <ClInclude Include="..\..\include\eXosip2\eX_publish.h" />
+    <ClInclude Include="..\..\include\eXosip2\eX_refer.h" />
+    <ClInclude Include="..\..\include\eXosip2\eX_register.h" />
+    <ClInclude Include="..\..\include\eXosip2\eX_setup.h" />
+    <ClInclude Include="..\..\include\eXosip2\eX_subscribe.h" />
+    <ClInclude Include="..\..\src\eXosip2.h" />
+    <ClInclude Include="..\..\src\eXtransport.h" />
+    <ClInclude Include="..\..\src\inet_ntop.h" />
+    <ClInclude Include="..\..\src\jpipe.h" />
+    <ClInclude Include="..\..\src\milenage.h" />
+    <ClInclude Include="..\..\src\rijndael.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="eXosip2.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\osip\platform\vsnet\osip2.vcxproj">
+      <Project>{85255507-5d16-4218-85e2-f683bb2f04da}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\osip\platform\vsnet\osipparser2.vcxproj">
+      <Project>{44f46b7e-0e51-4304-9735-330dfbab41e5}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
