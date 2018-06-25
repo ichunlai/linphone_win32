@@ -135,7 +135,7 @@ _eXosip_register_build_register(
                         osip_message_free(last_response);
                     return OSIP_NOMEM;
                 }
-                sprintf(reg->cseq->number, "%i", osip_cseq_num);
+                snprintf(reg->cseq->number, length + 2, "%i", osip_cseq_num);
 
                 if (last_response != NULL && last_response->status_code == 423)
                 {
@@ -215,11 +215,12 @@ _eXosip_register_build_register(
 }
 
 int
-eXosip_register_build_initial_register(
+eXosip_register_build_initial_register_withqvalue(
     const char     *from,
     const char     *proxy,
     const char     *contact,
     int            expires,
+    const char     *qvalue,
     osip_message_t **reg)
 {
     eXosip_reg_t *jr = NULL;
@@ -230,6 +231,7 @@ eXosip_register_build_initial_register(
     if (from == NULL || proxy == NULL)
         return OSIP_BADPARAMETER;
 
+#ifdef REJECT_DOUBLE_REGISTRATION
     /* Avoid adding the same registration info twice to prevent mem leaks */
     for (jr = eXosip.j_reg; jr != NULL; jr = jr->next)
     {
@@ -241,6 +243,8 @@ eXosip_register_build_initial_register(
             break;
         }
     }
+#endif
+
     if (jr == NULL)
     {
         /* Add new registration info */
@@ -262,6 +266,9 @@ eXosip_register_build_initial_register(
     else if (jr->r_reg_period < 30) /* too low */
         jr->r_reg_period = 30;
 
+    if (qvalue)
+        osip_strncpy(jr->r_qvalue, qvalue, sizeof(jr->r_qvalue));
+
     i = _eXosip_register_build_register(jr, reg);
     if (i != 0)
     {
@@ -273,6 +280,17 @@ eXosip_register_build_initial_register(
     }
 
     return jr->r_id;
+}
+
+int
+eXosip_register_build_initial_register(
+    const char     *from,
+    const char     *proxy,
+    const char     *contact,
+    int            expires,
+    osip_message_t **reg)
+{
+    return eXosip_register_build_initial_register_withqvalue(from, proxy, contact, expires, NULL, reg);
 }
 
 int

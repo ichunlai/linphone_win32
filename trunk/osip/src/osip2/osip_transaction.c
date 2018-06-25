@@ -508,6 +508,17 @@ osip_transaction_set_srv_record(
 }
 
 int
+osip_transaction_set_naptr_record(
+    osip_transaction_t *transaction,
+    osip_naptr_t       *record)
+{
+    if (transaction == NULL)
+        return OSIP_BADPARAMETER;
+    transaction->naptr_record = record;
+    return OSIP_SUCCESS;
+}
+
+int
 osip_transaction_set_your_instance(
     osip_transaction_t *transaction,
     void               *instance)
@@ -629,6 +640,15 @@ __osip_transaction_matching_response_osip_to_xict_17_1_3(
                        "Remote UA is not compliant: missing a branch parameter in  Via header!\n"));
         return OSIP_SYNTAXERROR;
 #endif
+    }
+
+    if ((b_request->gvalue == NULL)
+        || (b_response->gvalue == NULL))
+    {
+        OSIP_TRACE(osip_trace
+                       (__FILE__, __LINE__, OSIP_BUG, NULL,
+                       "Remote UA is not compliant: missing a branch parameter in  Via header!\n"));
+        return OSIP_SYNTAXERROR;
     }
 
     /*
@@ -770,11 +790,9 @@ __osip_transaction_matching_request_osip_to_xist_17_2_3(
 
         osip_from_param_get_byname(tr->to,      "tag", &tag_from1);
         osip_from_param_get_byname(request->to, "tag", &tag_from2);
-        if (tag_from1 == NULL && tag_from2 != NULL)
-        {
-            /* do not check it as it can be a new tag when the final
+        if (tag_from1 == NULL && tag_from2 != NULL)     /* do not check it as it can be a new tag when the final
                answer has a tag while an INVITE doesn't have one */
-        }
+        {}
         else if (tag_from1 != NULL && tag_from2 == NULL)
         {
             return OSIP_UNDEFINED_ERROR;

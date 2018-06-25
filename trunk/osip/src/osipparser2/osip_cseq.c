@@ -167,7 +167,7 @@ osip_cseq_to_str(
     *dest = (char *) osip_malloc(len);
     if (*dest == NULL)
         return OSIP_NOMEM;
-    sprintf(*dest, "%s %s", cseq->number, cseq->method);
+    snprintf(*dest, len, "%s %s", cseq->number, cseq->method);
     return OSIP_SUCCESS;
 }
 

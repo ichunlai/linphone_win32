@@ -147,6 +147,8 @@ eXosip_kill_transaction(
         transaction = osip_list_get(transactions, 0);
 
         __eXosip_delete_jinfo(transaction);
+        _eXosip_dnsutils_release(transaction->naptr_record);
+        transaction->naptr_record = NULL;
         osip_transaction_free(transaction);
     }
 }
@@ -250,12 +252,16 @@ eXosip_quit(
                                   "Release a terminated transaction\n"));
             osip_list_remove(&eXosip.j_transactions, 0);
             __eXosip_delete_jinfo(tr);
+            _eXosip_dnsutils_release(tr->naptr_record);
+            tr->naptr_record = NULL;
             osip_transaction_free(tr);
         }
         else
         {
             osip_list_remove(&eXosip.j_transactions, 0);
             __eXosip_delete_jinfo(tr);
+            _eXosip_dnsutils_release(tr->naptr_record);
+            tr->naptr_record = NULL;
             osip_transaction_free(tr);
         }
     }
@@ -701,8 +707,11 @@ eXosip_init(
 
     memset(&eXosip, 0, sizeof(eXosip));
 
+    eXosip.dscp = 0x1A;
+
     snprintf(eXosip.ipv4_for_gateway, 256, "%s", "217.12.3.11");
-    snprintf(eXosip.ipv6_for_gateway, 256, "%s", "2001:638:500:101:2e0:81ff:fe24:37c6");
+    snprintf(eXosip.ipv6_for_gateway, 256, "%s",
+             "2001:638:500:101:2e0:81ff:fe24:37c6");
 #ifndef MINISIZE
     snprintf(eXosip.event_package,    256, "%s", "dialog");
 #endif
@@ -1128,7 +1137,7 @@ eXosip_set_option(
         tmp = (char *) value;
         memset(eXosip.http_proxy, '\0', sizeof(eXosip.http_proxy));
         if (tmp != NULL && tmp[0] != '\0')
-            strncpy(eXosip.http_proxy, tmp, sizeof(eXosip.http_proxy)); /* value in proxy:port */
+            osip_strncpy(eXosip.http_proxy, tmp, sizeof(eXosip.http_proxy) - 1); /* value in proxy:port */
         OSIP_TRACE(osip_trace
                        (__FILE__, __LINE__, OSIP_INFO1, NULL,
                        "eXosip option set: http_proxy:%s!\n", eXosip.http_proxy));
@@ -1138,7 +1147,7 @@ eXosip_set_option(
         memset(eXosip.http_outbound_proxy, '\0',
                sizeof(eXosip.http_outbound_proxy));
         if (tmp != NULL && tmp[0] != '\0')
-            strncpy(eXosip.http_outbound_proxy, tmp, sizeof(eXosip.http_outbound_proxy));       /* value in proxy:port */
+            osip_strncpy(eXosip.http_outbound_proxy, tmp, sizeof(eXosip.http_outbound_proxy) - 1);  /* value in proxy:port */
         OSIP_TRACE(osip_trace
                        (__FILE__, __LINE__, OSIP_INFO1, NULL,
                        "eXosip option set: http_outbound_proxy:%s!\n",
@@ -1160,7 +1169,7 @@ eXosip_set_option(
         tmp = (char *) value;
         memset(eXosip.ipv4_for_gateway, '\0', sizeof(eXosip.ipv4_for_gateway));
         if (tmp != NULL && tmp[0] != '\0')
-            strncpy(eXosip.ipv4_for_gateway, tmp, sizeof(eXosip.ipv4_for_gateway));
+            osip_strncpy(eXosip.ipv4_for_gateway, tmp, sizeof(eXosip.ipv4_for_gateway) - 1);
         OSIP_TRACE(osip_trace
                        (__FILE__, __LINE__, OSIP_INFO1, NULL,
                        "eXosip option set: ipv4_for_gateway:%s!\n",
@@ -1171,7 +1180,7 @@ eXosip_set_option(
         tmp = (char *) value;
         memset(eXosip.ipv6_for_gateway, '\0', sizeof(eXosip.ipv6_for_gateway));
         if (tmp != NULL && tmp[0] != '\0')
-            strncpy(eXosip.ipv6_for_gateway, tmp, sizeof(eXosip.ipv6_for_gateway));
+            osip_strncpy(eXosip.ipv6_for_gateway, tmp, sizeof(eXosip.ipv6_for_gateway) - 1);
         OSIP_TRACE(osip_trace
                        (__FILE__, __LINE__, OSIP_INFO1, NULL,
                        "eXosip option set: ipv6_for_gateway:%s!\n",
@@ -1181,7 +1190,7 @@ eXosip_set_option(
         tmp = (char *) value;
         memset(eXosip.event_package, '\0', sizeof(eXosip.event_package));
         if (tmp != NULL && tmp[0] != '\0')
-            strncpy(eXosip.event_package, tmp, sizeof(eXosip.event_package));
+            osip_strncpy(eXosip.event_package, tmp, sizeof(eXosip.event_package) - 1);
         OSIP_TRACE(osip_trace
                        (__FILE__, __LINE__, OSIP_INFO1, NULL,
                        "eXosip option set: event_package:%s!\n",
@@ -1192,6 +1201,11 @@ eXosip_set_option(
         val              = *((int *) value);
         /* 0: A request, 1: SRV support, 2: NAPTR+SRV support */
         eXosip.dns_capabilities = val;
+        break;
+    case EXOSIP_OPT_SET_DSCP:
+        val                     = *((int *) value);
+        /* 0x1A by default */
+        eXosip.dscp             = val;
         break;
     default:
         return OSIP_BADPARAMETER;

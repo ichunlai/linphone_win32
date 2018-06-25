@@ -287,7 +287,8 @@ int osip_message_get_contact(const osip_message_t *sip, int pos,
  * @param hvalue The string describing the element.
  */
 #ifndef MINISIZE
-int osip_message_set_content_encoding(osip_message_t *sip, const char *hvalue);
+int osip_message_set_content_encoding(osip_message_t *sip,
+                                      const char     *hvalue);
 #else
     #define osip_message_set_content_encoding(sip, value) osip_message_set_header((osip_message_t *)sip, (const char *)"Content-Encoding", value)
 #endif
@@ -546,7 +547,8 @@ int osip_message_get_via(const osip_message_t *sip, int pos,
  * @param sip The element to work on.
  * @param hvalue The string describing the element.
  */
-int osip_message_set_www_authenticate(osip_message_t *sip, const char *hvalue);
+int osip_message_set_www_authenticate(osip_message_t *sip,
+                                      const char     *hvalue);
 /**
  * Get one Www-authenticate header.
  * @param sip The element to work on.

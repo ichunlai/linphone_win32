@@ -80,7 +80,7 @@
 
     #endif
 
-    #define EXOSIP_VERSION       "3.3.0"
+    #define EXOSIP_VERSION       "3.6.0"
 
     #ifdef __cplusplus
 extern "C" {
@@ -231,6 +231,7 @@ struct eXosip_reg_t {
     char                     *r_contact;   /* list of contacts string */
 
     char                     r_line[16];   /* line identifier */
+    char                     r_qvalue[16]; /* the q value used for routing */
 
     osip_transaction_t       *r_last_tr;
     int                      r_retry; /* avoid too many unsuccessfull retry */
@@ -443,6 +444,7 @@ struct eXosip_t {
     #endif
     int                        use_rport;
     int                        dns_capabilities;
+    int                        dscp;
     char                       ipv4_for_gateway[256];
     char                       ipv6_for_gateway[256];
     #ifndef MINISIZE
@@ -521,6 +523,8 @@ int generating_bye(osip_message_t **bye, osip_dialog_t *dialog,
 int eXosip_update_top_via(osip_message_t *sip);
 int _eXosip_request_add_via(osip_message_t *request, const char *transport,
                             const char *locip);
+
+void eXosip_mark_all_registrations_expired();
 
 int eXosip_add_authentication_information(osip_message_t *req,
                                           osip_message_t *last_response);
@@ -665,8 +669,9 @@ int _eXosip_transaction_init(osip_transaction_t **transaction,
                              osip_fsm_type_t ctx_type, osip_t *osip,
                              osip_message_t *message);
 
-int _eXosip_srv_lookup(osip_transaction_t *tr, osip_message_t *sip,
-                       struct osip_srv_record *record);
+int _eXosip_srv_lookup(osip_message_t *sip, osip_naptr_t **naptr_record);
+
+void _eXosip_dnsutils_release(osip_naptr_t *naptr_record);
 
 int _eXosip_handle_incoming_message(char *buf, size_t len, int socket,
                                     char *host, int port);

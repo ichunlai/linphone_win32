@@ -73,42 +73,37 @@ int lc_callback_obj_invoke(
 
 /*prevent a gcc bug with %c*/
 static size_t my_strftime(
-    char *s, size_t max, const char  *fmt, const struct tm *tm)
+    char *s, size_t max, const char  *fmt,  const struct tm *tm)
 {
-#if !defined(_WIN32_WCE)
     return strftime(s, max, fmt, tm);
-#else
-    return 0;
-    /*FIXME*/
-#endif /*_WIN32_WCE*/
 }
 
 static void set_call_log_date(
-    LinphoneCallLog *cl, const struct tm *loctime)
+    LinphoneCallLog *cl, time_t start_time)
 {
-    my_strftime(cl->start_date, sizeof(cl->start_date), "%Y-%m-%d %H:%M:%S", loctime);
+    struct tm loctime;
+#ifdef WIN32
+    #if !defined(_WIN32_WCE)
+    loctime = *localtime(&start_time);
+    /*FIXME*/
+    #endif /*_WIN32_WCE*/
+#else
+    localtime_r(&start_time, &loctime);
+#endif
+    my_strftime(cl->start_date, sizeof(cl->start_date), "%c", &loctime);
 }
 
 LinphoneCallLog *linphone_call_log_new(
     LinphoneCall *call, LinphoneAddress *from, LinphoneAddress *to)
 {
     LinphoneCallLog *cl = ms_new0(LinphoneCallLog, 1);
-    struct tm       loctime;
-    cl->dir = call->dir;
-#ifdef WIN32
-    #if !defined(_WIN32_WCE)
-    loctime = *localtime(&call->start_time);
-    /*FIXME*/
-    #endif /*_WIN32_WCE*/
-#else
-    localtime_r(&call->start_time, &loctime);
-#endif
-    set_call_log_date(cl, &loctime);
-    cl->from = from;
-    cl->to   = to;
-    strncpy(cl->caller,      linphone_address_get_username(from), sizeof(cl->caller));
-    strncpy(cl->called,      linphone_address_get_username(to),   sizeof(cl->called));
-    strncpy(cl->record_file, "",                                  sizeof(cl->record_file));
+    cl->dir             = call->dir;
+    cl->start_date_time = call->start_time;
+    set_call_log_date(cl, cl->start_date_time);
+    cl->from            = from;
+    cl->to              = to;
+    cl->status          = LinphoneCallAborted; /*default status*/
+    cl->quality         = -1;
     return cl;
 }
 

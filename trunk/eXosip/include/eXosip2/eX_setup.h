@@ -87,6 +87,7 @@ extern "C"
 #define EXOSIP_OPT_SET_IPV6_FOR_GATEWAY (EXOSIP_OPT_BASE_OPTION+12)
 #define EXOSIP_OPT_ADD_ACCOUNT_INFO (EXOSIP_OPT_BASE_OPTION+13)
 #define EXOSIP_OPT_DNS_CAPABILITIES (EXOSIP_OPT_BASE_OPTION+14)
+#define EXOSIP_OPT_SET_DSCP (EXOSIP_OPT_BASE_OPTION+15)
 
   /* non standard option: need a compilation flag to activate */
 #define EXOSIP_OPT_KEEP_ALIVE_OPTIONS_METHOD (EXOSIP_OPT_BASE_OPTION+1000)
@@ -146,25 +147,31 @@ extern "C"
 #endif
 
 /**
- * Ask for SRV record.
+ * Start and return osip_naptr context.
+ * Note that DNS results might not yet be available.
  * 
- * @param record      result structure.
- * @param domain      domain name for SRV record
- * @param protocol    protocol to use
+ * @param domain         domain name for NAPTR record
+ * @param protocol       protocol to use ("SIP")
+ * @param transport      transport to use ("UDP")
+ * @param keep_in_cache  keep result in cache if >0
  */
-  int eXosip_get_srv_record (struct osip_srv_record *record, char *domain,
-                             char *protocol);
+struct osip_naptr *eXosip_dnsutils_naptr(const char *domain, const char *protocol,
+                                         const char *transport, int keep_in_cache);
 
 /**
- * Ask for NAPTR request.
+ * Continue to process asynchronous DNS request (if implemented).
  * 
- * @param domain        domain name for SRV record
- * @param protocol      protocol to use
- * @param srv_record  result structure.
- * @param max_length sizeof srv_record.
+ * @param output_record  result structure.
+ * @param force          force waiting for final answer if >0
  */
-  int eXosip_get_naptr (char *domain, char *protocol, char *srv_record,
-                        int max_length);
+int eXosip_dnsutils_dns_process(struct osip_naptr *output_record, int force);
+
+/**
+ * Rotate first SRV entry to last SRV entry.
+ * 
+ * @param output_record  result structure.
+ */
+  int eXosip_dnsutils_rotate_srv(struct osip_srv_record *output_record);
 
 /**
  * Listen on a specified socket.

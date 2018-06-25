@@ -96,9 +96,12 @@ osip_body_clone(
     if (i != 0)
         return i;
 
-    copy->body               = (char *) osip_malloc(body->length + 2);
+    copy->body = (char *) osip_malloc(body->length + 2);
     if (copy->body == NULL)
+    {
+        osip_body_free(copy);
         return OSIP_NOMEM;
+    }
     copy->length             = body->length;
     memcpy(copy->body, body->body, body->length);
     copy->body[body->length] = '\0';
@@ -352,7 +355,7 @@ osip_body_parse_mime(
     start_of_osip_body_header = start_of_body;
 
     i                         = osip_body_parse_header(body, start_of_osip_body_header,
-                               &end_of_osip_body_header);
+                                                       &end_of_osip_body_header);
     if (i != 0)
         return i;
 
@@ -402,8 +405,10 @@ osip_body_to_str(
     int    i;
     size_t length;
 
-    *dest       = NULL;
-    *str_length = 0;
+    if (dest)
+        *dest = NULL;
+    if (str_length)
+        *str_length = 0;
     if (body == NULL)
         return OSIP_BADPARAMETER;
     if (body->body == NULL)

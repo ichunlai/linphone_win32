@@ -83,9 +83,6 @@ struct _MSTicker
 	MSTickerTickFunc wait_next_tick;
 	void *wait_next_tick_data;
 	bool_t run;       /* flag to indicate whether the ticker must be run or not */
-#ifdef WIN32_TIMERS
-	HANDLE TimeEvent;
-#endif
 };
 
 /**
@@ -169,9 +166,7 @@ MS2_PUBLIC int ms_ticker_attach(MSTicker *ticker,MSFilter *f);
  *
  * Returns: 0 if successfull, -1 otherwise.
  */
-MS2_PUBLIC int ms_ticker_attach(MSTicker *ticker,MSFilter *f);
-MS2_PUBLIC int ms_ticker_attach_multiple(
-    MSTicker *ticker, MSFilter *f, ...);
+MS2_PUBLIC int ms_ticker_attach_multiple(MSTicker *ticker,MSFilter *f,...);
 
 /**
  * Dettach a chain of filters to a ticker.

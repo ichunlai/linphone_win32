@@ -193,19 +193,30 @@ void linphone_call_set_authentication_token_verified(
 }
 
 static MSList *make_codec_list(
-    LinphoneCore *lc, const MSList *codecs, bool_t only_one_codec)
+    LinphoneCore *lc, const MSList *codecs, int bandwidth_limit, int *max_sample_rate, int nb_codecs_limit)
 {
     MSList       *l = NULL;
     const MSList *it;
     int          nb = 0;
+    if (max_sample_rate) *max_sample_rate = 0;
     for (it = codecs; it != NULL; it = it->next)
     {
         PayloadType *pt = (PayloadType *)it->data;
-        if ((pt->flags & PAYLOAD_TYPE_ENABLED) && linphone_core_check_payload_type_usability(lc, pt))
+        if (pt->flags & PAYLOAD_TYPE_ENABLED)
+        {
+            if (bandwidth_limit > 0 && !linphone_core_is_payload_type_usable_for_bandwidth(lc, pt, bandwidth_limit))
+            {
+                ms_message("Codec %s/%i eliminated because of audio bandwidth constraint.", pt->mime_type, pt->clock_rate);
+                continue;
+            }
+            if (linphone_core_check_payload_type_usability(lc, pt))
         {
             l = ms_list_append(l, payload_type_clone(pt));
-            if (only_one_codec) break;
+                nb++;
+                if (max_sample_rate && payload_type_get_rate(pt) > *max_sample_rate) *max_sample_rate = payload_type_get_rate(pt);
+            }
         }
+        if ((nb_codecs_limit > 0) && (nb >= nb_codecs_limit)) break;
     }
     return l;
 }
@@ -434,6 +445,7 @@ static void linphone_call_init_common(
     call->start_time       = time(NULL);
     call->media_start_time = 0;
     call->log              = linphone_call_log_new(call, from, to);
+    call->owns_call_log    = TRUE;
     linphone_core_notify_all_friends(call->core, LinphoneStatusOnThePhone);
     linphone_core_get_audio_port_range(call->core, &min_port, &max_port);
     if (min_port == max_port)
@@ -2132,7 +2144,7 @@ void linphone_call_stop_audio_stream(
                 lp_config_set_string(call->core->config, "sound", "ec_state", state_str);
             }
         }
-        //audio_stream_get_local_rtp_stats(call->audiostream, &call->log->local_stats);
+        audio_stream_get_local_rtp_stats(call->audiostream, &call->log->local_stats);
         linphone_call_log_fill_stats(call->log, (MediaStream *)call->audiostream);
         if (call->endpoint)
         {

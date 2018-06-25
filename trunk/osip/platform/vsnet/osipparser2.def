@@ -391,3 +391,4 @@ EXPORTS
 	 
      osip_realloc 
      __osip_uri_escape_userinfo
+	 osip_strcasestr

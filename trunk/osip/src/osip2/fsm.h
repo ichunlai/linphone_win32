@@ -149,8 +149,9 @@ int __osip_transaction_set_state(osip_transaction_t *transaction, state_t state)
  * @param tr The transaction.
  * @param resp The SIP response received.
  */
-int __osip_transaction_matching_response_osip_to_xict_17_1_3(osip_transaction_t *tr,
-                                                             osip_message_t     *resp);
+int
+__osip_transaction_matching_response_osip_to_xict_17_1_3(osip_transaction_t *tr,
+                                                         osip_message_t     *resp);
 
 /**
  * Check if the request match a client transaction.
@@ -158,13 +159,15 @@ int __osip_transaction_matching_response_osip_to_xict_17_1_3(osip_transaction_t 
  * @param tr The transaction.
  * @param request The SIP request received.
  */
-int __osip_transaction_matching_request_osip_to_xist_17_2_3(osip_transaction_t *tr,
-                                                            osip_message_t     *request);
+int
+__osip_transaction_matching_request_osip_to_xist_17_2_3(osip_transaction_t *tr,
+                                                        osip_message_t     *request);
 
-osip_event_t *__osip_transaction_need_timer_x_event(void *xixt, struct timeval *timer,
-                                                    int cond_state,
-                                                    int transactionid,
-                                                    int TIMER_VAL);
+osip_event_t *__osip_transaction_need_timer_x_event(void           *xixt,
+                                                    struct timeval *timer,
+                                                    int            cond_state,
+                                                    int            transactionid,
+                                                    int            TIMER_VAL);
 
 int __osip_transaction_snd_xxx(osip_transaction_t *ist, osip_message_t *msg);
 

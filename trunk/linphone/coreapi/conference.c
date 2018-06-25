@@ -133,7 +133,7 @@ static void add_local_endpoint(LinphoneConference *conf,LinphoneCore *lc){
 	const MSAudioConferenceParams *params=ms_audio_conference_get_params(conf->conf);
 	conf->local_dummy_profile=make_dummy_profile(params->samplerate);
 	
-	/*audio_stream_start_full(st, conf->local_dummy_profile,
+	audio_stream_start_full(st, conf->local_dummy_profile,
 				"127.0.0.1",
 				65000,
 				"127.0.0.1",
@@ -146,7 +146,7 @@ static void add_local_endpoint(LinphoneConference *conf,LinphoneCore *lc){
 				captcard,
 				linphone_core_echo_cancellation_enabled(lc)
 				);
-	_post_configure_audio_stream(st,lc,FALSE);*/
+	_post_configure_audio_stream(st,lc,FALSE);
 	conf->local_participant=st;
 	conf->local_endpoint=ms_audio_endpoint_get_from_stream(st,FALSE);
 	ms_audio_conference_add_member(conf->conf,conf->local_endpoint);

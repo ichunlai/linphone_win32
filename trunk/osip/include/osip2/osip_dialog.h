@@ -58,6 +58,7 @@ struct osip_dialog {
     char               *call_id;            /**< Call-ID*/
     char               *local_tag;          /**< local tag */
     char               *remote_tag;         /**< remote tag */
+    char               *line_param;         /**< line param from request uri for incoming calls */
     osip_list_t        route_set;           /**< route set */
     int                local_cseq;          /**< last local cseq */
     int                remote_cseq;         /**< last remote cseq*/
@@ -96,7 +97,8 @@ struct osip_dialog {
  * @param dialog The element to allocate.
  * @param response The response containing the informations.
  */
-int osip_dialog_init_as_uac(osip_dialog_t **dialog, osip_message_t *response);
+int osip_dialog_init_as_uac(osip_dialog_t  **dialog,
+                            osip_message_t *response);
 /**
  * Allocate a osip_dialog_t element as a UAC.
  * <UL><LI>This could be used to initiate dialog with a NOTIFY coming

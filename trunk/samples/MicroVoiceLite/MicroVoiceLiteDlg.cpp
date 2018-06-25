@@ -452,7 +452,7 @@ CMicroVoiceLiteDlg::OnBnClickedBntMakecall()
     }
     snprintf(buf, sizeof(buf), "proxy list");
     linphonec_parse_command_line(the_core, buf);
-#if 0
+#if 1
     linphone_core_set_delayed_timeout(the_core, 4);
     //snprintf(buf, sizeof(buf), "stun 192.168.1.178");
     snprintf(buf, sizeof(buf), "stun stun.ideasip.com");

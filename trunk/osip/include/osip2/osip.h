@@ -60,7 +60,7 @@ extern "C" {
 typedef enum _state_t {
     /* STATES for invite client transaction */
     ICT_PRE_CALLING,
-    ICT_CALLING,        // rfc 對ICT 只定義這底下四個 state
+    ICT_CALLING,
     ICT_PROCEEDING,
     ICT_COMPLETED,
     ICT_TERMINATED,
@@ -279,7 +279,14 @@ struct osip_srv_entry {
     int  weight;
     int  rweight;
     int  port;
+    char ipaddress[512];
 };
+
+#define OSIP_SRV_STATE_UNKNOWN      0
+/* #define OSIP_SRV_STATE_INPROGRESS 1 */
+#define OSIP_SRV_STATE_RETRYLATER   2
+#define OSIP_SRV_STATE_COMPLETED    3
+#define OSIP_SRV_STATE_NOTSUPPORTED 4
 
 /**
  * Structure for SRV record.
@@ -292,9 +299,43 @@ typedef struct osip_srv_record osip_srv_record_t;
  * @struct osip_srv_record
  */
 struct osip_srv_record {
-    char                  name[512];
-    char                  protocol[64];
-    struct osip_srv_entry srventry[10];
+    char             name[512];
+    int              srv_state;
+    char             protocol[64];
+    int              order;
+    int              preference;
+    int              index;
+    osip_srv_entry_t srventry[10];
+};
+
+#define OSIP_NAPTR_STATE_UNKNOWN       0
+#define OSIP_NAPTR_STATE_INPROGRESS    1
+#define OSIP_NAPTR_STATE_NAPTRDONE     2
+#define OSIP_NAPTR_STATE_SRVINPROGRESS 3
+#define OSIP_NAPTR_STATE_SRVDONE       4
+#define OSIP_NAPTR_STATE_RETRYLATER    5
+#define OSIP_NAPTR_STATE_NOTSUPPORTED  6
+
+/**
+ * Structure for NAPTR record.
+ * @var osip_naptr_t
+ */
+typedef struct osip_naptr osip_naptr_t;
+
+/**
+ * Structure for NAPTR record entry.
+ * @struct osip_naptr
+ */
+struct osip_naptr {
+    char                   domain[512];
+    int                    naptr_state;
+    void                   *arg;
+    int                    keep_in_cache;
+    struct osip_srv_record sipudp_record;
+    struct osip_srv_record siptcp_record;
+    struct osip_srv_record siptls_record;
+    struct osip_srv_record sipdtls_record;
+    struct osip_srv_record sipsctp_record;
 };
 
 /**
@@ -338,7 +379,8 @@ struct osip_transaction {
     osip_nict_t       *nict_context;  /**@internal */
     osip_nist_t       *nist_context;  /**@internal */
 
-    osip_srv_record_t record;         /**@internal */
+    osip_srv_record_t record;
+    osip_naptr_t      *naptr_record;/**@internal */
 };
 
 /**
@@ -675,7 +717,17 @@ int osip_transaction_get_destination(osip_transaction_t *transaction,
  * @param transaction The element to work on.
  * @param record The SRV lookup results for this transaction.
  */
-int osip_transaction_set_srv_record(osip_transaction_t *transaction, osip_srv_record_t *record);
+int osip_transaction_set_srv_record(osip_transaction_t *transaction,
+                                    osip_srv_record_t  *record);
+
+/**
+ * Set NAPTR lookup information to be used by state machine.
+ *
+ * @param transaction The element to work on.
+ * @param record The NAPTR lookup results for this transaction.
+ */
+int osip_transaction_set_naptr_record(osip_transaction_t *transaction,
+                                      osip_naptr_t       *record);
 
 /**
  * Set the socket for incoming message.
@@ -690,7 +742,8 @@ int osip_transaction_set_in_socket(osip_transaction_t *transaction, int sock);
  * @param transaction The element to work on.
  * @param sock The socket for outgoing message.
  */
-int osip_transaction_set_out_socket(osip_transaction_t *transaction, int sock);
+int osip_transaction_set_out_socket(osip_transaction_t *transaction,
+                                    int                sock);
 
 /**
  * Allocate an osip_t element.

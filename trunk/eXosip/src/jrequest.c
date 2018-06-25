@@ -184,6 +184,7 @@ _eXosip_dialog_add_contact(
             OSIP_TRACE(osip_trace
                            (__FILE__, __LINE__, OSIP_ERROR, NULL,
                            "eXosip: no default interface defined\n"));
+            osip_free(contact);
             return OSIP_NO_NETWORK;
         }
     }
@@ -317,6 +318,9 @@ generating_request_out_of_dialog(
 
     *dest = NULL;
 
+    if (!method || !*method)
+        return OSIP_BADPARAMETER;
+
     if (eXosip.eXtl == NULL)
         return OSIP_NO_NETWORK;
 
@@ -345,7 +349,12 @@ generating_request_out_of_dialog(
 
     if (doing_register)
     {
-        osip_uri_init(&(request->req_uri));
+        i = osip_uri_init(&(request->req_uri));
+        if (i != 0)
+        {
+            osip_message_free(request);
+            return i;
+        }
         i = osip_uri_parse(request->req_uri, proxy);
         if (i != 0)
         {
@@ -477,7 +486,14 @@ generating_request_out_of_dialog(
             osip_uri_uparam_get_byname(o_proxy->url, "lr", &lr_param);
             if (lr_param != NULL)   /* to is the remote target URI in this case! */
             {
-                osip_uri_clone(request->to->url, &(request->req_uri));
+                i = osip_uri_clone(request->to->url, &(request->req_uri));
+                if (i != 0)
+                {
+                    osip_route_free(o_proxy);
+                    osip_message_free(request);
+                    return i;
+                }
+
                 /* "[request] MUST includes a Route header field containing
                    the route set values in order." */
                 osip_list_add(&request->routes, o_proxy, 0);
@@ -796,9 +812,13 @@ generating_register(
                 osip_uri_uparam_add(new_contact_url, osip_strdup("line"),
                                     osip_strdup(jreg->r_line));
             }
+            if (jreg->r_qvalue[0] != 0)
+                osip_contact_param_add(new_contact, osip_strdup("q"), osip_strdup(jreg->r_qvalue));
 
             osip_list_add(&(*reg)->contacts, new_contact, -1);
         }
+        else
+            osip_contact_free(new_contact);
     }
     else
     {
@@ -1079,7 +1099,7 @@ _eXosip_build_request_within_dialog(
             osip_message_free(request);
             return OSIP_NOMEM;
         }
-        sprintf(tmp, "%i", dialog->local_cseq);
+        snprintf(tmp, 20, "%i", dialog->local_cseq);
         osip_cseq_set_number(cseq, tmp);
         osip_cseq_set_method(cseq, osip_strdup(method));
         request->cseq = cseq;

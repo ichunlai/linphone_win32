@@ -68,6 +68,12 @@ udp_tl_free(
     return OSIP_SUCCESS;
 }
 
+#if !defined(WIN32) && !defined(_WIN32_WCE)
+    #define SOCKET_OPTION_VALUE void *
+#else
+    #define SOCKET_OPTION_VALUE char *
+#endif
+
 static int
 udp_tl_open(
     void)
@@ -121,7 +127,7 @@ udp_tl_open(
                                strerror(errno)));
                 continue;
             }
-#endif      /* IPV6_V6ONLY */
+#endif                          /* IPV6_V6ONLY */
         }
 
         res = bind(sock, curinfo->ai_addr, curinfo->ai_addrlen);
@@ -176,11 +182,29 @@ udp_tl_open(
 
     udp_socket = sock;
 
+    if (eXtl_udp.proto_family == AF_INET)
+    {
+        int tos = (eXosip.dscp << 2) & 0xFC;
+        res = setsockopt(udp_socket, IPPROTO_IP, IP_TOS, (SOCKET_OPTION_VALUE)&tos, sizeof(tos));
+    }
+    else
+    {
+        int tos = (eXosip.dscp << 2) & 0xFC;
+#ifdef IPV6_TCLASS
+        res    = setsockopt(udp_socket, IPPROTO_IPV6, IPV6_TCLASS,
+                            (SOCKET_OPTION_VALUE)&tos, sizeof(tos));
+#else
+        retval = setsockopt(udp_socket, IPPROTO_IPV6, IP_TOS,
+                            (SOCKET_OPTION_VALUE)&tos, sizeof(tos));
+#endif
+    }
+
     if (eXtl_udp.proto_port == 0)
     {
         /* get port number from socket */
         if (eXtl_udp.proto_family == AF_INET)
-            eXtl_udp.proto_port = ntohs(((struct sockaddr_in *) &ai_addr)->sin_port);
+            eXtl_udp.proto_port =
+                ntohs(((struct sockaddr_in *) &ai_addr)->sin_port);
         else
             eXtl_udp.proto_port =
                 ntohs(((struct sockaddr_in6 *) &ai_addr)->sin6_port);
@@ -196,6 +220,7 @@ udp_tl_open(
 static int
 udp_tl_set_fdset(
     fd_set *osip_fdset,
+    fd_set *osip_wrset,
     int    *fd_max)
 {
     if (udp_socket <= 0)
@@ -218,9 +243,10 @@ udp_tl_learn_port_from_via(
     {
         osip_via_t           *via = NULL;
         osip_generic_param_t *br;
+        int                  i;
 
-        osip_message_get_via(sip, 0, &via);
-        if (via != NULL && via->protocol != NULL
+        i = osip_message_get_via(sip, 0, &via);
+        if (i >= 0 && via != NULL && via->protocol != NULL
             && (osip_strcasecmp(via->protocol, "udp") == 0
                 || osip_strcasecmp(via->protocol, "dtls-udp") == 0))
         {
@@ -253,7 +279,8 @@ udp_tl_learn_port_from_via(
 
 static int
 udp_tl_read_message(
-    fd_set *osip_fdset)
+    fd_set *osip_fdset,
+    fd_set *osip_wrset)
 {
     char *buf;
     int  i;
@@ -463,300 +490,450 @@ eXtl_update_local_target(
                 }
             }
 #endif
-        }
-    }
+                }
+            }
 
-    return OSIP_SUCCESS;
-}
+            return OSIP_SUCCESS;
+        }
 
 #ifndef INET6_ADDRSTRLEN
     #define INET6_ADDRSTRLEN 46
 #endif
 
-static int
-udp_tl_send_message(
-    osip_transaction_t *tr,
-    osip_message_t     *sip,
-    char               *host,
-    int                port,
-    int                out_socket)
-{
-    int                      len    = 0;
-    size_t                   length = 0;
-    struct addrinfo          *addrinfo;
-    struct __eXosip_sockaddr addr;
-    char                     *message;
-    char                     *crypt_date;
-    char                     ipbuf[INET6_ADDRSTRLEN];
-    int                      i;
-
-    if (udp_socket <= 0)
-        return -1;
-
-    if (host == NULL)
-    {
-        host = sip->req_uri->host;
-        if (sip->req_uri->port != NULL)
-            port = osip_atoi(sip->req_uri->port);
-        else
-            port = 5060;
-    }
-
-    eXtl_update_local_target(sip);
-
-    i = -1;
-#ifndef MINISIZE
-    if (tr != NULL && tr->record.name[0] != '\0'
-        && tr->record.srventry[0].srv[0] != '\0')
-    {
-        /* always choose the first here.
-           if a network error occur, remove first entry and
-           replace with next entries.
-         */
-        osip_srv_entry_t *srv;
-        int              n = 0;
-        for (srv = &tr->record.srventry[0];
-             n < 10 && tr->record.srventry[0].srv[0]; srv = &tr->record.srventry[0])
+        static int
+        udp_tl_send_message(
+            osip_transaction_t *tr,
+            osip_message_t     *sip,
+            char               *host,
+            int                port,
+            int                out_socket)
         {
-            i = eXosip_get_addrinfo(&addrinfo, srv->srv, srv->port, IPPROTO_UDP);
-            if (i == 0)
+            int                      len      = 0;
+            size_t                   length   = 0;
+            struct addrinfo          *addrinfo;
+            struct __eXosip_sockaddr addr;
+            char                     *message = NULL;
+
+            char                     ipbuf[INET6_ADDRSTRLEN];
+            int                      i;
+            osip_naptr_t             *naptr_record = NULL;
+
+            if (udp_socket <= 0)
+                return -1;
+
+            if (host == NULL)
             {
-                host = srv->srv;
-                port = srv->port;
+                host = sip->req_uri->host;
+                if (sip->req_uri->port != NULL)
+                    port = osip_atoi(sip->req_uri->port);
+                else
+                    port = 5060;
+            }
+
+            eXtl_update_local_target(sip);
+
+            i = -1;
+#ifndef MINISIZE
+            if (tr == NULL)
+            {
+                _eXosip_srv_lookup(sip, &naptr_record);
+
+                if (naptr_record != NULL)
+                {
+                    eXosip_dnsutils_dns_process(naptr_record, 1);
+                    if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE
+                        || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
+                        eXosip_dnsutils_dns_process(naptr_record, 1);
+                }
+
+                if (naptr_record != NULL && naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVDONE)
+                {
+                    /* 4: check if we have the one we want... */
+                    if (naptr_record->sipudp_record.name[0] != '\0'
+                        && naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv[0] != '\0')
+                    {
+                        /* always choose the first here.
+                           if a network error occur, remove first entry and
+                           replace with next entries.
+                         */
+                        osip_srv_entry_t *srv;
+                        int              n = 0;
+                        for (srv = &naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index];
+                             n < 10 && naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv[0];
+                             srv = &naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index])
+                        {
+                            if (srv->ipaddress[0])
+                                i = eXosip_get_addrinfo(&addrinfo, srv->ipaddress, srv->port, IPPROTO_UDP);
+                            else
+                                i = eXosip_get_addrinfo(&addrinfo, srv->srv, srv->port, IPPROTO_UDP);
+                            if (i == 0)
+                            {
+                                host = srv->srv;
+                                port = srv->port;
+                                break;
+                            }
+
+                            i = eXosip_dnsutils_rotate_srv(&naptr_record->sipudp_record);
+                            if (i <= 0)
+                            {
+                                return -1;
+                            }
+                            if (i >= n)
+                            {
+                                return -1;
+                            }
+                            i = -1;
+                            /* copy next element */
+                            n++;
+                        }
+                    }
+                }
+
+                if (naptr_record != NULL && naptr_record->keep_in_cache == 0)
+                    osip_free(naptr_record);
+                naptr_record = NULL;
+            }
+            else
+            {
+                naptr_record = tr->naptr_record;
+            }
+
+            if (naptr_record != NULL)
+            {
+                /* 1: make sure there is no pending DNS */
+                eXosip_dnsutils_dns_process(naptr_record, 0);
+                if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE
+                    || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
+                    eXosip_dnsutils_dns_process(naptr_record, 0);
+
+                if (naptr_record->naptr_state == OSIP_NAPTR_STATE_UNKNOWN)
+                {
+                    /* fallback to DNS A */
+                    if (naptr_record->keep_in_cache == 0)
+                        osip_free(naptr_record);
+                    naptr_record = NULL;
+                    if (tr != NULL)
+                        tr->naptr_record = NULL;
+                    /* must never happen? */
+                }
+                else if (naptr_record->naptr_state == OSIP_NAPTR_STATE_INPROGRESS)
+                {
+                    /* 2: keep waiting (naptr answer not received) */
+                    return OSIP_SUCCESS + 1;
+                }
+                else if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE)
+                {
+                    /* 3: keep waiting (naptr answer received/no srv answer received) */
+                    return OSIP_SUCCESS + 1;
+                }
+                else if (naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
+                {
+                    /* 3: keep waiting (naptr answer received/no srv answer received) */
+                    return OSIP_SUCCESS + 1;
+                }
+                else if (naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVDONE)
+                {
+                    /* 4: check if we have the one we want... */
+                    if (naptr_record->sipudp_record.name[0] != '\0'
+                        && naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv[0] != '\0')
+                    {
+                        /* always choose the first here.
+                           if a network error occur, remove first entry and
+                           replace with next entries.
+                         */
+                        osip_srv_entry_t *srv;
+                        int              n = 0;
+                        for (srv = &naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index];
+                             n < 10 && naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv[0];
+                             srv = &naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index])
+                        {
+                            if (srv->ipaddress[0])
+                                i = eXosip_get_addrinfo(&addrinfo, srv->ipaddress, srv->port, IPPROTO_UDP);
+                            else
+                                i = eXosip_get_addrinfo(&addrinfo, srv->srv, srv->port, IPPROTO_UDP);
+                            if (i == 0)
+                            {
+                                host = srv->srv;
+                                port = srv->port;
+                                break;
+                            }
+
+                            i = eXosip_dnsutils_rotate_srv(&naptr_record->sipudp_record);
+                            if (i <= 0)
+                            {
+                                return -1;
+                            }
+                            if (i >= n)
+                            {
+                                return -1;
+                            }
+                            i = -1;
+                            /* copy next element */
+                            n++;
+                        }
+                    }
+                }
+                else if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NOTSUPPORTED
+                         || naptr_record->naptr_state == OSIP_NAPTR_STATE_RETRYLATER)
+                {
+                    /* 5: fallback to DNS A */
+                    if (naptr_record->keep_in_cache == 0)
+                        osip_free(naptr_record);
+                    naptr_record = NULL;
+                    if (tr != NULL)
+                        tr->naptr_record = NULL;
+                }
+            }
+#endif
+
+            /* if SRV was used, destination may be already found */
+            if (i != 0)
+            {
+                i = eXosip_get_addrinfo(&addrinfo, host, port, IPPROTO_UDP);
+            }
+
+            if (i != 0)
+            {
+                return -1;
+            }
+
+            memcpy(&addr, addrinfo->ai_addr, addrinfo->ai_addrlen);
+            len = addrinfo->ai_addrlen;
+
+            eXosip_freeaddrinfo(addrinfo);
+
+            /* remove preloaded route if there is no tag in the To header
+             */
+            {
+                osip_route_t         *route = NULL;
+                osip_generic_param_t *tag   = NULL;
+                osip_message_get_route(sip, 0, &route);
+
+                osip_to_get_tag(sip->to, &tag);
+                if (tag == NULL && route != NULL && route->url != NULL)
+                {
+                    osip_list_remove(&sip->routes, 0);
+                }
+                i = osip_message_to_str(sip, &message, &length);
+                if (tag == NULL && route != NULL && route->url != NULL)
+                {
+                    osip_list_add(&sip->routes, route, 0);
+                }
+            }
+
+            if (i != 0 || length <= 0)
+            {
+                osip_free(message);
+                return -1;
+            }
+
+            switch (((struct sockaddr *) &addr)->sa_family)
+            {
+            case AF_INET:
+                inet_ntop(((struct sockaddr *) &addr)->sa_family,
+                          &(((struct sockaddr_in *) &addr)->sin_addr), ipbuf,
+                          sizeof(ipbuf));
+                break;
+            case AF_INET6:
+                inet_ntop(((struct sockaddr *) &addr)->sa_family,
+                          &(((struct sockaddr_in6 *) &addr)->sin6_addr), ipbuf,
+                          sizeof(ipbuf));
+                break;
+            default:
+                strncpy(ipbuf, "(unknown)", sizeof(ipbuf));
                 break;
             }
-            memmove(&tr->record.srventry[0], &tr->record.srventry[1],
-                    9 * sizeof(osip_srv_entry_t));
-            memset(&tr->record.srventry[9], 0, sizeof(osip_srv_entry_t));
-            i = -1;
-            /* copy next element */
-            n++;
-        }
-    }
-#endif
 
-    /* if SRV was used, distination may be already found */
-    if (i != 0)
-    {
-        i = eXosip_get_addrinfo(&addrinfo, host, port, IPPROTO_UDP);
-    }
+            OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL,
+                                  "Message sent: (to dest=%s:%i)\n%s\n",
+                                  ipbuf, port, message));
 
-    if (i != 0)
-    {
-        return -1;
-    }
+            if (osip_strcasecmp(host, ipbuf) != 0 && MSG_IS_REQUEST(sip))
+            {
+                if (MSG_IS_REGISTER(sip))
+                {
+                    struct eXosip_dns_cache entry;
 
-    memcpy(&addr, addrinfo->ai_addr, addrinfo->ai_addrlen);
-    len = addrinfo->ai_addrlen;
+                    memset(&entry, 0, sizeof(struct eXosip_dns_cache));
+                    snprintf(entry.host, sizeof(entry.host), "%s", host);
+                    snprintf(entry.ip,   sizeof(entry.ip),   "%s", ipbuf);
+                    eXosip_set_option(EXOSIP_OPT_ADD_DNS_CACHE, (void *) &entry);
+                }
+            }
 
-    eXosip_freeaddrinfo(addrinfo);
+            if (tr != NULL)
+            {
+                if (tr->ict_context != NULL)
+                    osip_ict_set_destination(tr->ict_context, osip_strdup(ipbuf), port);
+                if (tr->nict_context != NULL)
+                    osip_nict_set_destination(tr->nict_context, osip_strdup(ipbuf), port);
+            }
 
-    /* remove preloaded route if there is no tag in the To header
-     */
-    {
-        osip_route_t         *route = NULL;
-        osip_generic_param_t *tag   = NULL;
-        osip_message_get_route(sip, 0, &route);
-
-        osip_to_get_tag(sip->to, &tag);
-        if (tag == NULL && route != NULL && route->url != NULL)
-        {
-            osip_list_remove(&sip->routes, 0);
-        }
-        i = osip_message_to_str(sip, &message, &length);
-        if (tag == NULL && route != NULL && route->url != NULL)
-        {
-            osip_list_add(&sip->routes, route, 0);
-        }
-    }
-
-    if (i != 0 || length <= 0)
-    {
-        return -1;
-    }
-
-    switch (((struct sockaddr *) &addr)->sa_family)
-    {
-    case AF_INET:
-        inet_ntop(((struct sockaddr *) &addr)->sa_family,
-                  &(((struct sockaddr_in *) &addr)->sin_addr), ipbuf,
-                  sizeof(ipbuf));
-        break;
-    case AF_INET6:
-        inet_ntop(((struct sockaddr *) &addr)->sa_family,
-                  &(((struct sockaddr_in6 *) &addr)->sin6_addr), ipbuf,
-                  sizeof(ipbuf));
-        break;
-    default:
-        strncpy(ipbuf, "(unknown)", sizeof(ipbuf));
-        break;
-    }
-
-    OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL,
-                          "Message sent: (to dest=%s:%i)\n%s\n",
-                          ipbuf, port, message));
-
-    if (tr != NULL)
-    {
-        if (tr->ict_context != NULL)
-            osip_ict_set_destination(tr->ict_context, osip_strdup(ipbuf), port);
-        if (tr->nict_context != NULL)
-            osip_nict_set_destination(tr->nict_context, osip_strdup(ipbuf), port);
-    }
-
-    //SIP���ܵ�
-
-    crypt_date = (char *)malloc(length);
-
-    memcpy(crypt_date, (const char *)message, length);
-
-#ifdef ENABLE_MYCRYPT
-    CRYPT_DATA_SIP((unsigned char *)crypt_date, length);
-#endif // ENABLE_MYCRYPT
-
-    if (0 >
-        sendto(udp_socket, (const void *) crypt_date, length, 0,
-               (struct sockaddr *) &addr, len))
-    {
-#ifdef WIN32
-        if (WSAECONNREFUSED == WSAGetLastError())
-#else
-        if (ECONNREFUSED == errno)
-#endif
-        {
-            /* This can be considered as an error, but for the moment,
-               I prefer that the application continue to try sending
-               message again and again... so we are not in a error case.
-               Nevertheless, this error should be announced!
-               ALSO, UAS may not have any other options than retry always
-               on the same port.
-             */
-            osip_free(message);
-            return 1;
-        }
-        else
-        {
+            if (0 >
+                sendto(udp_socket, (const void *) message, length, 0,
+                       (struct sockaddr *) &addr, len))
+            {
 #ifndef MINISIZE
-            /* delete first SRV entry that is not reachable */
-            if (tr != NULL && tr->record.name[0] != '\0'
-                && tr->record.srventry[0].srv[0] != '\0')
-            {
-                memmove(&tr->record.srventry[0], &tr->record.srventry[1],
-                        9 * sizeof(osip_srv_entry_t));
-                memset(&tr->record.srventry[9], 0, sizeof(osip_srv_entry_t));
+                if (naptr_record != NULL)
+                {
+                    /* rotate on failure! */
+                    if (eXosip_dnsutils_rotate_srv(&naptr_record->sipudp_record) > 0)
+                    {
+                        osip_free(message);
+                        return OSIP_SUCCESS + 1; /* retry for next retransmission! */
+                    }
+                }
+#endif
+                /* SIP_NETWORK_ERROR; */
                 osip_free(message);
-                return OSIP_SUCCESS;    /* retry for next retransmission! */
+                return -1;
+            }
+
+            if (eXosip.keep_alive > 0)
+            {
+                if (MSG_IS_REGISTER(sip))
+                {
+                    eXosip_reg_t *reg = NULL;
+
+                    if (_eXosip_reg_find(&reg, tr) == 0)
+                    {
+                        memcpy(&(reg->addr), &addr, len);
+                        reg->len = len;
+                    }
+                }
+            }
+
+#ifndef MINISIZE
+            if (naptr_record != NULL)
+            {
+                if (tr != NULL && MSG_IS_REGISTER(sip) && tr->last_response == NULL)
+                {
+                    /* failover for outgoing transaction */
+                    time_t now;
+                    now = time(NULL);
+                    OSIP_TRACE(osip_trace
+                                   (__FILE__, __LINE__, OSIP_INFO2, NULL,
+                                   "not yet answered\n"));
+                    if (tr != NULL && now - tr->birth_time > 10 && now - tr->birth_time < 13)
+                    {
+                        /* avoid doing this twice... */
+                        if (eXosip_dnsutils_rotate_srv(&naptr_record->sipudp_record) > 0)
+                        {
+                            OSIP_TRACE(osip_trace(__FILE__, __LINE__, OSIP_INFO1, NULL,
+                                                  "Doing failover: %s:%i->%s:%i\n",
+                                                  host, port,
+                                                  naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].srv,
+                                                  naptr_record->sipudp_record.srventry[naptr_record->sipudp_record.index].port));
+                            osip_free(message);
+                            return OSIP_SUCCESS + 1; /* retry for next retransmission! */
+                        }
+                    }
+                }
             }
 #endif
-            /* SIP_NETWORK_ERROR; */
+
             osip_free(message);
-            return -1;
+            return OSIP_SUCCESS;
         }
-    }
 
-    if (eXosip.keep_alive > 0)
-    {
-        if (MSG_IS_REGISTER(sip))
+        static int
+        udp_tl_keepalive(
+            void)
         {
-            eXosip_reg_t *reg = NULL;
+            char         buf[4] = "jaK";
+            eXosip_reg_t *jr;
 
-            if (_eXosip_reg_find(&reg, tr) == 0)
+            if (eXosip.keep_alive <= 0)
             {
-                memcpy(&(reg->addr), &addr, len);
-                reg->len = len;
+                return 0;
             }
+
+            if (udp_socket <= 0)
+                return OSIP_UNDEFINED_ERROR;
+
+            for (jr = eXosip.j_reg; jr != NULL; jr = jr->next)
+            {
+                if (jr->len > 0)
+                {
+                    if (sendto(udp_socket, (const void *) buf, 4, 0,
+                               (struct sockaddr *) &(jr->addr), jr->len) > 0)
+                    {
+                        OSIP_TRACE(osip_trace
+                                       (__FILE__, __LINE__, OSIP_INFO1, NULL,
+                                       "eXosip: Keep Alive sent on UDP!\n"));
+                    }
+                }
+            }
+            return OSIP_SUCCESS;
         }
-    }
 
-    osip_free(message);
-    return OSIP_SUCCESS;
-}
-
-static int
-udp_tl_keepalive(
-    void)
-{
-    char         buf[6] = "Ping.";
-    eXosip_reg_t *jr;
-    for (jr = eXosip.j_reg; jr != NULL; jr = jr->next)
-    {
-        if (jr->len > 0)
+        static int
+        udp_tl_set_socket(
+            int socket)
         {
-            if (sendto(udp_socket, (const void *) buf, 4, 0,
-                       (struct sockaddr *) &(jr->addr), jr->len) > 0)
-            {
-                OSIP_TRACE(osip_trace
-                               (__FILE__, __LINE__, OSIP_INFO1, NULL,
-                               "eXosip: Keep Alive sent on UDP!\n"));
-            }
+            udp_socket = socket;
+
+            return OSIP_SUCCESS;
         }
-    }
-    return OSIP_SUCCESS;
-}
 
-static int
-udp_tl_set_socket(
-    int socket)
-{
-    udp_socket = socket;
+        static int
+        udp_tl_masquerade_contact(
+            const char *public_address,
+            int        port)
+        {
+            if (public_address == NULL || public_address[0] == '\0')
+            {
+                memset(udp_firewall_ip,   '\0', sizeof(udp_firewall_ip));
+                memset(udp_firewall_port, '\0', sizeof(udp_firewall_port));
+                if (eXtl_udp.proto_port > 0)
+                    snprintf(udp_firewall_port, sizeof(udp_firewall_port), "%i",
+                             eXtl_udp.proto_port);
+                return OSIP_SUCCESS;
+            }
+            snprintf(udp_firewall_ip, sizeof(udp_firewall_ip), "%s", public_address);
+            if (port > 0)
+            {
+                snprintf(udp_firewall_port, sizeof(udp_firewall_port), "%i", port);
+            }
+            return OSIP_SUCCESS;
+        }
 
-    return OSIP_SUCCESS;
-}
+        static int
+        udp_tl_get_masquerade_contact(
+            char *ip,
+            int  ip_size,
+            char *port,
+            int  port_size)
+        {
+            memset(ip,   0, ip_size);
+            memset(port, 0, port_size);
 
-static int
-udp_tl_masquerade_contact(
-    const char *public_address,
-    int        port)
-{
-    if (public_address == NULL || public_address[0] == '\0')
-    {
-        memset(udp_firewall_ip, '\0', sizeof(udp_firewall_ip));
-        return OSIP_SUCCESS;
-    }
-    snprintf(udp_firewall_ip, sizeof(udp_firewall_ip), "%s", public_address);
-    if (port > 0)
-    {
-        snprintf(udp_firewall_port, sizeof(udp_firewall_port), "%i", port);
-    }
-    return OSIP_SUCCESS;
-}
+            if (udp_firewall_ip[0] != '\0')
+                snprintf(ip, ip_size, "%s", udp_firewall_ip);
 
-static int
-udp_tl_get_masquerade_contact(
-    char *ip,
-    int  ip_size,
-    char *port,
-    int  port_size)
-{
-    memset(ip,   0, ip_size);
-    memset(port, 0, port_size);
+            if (udp_firewall_port[0] != '\0')
+                snprintf(port, port_size, "%s", udp_firewall_port);
+            return OSIP_SUCCESS;
+        }
 
-    if (udp_firewall_ip != '\0')
-        snprintf(ip, ip_size, "%s", udp_firewall_ip);
+        struct eXtl_protocol eXtl_udp = {
+            1,
+            5060,
+            "UDP",
+            "0.0.0.0",
+            IPPROTO_UDP,
+            AF_INET,
+            0,
+            0,
 
-    if (udp_firewall_port != '\0')
-        snprintf(port, port_size, "%s", udp_firewall_port);
-    return OSIP_SUCCESS;
-}
-
-struct eXtl_protocol eXtl_udp = {
-    1,
-    5060,
-    "UDP",
-    "0.0.0.0",
-    IPPROTO_UDP,
-    AF_INET,
-    0,
-    0,
-
-    &udp_tl_init,
-    &udp_tl_free,
-    &udp_tl_open,
-    &udp_tl_set_fdset,
-    &udp_tl_read_message,
-    &udp_tl_send_message,
-    &udp_tl_keepalive,
-    &udp_tl_set_socket,
-    &udp_tl_masquerade_contact,
-    &udp_tl_get_masquerade_contact
-};
+            &udp_tl_init,
+            &udp_tl_free,
+            &udp_tl_open,
+            &udp_tl_set_fdset,
+            &udp_tl_read_message,
+            &udp_tl_send_message,
+            &udp_tl_keepalive,
+            &udp_tl_set_socket,
+            &udp_tl_masquerade_contact,
+            &udp_tl_get_masquerade_contact
+        };

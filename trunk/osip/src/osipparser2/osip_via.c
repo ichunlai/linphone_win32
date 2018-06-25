@@ -366,7 +366,7 @@ osip_via_to_str(
         buf = (char *) osip_realloc(buf, len);
         tmp = buf;
         tmp = tmp + strlen(tmp);
-        sprintf(tmp, " (%s)", via->comment);
+        snprintf(tmp, len - (tmp - buf), " (%s)", via->comment);
     }
     *dest = buf;
     return OSIP_SUCCESS;

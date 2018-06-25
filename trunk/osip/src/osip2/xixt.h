@@ -30,7 +30,8 @@ extern "C"
 
 void __osip_message_callback(int type, osip_transaction_t *, osip_message_t *);
 void __osip_kill_transaction_callback(int type, osip_transaction_t *);
-void __osip_transport_error_callback(int type, osip_transaction_t *, int error);
+void __osip_transport_error_callback(int type, osip_transaction_t *,
+                                     int error);
 
 /**
  * Allocate an osip_ict_t element. (for outgoing INVITE transaction)

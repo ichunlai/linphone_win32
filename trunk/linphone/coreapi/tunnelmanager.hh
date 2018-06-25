@@ -12,11 +12,11 @@
 #define __TUNNEL_CLIENT_MANAGER_H__
 #include <list>
 #include <string>
-//#include "tunnel/client.hh"
+#include "tunnel/client.hh"
 #include "linphonecore.h"
 
 extern "C" {
-	//#include "eXosip2/eXosip_transport_hook.h"
+	#include "eXosip2/eXosip_transport_hook.h"
 }
 namespace belledonnecomm {
 class TunnelClient;

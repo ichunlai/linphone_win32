@@ -393,7 +393,8 @@ base64_decode_string(
     unsigned int len,
     int          *newlen)
 {
-    int  i, j, x1, x2, x3, x4;
+    unsigned int i, j;
+    int          x1, x2, x3, x4;
     char *out;
     out = (char *) osip_malloc((len * 3 / 4) + 8);
     if (out == NULL)
@@ -555,7 +556,8 @@ DigestCalcResponseAka(
 
     /* Compute the AKA response */
     resp_hex[0] = 0;
-    sprintf(tmp, "%s", pszNonce);
+    snprintf(tmp, MAX_HEADER_LEN - 1, "%s", pszNonce);
+    tmp[MAX_HEADER_LEN - 1] = 0;
     nonce64     = tmp;
     nonce       = base64_decode_string(nonce64, strlen(tmp), &noncelen);
     if (nonce == NULL)
@@ -564,6 +566,7 @@ DigestCalcResponseAka(
     if (noncelen < RANDLEN + AUTNLEN)
     {
         /* Nonce is too short */
+        osip_free(nonce);
         goto done;
     }
     memcpy(rnd,    nonce,                             RANDLEN);
@@ -892,7 +895,8 @@ __eXosip_create_authorization_header(
                 return OSIP_NOMEM;
             }
 
-            sprintf(resp, "\"%s\"", Response);
+            snprintf(resp, 35, "\"%s\"", Response);
+            resp[34] = 0;
             osip_authorization_set_response(aut, resp);
         }
         osip_free(pszNonce);
@@ -1065,7 +1069,11 @@ __eXosip_create_proxy_authorization_header(
         pszPass = passwd;
 
         if (osip_www_authenticate_get_nonce(wa) == NULL)
+        {
+            osip_authorization_free(aut);
+            osip_free(pszRealm);
             return OSIP_SYNTAXERROR;
+        }
         pszNonce = osip_strdup_without_quote(osip_www_authenticate_get_nonce(wa));
 
         if (qop != NULL)
@@ -1103,7 +1111,8 @@ __eXosip_create_proxy_authorization_header(
             }
 
             osip_proxy_authorization_set_message_qop(aut, osip_strdup("auth"));
-            osip_proxy_authorization_set_nonce_count(aut, osip_strdup(szNonceCount));
+            osip_proxy_authorization_set_nonce_count(aut,
+                                                     osip_strdup(szNonceCount));
 
             {
                 char *tmp = osip_malloc(strlen(pszCNonce) + 3);
@@ -1180,7 +1189,8 @@ __eXosip_create_proxy_authorization_header(
                 return OSIP_NOMEM;
             }
 
-            sprintf(resp, "\"%s\"", Response);
+            snprintf(resp, 35, "\"%s\"", Response);
+            resp[34] = 0;
             osip_proxy_authorization_set_response(aut, resp);
         }
         osip_free(pszNonce);

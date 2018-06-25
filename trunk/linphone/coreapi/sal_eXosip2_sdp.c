@@ -23,7 +23,7 @@
 #include "sip_sal.h"
 #include <eXosip2/eXosip.h>
 
-#define keywordcmp(key, b) strncmp(key, b, sizeof(key))
+#define keywordcmp(key, b) strcmp(key, b)
 
 #ifdef FOR_LATER
 
@@ -175,7 +175,7 @@ static sdp_message_t *create_generic_sdp(
     else inet6 = 0;
     sdp_message_v_version_set(local, osip_strdup("0"));
     sdp_message_o_origin_set(local, osip_strdup(desc->username),
-                             osip_strdup("123456"), osip_strdup("654321"),
+                             osip_strdup(sessid), osip_strdup(sessver),
                              osip_strdup("IN"), inet6 ? osip_strdup("IP6") : osip_strdup("IP4"),
                              osip_strdup(desc->addr));
     sdp_message_s_name_set(local, osip_strdup("Talk"));
@@ -218,11 +218,14 @@ static bool_t is_known_rtpmap(
 }
 
 static void add_payload(
-    sdp_message_t *msg, int line, const PayloadType *pt)
+    sdp_message_t *msg, int line, const PayloadType *pt, bool_t strip_well_known_rtpmaps)
 {
     char attr[256];
     sdp_message_m_payload_add(msg, line, int_2char(payload_type_get_number(pt)));
-    if (pt->channels > 0)
+
+    if (!strip_well_known_rtpmaps || !is_known_rtpmap(pt))
+    {
+        if (pt->channels > 1)
         snprintf(attr, sizeof(attr), "%i %s/%i/%i", payload_type_get_number(pt),
                  pt->mime_type, pt->clock_rate, pt->channels);
     else
@@ -230,6 +233,7 @@ static void add_payload(
                  pt->mime_type, pt->clock_rate);
     sdp_message_a_attribute_add(msg, line,
                                 osip_strdup("rtpmap"), osip_strdup(attr));
+    }
 
     if (pt->recv_fmtp != NULL)
     {
@@ -328,9 +332,49 @@ static void add_line(
     rtp_port  = desc->rtp_port;
     rtcp_port = desc->rtcp_port;
 
+    if (desc->proto == SalProtoRtpSavp)
+    {
+        int i;
+
+        sdp_message_m_media_add(msg, osip_strdup(mt),
+                                int_2char(rtp_port), NULL,
+                                osip_strdup("RTP/SAVP"));
+
+        /* add crypto lines */
+        for (i = 0; i < SAL_CRYPTO_ALGO_MAX; i++)
+        {
+            char buffer[1024];
+            switch (desc->crypto[i].algo)
+            {
+            case AES_128_SHA1_80:
+                snprintf(buffer, 1024, "%d %s inline:%s",
+                         desc->crypto[i].tag, "AES_CM_128_HMAC_SHA1_80", desc->crypto[i].master_key);
+                sdp_message_a_attribute_add(msg, lineno, osip_strdup("crypto"),
+                                            osip_strdup(buffer));
+                break;
+            case AES_128_SHA1_32:
+                snprintf(buffer, 1024, "%d %s inline:%s",
+                         desc->crypto[i].tag, "AES_CM_128_HMAC_SHA1_32", desc->crypto[i].master_key);
+                sdp_message_a_attribute_add(msg, lineno, osip_strdup("crypto"),
+                                            osip_strdup(buffer));
+                break;
+            case AES_128_NO_AUTH:
+                ms_warning("Unsupported crypto suite: AES_128_NO_AUTH");
+                break;
+            case NO_CIPHER_SHA1_80:
+                ms_warning("Unsupported crypto suite: NO_CIPHER_SHA1_80");
+                break;
+            default:
+                i = SAL_CRYPTO_ALGO_MAX;
+            }
+        }
+    }
+    else
+    {
     sdp_message_m_media_add(msg, osip_strdup(mt),
                             int_2char(rtp_port), NULL,
                             osip_strdup("RTP/AVP"));
+    }
 
     /*only add a c= line within the stream description if address are differents*/
     if (rtp_addr[0] != '\0' && strcmp(rtp_addr, sdp_message_c_addr_get(msg, -1, 0)) != 0)
@@ -357,7 +401,7 @@ static void add_line(
     {
         for (elem = desc->payloads; elem != NULL; elem = elem->next)
         {
-            add_payload(msg, lineno, (PayloadType *)elem->data);
+            add_payload(msg, lineno, (PayloadType *)elem->data, strip_well_known_rtpmaps);
         }
     }
     else
@@ -627,7 +671,7 @@ int sdp_to_media_description(
                                stream->crypto[valid_count].tag,
                                tmp,
                                tmp2);
-                    /*if (nb == 3)
+                    if (nb == 3)
                        {
                         if (strcmp(tmp, "AES_CM_128_HMAC_SHA1_80") == 0)
                             stream->crypto[valid_count].algo = AES_128_SHA1_80;
@@ -652,7 +696,7 @@ int sdp_to_media_description(
                        else
                        {
                         ms_warning("sdp has a strange a= line (%s) nb=%i", attr->a_att_value, nb);
-                       }*/
+                    }
                 }
             }
             ms_message("Found: %d valid crypto lines", valid_count);

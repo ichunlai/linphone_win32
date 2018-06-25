@@ -208,7 +208,7 @@ osip_content_type_to_str(
                 len = tmp_len;
                 tmp = buf + strlen(buf);
             }
-            sprintf(tmp, "; %s=%s", u_param->gname, u_param->gvalue);
+            snprintf(tmp, len - (tmp - buf), "; %s=%s", u_param->gname, u_param->gvalue);
             tmp = tmp + strlen(tmp);
             pos++;
         }
@@ -269,7 +269,7 @@ osip_content_type_clone(
             if (i != 0)
             {
                 osip_content_type_free(ct);
-                osip_free(ct);
+                //osip_free(ct);
                 return i;
             }
             osip_list_add(&ct->gen_params, dest_param, -1);

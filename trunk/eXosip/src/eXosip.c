@@ -21,6 +21,10 @@
     #include <mpatrol.h>
 #endif
 
+#ifdef __APPLE__
+    #include "TargetConditionals.h"
+#endif
+
 #include "eXosip2.h"
 #include <eXosip2/eXosip.h>
 
@@ -79,25 +83,22 @@ _eXosip_transaction_init(
     osip_t             *osip,
     osip_message_t     *message)
 {
-#ifdef SRV_RECORD
-    osip_srv_record_t record;
-#endif
-    int               i;
+    int i;
     i = osip_transaction_init(transaction, ctx_type, osip, message);
     if (i != 0)
     {
         return i;
     }
-#ifdef SRV_RECORD
-    memset(&record, 0, sizeof(osip_srv_record_t));
-    i = _eXosip_srv_lookup(*transaction, message, &record);
-    if (i < 0)
     {
-        /* might be a simple DNS request or an IP */
-        return OSIP_SUCCESS;
+        osip_naptr_t *naptr_record = NULL;
+        i = _eXosip_srv_lookup(message, &naptr_record);
+        if (i < 0)
+        {
+            /* might be a simple DNS request or an IP */
+            return OSIP_SUCCESS;
+        }
+        osip_transaction_set_naptr_record(*transaction, naptr_record);
     }
-    osip_transaction_set_srv_record(*transaction, &record);
-#endif
     return OSIP_SUCCESS;
 }
 
@@ -694,7 +695,7 @@ eXosip_automatic_refresh(
     {
         for (jd = js->s_dialogs; jd != NULL; jd = jd->next)
         {
-            if (jd->d_dialog != NULL && (jd->d_id >= 1)) /* finished call */
+            if (jd->d_dialog != NULL && (jd->d_id >= 1))    /* finished call */
             {
                 osip_transaction_t *out_tr = NULL;
 
@@ -732,6 +733,12 @@ eXosip_automatic_refresh(
             {
                 /* automatic refresh */
                 eXosip_register_send_register(jr->r_id, NULL);
+    #if TARGET_OS_IPHONE
+            }
+            else if (now - jr->r_last_tr->birth_time > jr->r_reg_period - 630)
+            {
+                eXosip_register_send_register(jr->r_id, NULL);
+    #endif
             }
             else if (now - jr->r_last_tr->birth_time > jr->r_reg_period - (jr->r_reg_period / 10))
             {
@@ -1519,7 +1526,7 @@ eXosip_add_authentication_information(
 
                 authinfo =
                     eXosip_find_authentication_info(req->from->url->username,
-                                                           http_auth->wa->realm);
+                                                    http_auth->wa->realm);
                 if (authinfo == NULL)
                 {
                     if (http_auth->wa->realm != NULL)
@@ -1741,7 +1748,28 @@ eXosip_update_top_via(
     osip_free(br->gvalue);
     number     = osip_build_random_number();
 
-    sprintf(tmp, "z9hG4bK%u", number);
+    snprintf(tmp, 40, "z9hG4bK%u", number);
     br->gvalue = osip_strdup(tmp);
     return OSIP_SUCCESS;
+}
+
+/* vivox: mark all registrations as needing refreshing */
+void
+eXosip_mark_all_registrations_expired()
+{
+    eXosip_reg_t *jr;
+    int wakeup = 0;
+
+    for (jr = eXosip.j_reg; jr != NULL; jr = jr->next)
+    {
+        if (jr->r_id >= 1 && jr->r_last_tr != NULL)
+        {
+            jr->r_last_tr->birth_time -= jr->r_reg_period;
+            wakeup                     = 1;
+        }
+    }
+    if (wakeup)
+    {
+        __eXosip_wakeup();
+    }
 }

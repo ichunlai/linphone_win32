@@ -690,8 +690,7 @@ _osip_message_to_str(
                                          table[pos].header_length,
                                          ((int (*)(void *, char **))
                                           table[pos].to_str), &next);
-            i =
-                strcat_headers_one_per_line(dest, &malloc_size, &message,
+            i = strcat_headers_one_per_line(dest, &malloc_size, &message,
                                             table[pos].header_list,
                                             table[pos].header_name,
                                             table[pos].header_length,
@@ -939,7 +938,7 @@ _osip_message_to_str(
         char   tmp2[15];
 
         total_length += size;
-        sprintf(tmp2, "%i", size);
+        snprintf(tmp2, 15, "%i", size);
         /* do not use osip_strncpy here! */
         strncpy(content_length_to_modify + 5 - strlen(tmp2), tmp2, strlen(tmp2));
     }

@@ -316,9 +316,9 @@ dtls_tl_open(
         eXtl_dtls.proto_port = 5061;
 
     server_ctx = initialize_server_ctx(SERVER_KEYFILE, SERVER_CERTFILE, PASSWORD,
-                                       IPPROTO_TCP);
+                                       IPPROTO_UDP);
     client_ctx = initialize_client_ctx(CLIENT_KEYFILE, CLIENT_CERTFILE, PASSWORD,
-                                       IPPROTO_TCP);
+                                       IPPROTO_UDP);
 
     res        = eXosip_get_addrinfo(&addrinfo,
                                      eXtl_dtls.proto_ifs,
@@ -420,7 +420,8 @@ dtls_tl_open(
     {
         /* get port number from socket */
         if (eXtl_dtls.proto_family == AF_INET)
-            eXtl_dtls.proto_port = ntohs(((struct sockaddr_in *) &ai_addr)->sin_port);
+            eXtl_dtls.proto_port =
+                ntohs(((struct sockaddr_in *) &ai_addr)->sin_port);
         else
             eXtl_dtls.proto_port =
                 ntohs(((struct sockaddr_in6 *) &ai_addr)->sin6_port);
@@ -440,6 +441,7 @@ dtls_tl_open(
 static int
 dtls_tl_set_fdset(
     fd_set *osip_fdset,
+    fd_set *osip_wrset,
     int    *fd_max)
 {
     if (dtls_socket <= 0)
@@ -455,7 +457,8 @@ dtls_tl_set_fdset(
 
 static int
 dtls_tl_read_message(
-    fd_set *osip_fdset)
+    fd_set *osip_fdset,
+    fd_set *osip_wrset)
 {
     char *enc_buf;
     char *dec_buf;
@@ -618,7 +621,8 @@ dtls_tl_read_message(
 
                 /* No MTU query */
         #ifdef  SSL_OP_NO_QUERY_MTU
-                SSL_set_options(dtls_socket_tab[pos].ssl_conn, SSL_OP_NO_QUERY_MTU);
+                SSL_set_options(dtls_socket_tab[pos].ssl_conn,
+                                SSL_OP_NO_QUERY_MTU);
                 SSL_set_mtu(dtls_socket_tab[pos].ssl_conn, 2000);
         #endif
                 /* MTU query */
@@ -660,7 +664,7 @@ dtls_tl_read_message(
             dtls_socket_tab[pos].ssl_conn->rbio = rbio;
 
             i                                   = SSL_read(dtls_socket_tab[pos].ssl_conn, dec_buf,
-                         SIP_MESSAGE_MAX_LENGTH);
+                                                           SIP_MESSAGE_MAX_LENGTH);
             /* done with the rbio */
             BIO_free(dtls_socket_tab[pos].ssl_conn->rbio);
             dtls_socket_tab[pos].ssl_conn->rbio = BIO_new(BIO_s_mem());
@@ -796,31 +800,154 @@ dtls_tl_send_message(
 
     i = -1;
         #ifndef MINISIZE
-    if (tr != NULL && tr->record.name[0] != '\0'
-        && tr->record.srventry[0].srv[0] != '\0')
+    if (tr == NULL)
     {
-        /* always choose the first here.
-           if a network error occur, remove first entry and
-           replace with next entries.
-         */
-        osip_srv_entry_t *srv;
-        int              n = 0;
-        for (srv = &tr->record.srventry[0];
-             n < 10 && tr->record.srventry[0].srv[0]; srv = &tr->record.srventry[0])
+        _eXosip_srv_lookup(sip, &naptr_record);
+
+        if (naptr_record != NULL)
         {
-            i = eXosip_get_addrinfo(&addrinfo, srv->srv, srv->port, IPPROTO_UDP);
-            if (i == 0)
+            eXosip_dnsutils_dns_process(naptr_record, 1);
+            if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE
+                || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
+                eXosip_dnsutils_dns_process(naptr_record, 1);
+        }
+
+        if (naptr_record != NULL && naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVDONE)
+        {
+            /* 4: check if we have the one we want... */
+            if (naptr_record->sipdtls_record.name[0] != '\0'
+                && naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index].srv[0] != '\0')
             {
-                host = srv->srv;
-                port = srv->port;
-                break;
+                /* always choose the first here.
+                   if a network error occur, remove first entry and
+                   replace with next entries.
+                 */
+                osip_srv_entry_t *srv;
+                int              n = 0;
+                for (srv = &naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index];
+                     n < 10 && naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index].srv[0];
+                     srv = &naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index])
+                {
+                    if (srv->ipaddress[0])
+                        i = eXosip_get_addrinfo(&addrinfo, srv->ipaddress, srv->port, IPPROTO_UDP);
+                    else
+                        i = eXosip_get_addrinfo(&addrinfo, srv->srv, srv->port, IPPROTO_UDP);
+                    if (i == 0)
+                    {
+                        host = srv->srv;
+                        port = srv->port;
+                        break;
+                    }
+
+                    i = eXosip_dnsutils_rotate_srv(&naptr_record->sipdtls_record);
+                    if (i <= 0)
+                    {
+                        return -1;
+                    }
+                    if (i >= n)
+                    {
+                        return -1;
+                    }
+                    i = -1;
+                    /* copy next element */
+                    n++;
+                }
             }
-            memmove(&tr->record.srventry[0], &tr->record.srventry[1],
-                    9 * sizeof(osip_srv_entry_t));
-            memset(&tr->record.srventry[9], 0, sizeof(osip_srv_entry_t));
-            i = -1;
-            /* copy next element */
-            n++;
+        }
+
+        if (naptr_record != NULL && naptr_record->keep_in_cache == 0)
+            osip_free(naptr_record);
+        naptr_record = NULL;
+    }
+    else
+    {
+        naptr_record = tr->naptr_record;
+    }
+
+    if (naptr_record != NULL)
+    {
+        /* 1: make sure there is no pending DNS */
+        eXosip_dnsutils_dns_process(naptr_record, 0);
+        if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE
+            || naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
+            eXosip_dnsutils_dns_process(naptr_record, 0);
+
+        if (naptr_record->naptr_state == OSIP_NAPTR_STATE_UNKNOWN)
+        {
+            /* fallback to DNS A */
+            if (naptr_record->keep_in_cache == 0)
+                osip_free(naptr_record);
+            naptr_record = NULL;
+            if (tr != NULL)
+                tr->naptr_record = NULL;
+            /* must never happen? */
+        }
+        else if (naptr_record->naptr_state == OSIP_NAPTR_STATE_INPROGRESS)
+        {
+            /* 2: keep waiting (naptr answer not received) */
+            return OSIP_SUCCESS + 1;
+        }
+        else if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NAPTRDONE)
+        {
+            /* 3: keep waiting (naptr answer received/no srv answer received) */
+            return OSIP_SUCCESS + 1;
+        }
+        else if (naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVINPROGRESS)
+        {
+            /* 3: keep waiting (naptr answer received/no srv answer received) */
+            return OSIP_SUCCESS + 1;
+        }
+        else if (naptr_record->naptr_state == OSIP_NAPTR_STATE_SRVDONE)
+        {
+            /* 4: check if we have the one we want... */
+            if (naptr_record->sipdtls_record.name[0] != '\0'
+                && naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index].srv[0] != '\0')
+            {
+                /* always choose the first here.
+                   if a network error occur, remove first entry and
+                   replace with next entries.
+                 */
+                osip_srv_entry_t *srv;
+                int              n = 0;
+                for (srv = &naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index];
+                     n < 10 && naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index].srv[0];
+                     srv = &naptr_record->sipdtls_record.srventry[naptr_record->sipdtls_record.index])
+                {
+                    if (srv->ipaddress[0])
+                        i = eXosip_get_addrinfo(&addrinfo, srv->ipaddress, srv->port, IPPROTO_UDP);
+                    else
+                        i = eXosip_get_addrinfo(&addrinfo, srv->srv, srv->port, IPPROTO_UDP);
+                    if (i == 0)
+                    {
+                        host = srv->srv;
+                        port = srv->port;
+                        break;
+                    }
+
+                    i = eXosip_dnsutils_rotate_srv(&naptr_record->sipdtls_record);
+                    if (i <= 0)
+                    {
+                        return -1;
+                    }
+                    if (i >= n)
+                    {
+                        return -1;
+                    }
+                    i = -1;
+                    /* copy next element */
+                    n++;
+                }
+            }
+        }
+        else if (naptr_record->naptr_state == OSIP_NAPTR_STATE_NOTSUPPORTED
+                 || naptr_record->naptr_state == OSIP_NAPTR_STATE_RETRYLATER)
+        {
+            /* 5: fallback to DNS A */
+            if (naptr_record->keep_in_cache == 0)
+                osip_free(naptr_record);
+            naptr_record = NULL;
+            if (tr != NULL)
+                tr->naptr_record = NULL;
         }
     }
         #endif
@@ -1023,15 +1150,14 @@ dtls_tl_send_message(
             memset(&dtls_socket_tab[pos], 0, sizeof(struct socket_tab));
         }
         #ifndef MINISIZE
-        /* delete first SRV entry that is not reachable */
-        if (tr != NULL && tr->record.name[0] != '\0'
-            && tr->record.srventry[0].srv[0] != '\0')
+        if (naptr_record != NULL)
         {
-            memmove(&tr->record.srventry[0], &tr->record.srventry[1],
-                    9 * sizeof(osip_srv_entry_t));
-            memset(&tr->record.srventry[9], 0, sizeof(osip_srv_entry_t));
-            osip_free(message);
-            return OSIP_SUCCESS; /* retry for next retransmission! */
+            /* rotate on failure! */
+            if (eXosip_dnsutils_rotate_srv(&naptr_record->sipdtls_record) > 0)
+            {
+                osip_free(message);
+                return OSIP_SUCCESS; /* retry for next retransmission! */
+            }
         }
         #endif
         /* SIP_NETWORK_ERROR; */
@@ -1104,7 +1230,7 @@ dtls_tl_masquerade_contact(
 {
     if (public_address == NULL || public_address[0] == '\0')
     {
-        memset(dtls_firewall_ip, '\0', sizeof(dtls_firewall_ip));
+        memset(dtls_firewall_ip,   '\0', sizeof(dtls_firewall_ip));
         memset(dtls_firewall_port, '\0', sizeof(dtls_firewall_port));
         if (eXtl_dtls.proto_port > 0)
             snprintf(dtls_firewall_port, sizeof(dtls_firewall_port), "%i",

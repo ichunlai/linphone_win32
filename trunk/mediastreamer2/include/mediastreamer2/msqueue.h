@@ -36,32 +36,39 @@ typedef struct _MSQueue
 
 MS2_PUBLIC MSQueue *ms_queue_new(struct _MSFilter *f1, int pin1, struct _MSFilter *f2, int pin2);
 
-static inline mblk_t *ms_queue_get(
+static inline mblk_t *
+ms_queue_get(
     MSQueue *q)
 {
     return getq(&q->q);
 }
 
-static inline void ms_queue_put(
-    MSQueue *q, mblk_t *m)
+static inline void
+ms_queue_put(
+    MSQueue *q,
+    mblk_t  *m)
 {
     putq(&q->q, m);
     return;
 }
 
-static inline mblk_t *ms_queue_peek_last(
+static inline mblk_t *
+ms_queue_peek_last(
     MSQueue *q)
 {
     return qlast(&q->q);
 }
 
-static inline void ms_queue_remove(
-    MSQueue *q, mblk_t *m)
+static inline void
+ms_queue_remove(
+    MSQueue *q,
+    mblk_t  *m)
 {
     remq(&q->q, m);
 }
 
-static inline bool_t ms_queue_empty(
+static inline bool_t
+ms_queue_empty(
     MSQueue *q)
 {
     return qempty(&q->q);
@@ -97,7 +104,6 @@ MS2_PUBLIC void ms_queue_destroy(MSQueue *q);
 #define mblk_set_payload_type(m, bits) (m)->reserved2 = ((m)->reserved2 | (bits << 3))
 #define mblk_get_payload_type(m)       (((m)->reserved2 >> 3) & 0x7F)
 
-
 struct _MSBufferizer {
     queue_t q;
     int     size;
@@ -119,7 +125,8 @@ MS2_PUBLIC void ms_bufferizer_put_from_queue(MSBufferizer *obj, MSQueue *q);
 MS2_PUBLIC int ms_bufferizer_read(MSBufferizer *obj, uint8_t *data, int datalen);
 
 /* returns the number of bytes available in the bufferizer*/
-static inline int ms_bufferizer_get_avail(
+static inline int
+ms_bufferizer_get_avail(
     MSBufferizer *obj)
 {
     return obj->size;

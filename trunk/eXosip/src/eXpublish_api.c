@@ -174,7 +174,7 @@ eXosip_publish(
                 osip_message_free(message);
                 return OSIP_NOMEM;
             }
-            sprintf(message->cseq->number, "%i", osip_cseq_num);
+            snprintf(message->cseq->number, length + 2, "%i", osip_cseq_num);
         }
     }
 

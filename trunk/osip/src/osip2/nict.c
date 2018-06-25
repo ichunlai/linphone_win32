@@ -110,7 +110,7 @@ int __osip_nict_init(
         }
     }
 
-    if (route != NULL)
+    if (route != NULL && route->url != NULL)
     {
         int port = 5060;
 
