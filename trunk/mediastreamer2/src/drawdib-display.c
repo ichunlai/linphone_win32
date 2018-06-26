@@ -38,7 +38,8 @@ typedef struct Yuv2RgbCtx {
     struct ms_SwsContext *sws;
 } Yuv2RgbCtx;
 
-static void yuv2rgb_init(
+static void
+yuv2rgb_init(
     Yuv2RgbCtx *ctx)
 {
     ctx->rgb          = NULL;
@@ -50,7 +51,8 @@ static void yuv2rgb_init(
     ctx->sws          = NULL;
 }
 
-static void yuv2rgb_uninit(
+static void
+yuv2rgb_uninit(
     Yuv2RgbCtx *ctx)
 {
     if (ctx->rgb)
@@ -70,8 +72,11 @@ static void yuv2rgb_uninit(
     ctx->ssize.height = 0;
 }
 
-static void yuv2rgb_prepare(
-    Yuv2RgbCtx *ctx, MSVideoSize src, MSVideoSize dst)
+static void
+yuv2rgb_prepare(
+    Yuv2RgbCtx  *ctx,
+    MSVideoSize src,
+    MSVideoSize dst)
 {
     if (ctx->sws != NULL) yuv2rgb_uninit(ctx);
     ctx->sws    = ms_sws_getContext(src.width, src.height, PIX_FMT_YUV420P,
@@ -88,8 +93,12 @@ static void yuv2rgb_prepare(
    It takes care of reallocating a new SwsContext and rgb buffer if the source/destination sizes have
    changed.
  */
-static void yuv2rgb_process(
-    Yuv2RgbCtx *ctx, MSPicture *src, MSVideoSize dstsize, bool_t mirroring)
+static void
+yuv2rgb_process(
+    Yuv2RgbCtx  *ctx,
+    MSPicture   *src,
+    MSVideoSize dstsize,
+    bool_t      mirroring)
 {
     MSVideoSize srcsize;
 
@@ -113,8 +122,13 @@ static void yuv2rgb_process(
     }
 }
 
-static void yuv2rgb_draw(
-    Yuv2RgbCtx *ctx, HDRAWDIB ddh, HDC hdc, int dstx, int dsty)
+static void
+yuv2rgb_draw(
+    Yuv2RgbCtx *ctx,
+    HDRAWDIB   ddh,
+    HDC        hdc,
+    int        dstx,
+    int        dsty)
 {
     if (ctx->rgb)
     {
@@ -151,7 +165,8 @@ typedef struct _DDDisplay {
     bool_t      own_window;
 } DDDisplay;
 
-static LRESULT CALLBACK window_proc(
+static LRESULT CALLBACK
+window_proc(
     HWND   hwnd,      // handle to window
     UINT   uMsg,      // message identifier
     WPARAM wParam,    // first message parameter
@@ -197,8 +212,10 @@ static LRESULT CALLBACK window_proc(
     return 0;
 }
 
-static HWND create_window(
-    int w, int h)
+static HWND
+create_window(
+    int w,
+    int h)
 {
     WNDCLASS  wc;
     HINSTANCE hInstance = GetModuleHandle(NULL);
@@ -239,7 +256,8 @@ static HWND create_window(
     return hwnd;
 }
 
-static void dd_display_init(
+static void
+dd_display_init(
     MSFilter *f)
 {
     DDDisplay *obj = (DDDisplay *)ms_new0(DDDisplay, 1);
@@ -262,7 +280,8 @@ static void dd_display_init(
     f->data                  = obj;
 }
 
-static void dd_display_prepare(
+static void
+dd_display_prepare(
     MSFilter *f)
 {
     DDDisplay *dd = (DDDisplay *)f->data;
@@ -276,7 +295,8 @@ static void dd_display_prepare(
         dd->ddh = DrawDibOpen();
 }
 
-static void dd_display_unprepare(
+static void
+dd_display_unprepare(
     MSFilter *f)
 {
     DDDisplay *dd = (DDDisplay *)f->data;
@@ -292,7 +312,8 @@ static void dd_display_unprepare(
     }
 }
 
-static void dd_display_uninit(
+static void
+dd_display_uninit(
     MSFilter *f)
 {
     DDDisplay *obj = (DDDisplay *)f->data;
@@ -302,7 +323,8 @@ static void dd_display_uninit(
     ms_free(obj);
 }
 
-static void dd_display_preprocess(
+static void
+dd_display_preprocess(
     MSFilter *f)
 {
     dd_display_prepare(f);
@@ -310,8 +332,11 @@ static void dd_display_preprocess(
 
 /* compute the ideal placement of the video within a window of size wsize,
    given that the original video has size vsize. Put the result in rect*/
-static void center_with_ratio(
-    MSVideoSize wsize, MSVideoSize vsize, MSRect *rect)
+static void
+center_with_ratio(
+    MSVideoSize wsize,
+    MSVideoSize vsize,
+    MSRect      *rect)
 {
     int w, h;
     w = wsize.width & ~0x3;
@@ -331,8 +356,15 @@ static void center_with_ratio(
 #define LOCAL_BORDER_SIZE 2
 #define LOCAL_POS_OFFSET  10
 
-static void compute_layout(
-    MSVideoSize wsize, MSVideoSize vsize, MSVideoSize orig_psize, MSRect *mainrect, MSRect *localrect, int localrect_pos, float scalefactor)
+static void
+compute_layout(
+    MSVideoSize wsize,
+    MSVideoSize vsize,
+    MSVideoSize orig_psize,
+    MSRect      *mainrect,
+    MSRect      *localrect,
+    int         localrect_pos,
+    float       scalefactor)
 {
     MSVideoSize psize;
 
@@ -442,8 +474,11 @@ static void compute_layout(
  */
 }
 
-static void draw_local_view_frame(
-    HDC hdc, MSVideoSize wsize, MSRect localrect)
+static void
+draw_local_view_frame(
+    HDC         hdc,
+    MSVideoSize wsize,
+    MSRect      localrect)
 {
     Rectangle(hdc, localrect.x - LOCAL_BORDER_SIZE, localrect.y - LOCAL_BORDER_SIZE,
               localrect.x + localrect.w + LOCAL_BORDER_SIZE, localrect.y + localrect.h + LOCAL_BORDER_SIZE);
@@ -453,8 +488,12 @@ static void draw_local_view_frame(
  * Draws a background, that is the black rectangles at top, bottom or left right sides of the video display.
  * It is normally invoked only when a full redraw is needed (notified by Windows).
  */
-static void draw_background(
-    HDC hdc, MSVideoSize wsize, MSRect mainrect, int color[3])
+static void
+draw_background(
+    HDC         hdc,
+    MSVideoSize wsize,
+    MSRect      mainrect,
+    int         color[3])
 {
     HBRUSH brush;
     RECT   brect;
@@ -497,7 +536,8 @@ static void draw_background(
     DeleteObject(brush);
 }
 
-static void dd_display_process(
+static void
+dd_display_process(
     MSFilter *f)
 {
     DDDisplay   *obj = (DDDisplay *)f->data;
@@ -656,16 +696,20 @@ end:
         ms_queue_flush(f->inputs[1]);
 }
 
-static int get_native_window_id(
-    MSFilter *f, void *data)
+static int
+get_native_window_id(
+    MSFilter *f,
+    void     *data)
 {
     DDDisplay *obj = (DDDisplay *)f->data;
     *(long *)data = (long)obj->window;
     return 0;
 }
 
-static int set_native_window_id(
-    MSFilter *f, void *data)
+static int
+set_native_window_id(
+    MSFilter *f,
+    void     *data)
 {
     DDDisplay *obj = (DDDisplay *)f->data;
     obj->window     = (HWND)(*(long *)data);
@@ -673,24 +717,30 @@ static int set_native_window_id(
     return 0;
 }
 
-static int enable_autofit(
-    MSFilter *f, void *data)
+static int
+enable_autofit(
+    MSFilter *f,
+    void     *data)
 {
     DDDisplay *obj = (DDDisplay *)f->data;
     obj->autofit = *(int *)data;
     return 0;
 }
 
-static int enable_mirroring(
-    MSFilter *f, void *data)
+static int
+enable_mirroring(
+    MSFilter *f,
+    void     *data)
 {
     DDDisplay *obj = (DDDisplay *)f->data;
     obj->mirroring = *(int *)data;
     return 0;
 }
 
-static int set_corner(
-    MSFilter *f, void *data)
+static int
+set_corner(
+    MSFilter *f,
+    void     *data)
 {
     DDDisplay *obj = (DDDisplay *)f->data;
     obj->sv_corner    = *(int *)data;
@@ -698,24 +748,30 @@ static int set_corner(
     return 0;
 }
 
-static int get_vsize(
-    MSFilter *f, void *data)
+static int
+get_vsize(
+    MSFilter *f,
+    void     *data)
 {
     DDDisplay *obj = (DDDisplay *)f->data;
     *(MSVideoSize *)data = obj->wsize;
     return 0;
 }
 
-static int set_vsize(
-    MSFilter *f, void *data)
+static int
+set_vsize(
+    MSFilter *f,
+    void     *data)
 {
     DDDisplay *obj = (DDDisplay *)f->data;
     obj->wsize = *(MSVideoSize *)data;
     return 0;
 }
 
-static int set_scalefactor(
-    MSFilter *f, void *arg)
+static int
+set_scalefactor(
+    MSFilter *f,
+    void     *arg)
 {
     DDDisplay *obj = (DDDisplay *)f->data;
     ms_filter_lock(f);
@@ -726,8 +782,10 @@ static int set_scalefactor(
     return 0;
 }
 
-static int set_selfview_pos(
-    MSFilter *f, void *arg)
+static int
+set_selfview_pos(
+    MSFilter *f,
+    void     *arg)
 {
     DDDisplay *s = (DDDisplay *)f->data;
     s->sv_posx        = ((float *)arg)[0];
@@ -736,8 +794,10 @@ static int set_selfview_pos(
     return 0;
 }
 
-static int get_selfview_pos(
-    MSFilter *f, void *arg)
+static int
+get_selfview_pos(
+    MSFilter *f,
+    void     *arg)
 {
     DDDisplay *s = (DDDisplay *)f->data;
     ((float *)arg)[0] = s->sv_posx;
@@ -746,8 +806,10 @@ static int get_selfview_pos(
     return 0;
 }
 
-static int set_background_color(
-    MSFilter *f, void *arg)
+static int
+set_background_color(
+    MSFilter *f,
+    void     *arg)
 {
     DDDisplay *s = (DDDisplay *)f->data;
     s->background_color[0] = ((int *)arg)[0];
@@ -757,18 +819,18 @@ static int set_background_color(
 }
 
 static MSFilterMethod methods[] = {
-    {   MS_FILTER_GET_VIDEO_SIZE,                    get_vsize            },
-    {   MS_FILTER_SET_VIDEO_SIZE,                    set_vsize            },
-    {   MS_VIDEO_DISPLAY_GET_NATIVE_WINDOW_ID,       get_native_window_id },
-    {   MS_VIDEO_DISPLAY_SET_NATIVE_WINDOW_ID,       set_native_window_id },
-    {   MS_VIDEO_DISPLAY_ENABLE_AUTOFIT,             enable_autofit       },
-    {   MS_VIDEO_DISPLAY_ENABLE_MIRRORING,           enable_mirroring     },
-    {   MS_VIDEO_DISPLAY_SET_LOCAL_VIEW_MODE,        set_corner           },
-    {   MS_VIDEO_DISPLAY_SET_LOCAL_VIEW_SCALEFACTOR, set_scalefactor      },
-    {   MS_VIDEO_DISPLAY_SET_SELFVIEW_POS,           set_selfview_pos     },
-    {   MS_VIDEO_DISPLAY_GET_SELFVIEW_POS,           get_selfview_pos     },
-    {   MS_VIDEO_DISPLAY_SET_BACKGROUND_COLOR,       set_background_color },
-    {                                             0, NULL                 }
+    {   MS_FILTER_GET_VIDEO_SIZE,                    get_vsize                               },
+    {   MS_FILTER_SET_VIDEO_SIZE,                    set_vsize                               },
+    {   MS_VIDEO_DISPLAY_GET_NATIVE_WINDOW_ID,       get_native_window_id                    },
+    {   MS_VIDEO_DISPLAY_SET_NATIVE_WINDOW_ID,       set_native_window_id                    },
+    {   MS_VIDEO_DISPLAY_ENABLE_AUTOFIT,             enable_autofit                          },
+    {   MS_VIDEO_DISPLAY_ENABLE_MIRRORING,           enable_mirroring                        },
+    {   MS_VIDEO_DISPLAY_SET_LOCAL_VIEW_MODE,        set_corner                              },
+    {   MS_VIDEO_DISPLAY_SET_LOCAL_VIEW_SCALEFACTOR, set_scalefactor                         },
+    {   MS_VIDEO_DISPLAY_SET_SELFVIEW_POS,           set_selfview_pos                        },
+    {   MS_VIDEO_DISPLAY_GET_SELFVIEW_POS,           get_selfview_pos                        },
+    {   MS_VIDEO_DISPLAY_SET_BACKGROUND_COLOR,       set_background_color                    },
+    {                                             0, NULL                                    }
 };
 
 #ifdef _MSC_VER

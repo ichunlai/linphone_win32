@@ -82,7 +82,7 @@ static bool_t read_event(
         evsize   = argsize + 16;
         data     = q->rptr + 16;
         if (f->notify != NULL)
-            f->notify(f->notify_ud, id, argsize > 0 ? data : NULL);
+            f->notify(f->notify_ud, f, id, argsize > 0 ? data : NULL);
         q->rptr += evsize;
         if (q->rptr >= q->endptr)
         {
@@ -149,7 +149,7 @@ void ms_filter_notify(
         if (ms_global_event_queue == NULL)
         {
             /* synchronous notification */
-            f->notify(f->notify_ud, id, arg);
+            f->notify(f->notify_ud, f, id, arg);
         }
         else
         {
@@ -163,7 +163,7 @@ void ms_filter_notify_synchronous(
 {
     if (f->notify)
     {
-        f->notify(f->notify_ud, id, arg);
+        f->notify(f->notify_ud, f, id, arg);
     }
 }
 

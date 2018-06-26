@@ -84,9 +84,6 @@
     <ClCompile Include="..\..\src\msfilter.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\msjoin.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\msqueue.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -202,6 +199,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\void.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\join.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

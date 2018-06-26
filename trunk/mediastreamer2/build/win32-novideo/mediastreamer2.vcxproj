@@ -169,7 +169,7 @@
     <ClCompile Include="..\..\src\msfilter.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\..\src\msjoin.c">
+    <ClCompile Include="..\..\src\join.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
     </ClCompile>
     <ClCompile Include="..\..\src\msqueue.c">

@@ -2034,6 +2034,21 @@ void linphone_call_start_media_streams(
     call->playing_ringbacktone = send_ringbacktone;
     call->up_bw                = linphone_core_get_upload_bandwidth(lc);
 
+    if (call->params.media_encryption == LinphoneMediaEncryptionZRTP)
+    {
+        OrtpZrtpParams params;
+        /*will be set later when zrtp is activated*/
+        call->current_params.media_encryption = LinphoneMediaEncryptionNone;
+
+        params.zid_file                       = lc->zrtp_secrets_cache;
+        audio_stream_enable_zrtp(call->audiostream, &params);
+    }
+    else if (call->params.media_encryption == LinphoneMediaEncryptionSRTP)
+    {
+        call->current_params.media_encryption = linphone_call_are_all_streams_encrypted(call) ?
+                                                LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionNone;
+    }
+
     /*also reflect the change if the "wished" params, in order to avoid to propose SAVP or video again
      * further in the call, for example during pause,resume, conferencing reINVITEs*/
     linphone_call_fix_call_parameters(call);
@@ -2068,6 +2083,70 @@ void linphone_call_stop_media_streams_for_ice_gathering(
     if (call->videostream)
     {
         video_stream_unprepare_video(call->videostream);
+    }
+#endif
+}
+
+void linphone_call_update_crypto_parameters(
+    LinphoneCall *call, SalMediaDescription *old_md, SalMediaDescription *new_md)
+{
+    SalStreamDescription *old_stream;
+    SalStreamDescription *new_stream;
+    int                  i;
+
+    old_stream = sal_media_description_find_stream(old_md, SalProtoRtpSavp, SalAudio);
+    new_stream = sal_media_description_find_stream(new_md, SalProtoRtpSavp, SalAudio);
+    if (old_stream && new_stream)
+    {
+        const SalStreamDescription *local_st_desc = sal_media_description_find_stream(call->localdesc, SalProtoRtpSavp, SalAudio);
+        if (local_st_desc)
+        {
+            int crypto_idx = find_crypto_index_from_tag(local_st_desc->crypto, new_stream->crypto_local_tag);
+            if (crypto_idx >= 0)
+            {
+                audio_stream_enable_srtp(call->audiostream, new_stream->crypto[0].algo, local_st_desc->crypto[crypto_idx].master_key, new_stream->crypto[0].master_key);
+                call->audiostream_encrypted = TRUE;
+            }
+            else
+            {
+                ms_warning("Failed to find local crypto algo with tag: %d", new_stream->crypto_local_tag);
+                call->audiostream_encrypted = FALSE;
+            }
+            for (i = 0; i < SAL_CRYPTO_ALGO_MAX; i++)
+            {
+                old_stream->crypto[i].tag  = new_stream->crypto[i].tag;
+                old_stream->crypto[i].algo = new_stream->crypto[i].algo;
+                strncpy(old_stream->crypto[i].master_key, new_stream->crypto[i].master_key, sizeof(old_stream->crypto[i].master_key) - 1);
+            }
+        }
+    }
+
+#ifdef VIDEO_ENABLED
+    old_stream = sal_media_description_find_stream(old_md, SalProtoRtpSavp, SalVideo);
+    new_stream = sal_media_description_find_stream(new_md, SalProtoRtpSavp, SalVideo);
+    if (old_stream && new_stream)
+    {
+        const SalStreamDescription *local_st_desc = sal_media_description_find_stream(call->localdesc, SalProtoRtpSavp, SalVideo);
+        if (local_st_desc)
+        {
+            int crypto_idx = find_crypto_index_from_tag(local_st_desc->crypto, new_stream->crypto_local_tag);
+            if (crypto_idx >= 0)
+            {
+                video_stream_enable_strp(call->videostream, new_stream->crypto[0].algo, local_st_desc->crypto[crypto_idx].master_key, new_stream->crypto[0].master_key);
+                call->videostream_encrypted = TRUE;
+            }
+            else
+            {
+                ms_warning("Failed to find local crypto algo with tag: %d", new_stream->crypto_local_tag);
+                call->videostream_encrypted = FALSE;
+            }
+            for (i = 0; i < SAL_CRYPTO_ALGO_MAX; i++)
+            {
+                old_stream->crypto[i].tag  = new_stream->crypto[i].tag;
+                old_stream->crypto[i].algo = new_stream->crypto[i].algo;
+                strncpy(old_stream->crypto[i].master_key, new_stream->crypto[i].master_key, sizeof(old_stream->crypto[i].master_key) - 1);
+            }
+        }
     }
 #endif
 }

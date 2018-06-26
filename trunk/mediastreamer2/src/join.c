@@ -17,6 +17,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+#if defined(HAVE_CONFIG_H)
+#include "mediastreamer-config.h"
+#endif
+
 #include "mediastreamer2/msfilter.h"
 
 static void join_process(MSFilter *f){
@@ -30,8 +34,6 @@ static void join_process(MSFilter *f){
 	if (f->inputs[1]!=NULL)
 	{
 		while((im=ms_queue_get(f->inputs[1]))!=NULL){
-			int payload;
-			payload=mblk_set_payload_type(im, 123);
 			ms_queue_put(f->outputs[0],im);
 		}
 	}
