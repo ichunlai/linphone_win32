@@ -150,9 +150,6 @@ typedef struct _RtpStream
 	uint32_t last_rcv_SR_ts;     /* NTP timestamp (middle 32 bits) of last received SR */
 	struct timeval last_rcv_SR_time;   /* time at which last SR was received  */
 	uint16_t snd_seq; /* send sequence number */
-	uint32_t last_rtcp_report_snt_r;	/* the time of the last rtcp report sent, in recv timestamp unit */
-	uint32_t last_rtcp_report_snt_s;	/* the time of the last rtcp report sent, in send timestamp unit */
-	uint32_t rtcp_report_snt_interval; /* the interval in timestamp unit between rtcp report sent */
 	uint32_t last_rtcp_packet_count; /*the sender's octet count in the last sent RTCP SR*/
 	uint32_t sent_payload_bytes; /*used for RTCP sender reports*/
 	unsigned int sent_bytes; /* used for bandwidth estimation */

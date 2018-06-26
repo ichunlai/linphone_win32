@@ -332,8 +332,10 @@ sendMessage( Socket fd, char* buf, int l,
       to.sin_family = AF_INET;
       to.sin_port = htons(dstPort);
       to.sin_addr.s_addr = htonl(dstIp);
-        
+
+      ortp_error("%s(%d): sendto\r\n", __FILE__, __LINE__);
       s = sendto(fd, buf, l, 0,(struct sockaddr*)&to, toLen);
+      ortp_error("%s(%d): s(%d)\r\n", __FILE__, __LINE__, s);
    }
     
    if ( s == SOCKET_ERROR )

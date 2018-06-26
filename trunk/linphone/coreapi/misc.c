@@ -461,6 +461,8 @@ static int sendStunRequest(
         ms_error("Fail to encode stun message.");
         return -1;
     }
+
+    ms_error("%s(%d): sendto", __FILE__, __LINE__);
     err = sendto(sock, buf, len, 0, server, addrlen);
     if (err < 0)
     {

@@ -310,8 +310,8 @@ static void _osip_trace_func(
     }
     if (ortp_log_level_enabled(level))
     {
-        int  len      = strlen(chfr);
-        char *chfrdup = ortp_strdup(chfr);
+        char *chfrdup = ortp_strdup_printf("%s(%d): %s\r\n", fi, li, chfr);
+        int  len = strlen(chfrdup);
         /*need to remove endline*/
         if (len > 1)
         {

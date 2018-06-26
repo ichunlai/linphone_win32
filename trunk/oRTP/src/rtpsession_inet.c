@@ -1141,6 +1141,8 @@ rtp_session_rtp_send(
 #else
         if (m->b_cont != NULL)
             msgpullup(m, -1);
+
+        ortp_error("%s(%d): sendto\r\n", __FILE__, __LINE__);
         error = sendto(sockfd, (char *)m->b_rptr, (int) (m->b_wptr - m->b_rptr),
                        0, destaddr, destlen);
 #endif
@@ -1196,6 +1198,8 @@ rtp_session_rtcp_send(
             {
                 msgpullup(m, -1);
             }
+
+            ortp_error("%s(%d): sendto\r\n", __FILE__, __LINE__);
             error = sendto(sockfd, (char *)m->b_rptr,
                            (int) (m->b_wptr - m->b_rptr), 0,
                            destaddr, destlen);

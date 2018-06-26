@@ -832,7 +832,7 @@ int linphone_proxy_config_normalize_number(
         flatten = flatten_number(username);
         ms_message("Flattened number is '%s'", flatten);
 
-        if (proxy->dial_prefix == NULL || proxy->dial_prefix[0] == '\0')
+        if (proxy == NULL || proxy->dial_prefix == NULL || proxy->dial_prefix[0] == '\0')
         {
             /*no prefix configured, nothing else to do*/
             strncpy(result, flatten, result_len);

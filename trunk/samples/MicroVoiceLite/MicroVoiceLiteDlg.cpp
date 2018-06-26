@@ -275,7 +275,7 @@ CMicroVoiceLiteDlg::OnInitDialog()
 
     mUsername.SetWindowText(_T("ichunlai"));        // local user id
     mPassword.SetWindowText(_T("mmbbs"));
-    mHost.SetWindowText(_T("192.168.1.178"));       // local ip address
+    mHost.SetWindowText(_T("192.168.190.165"));       // local ip address
     mDialNum.SetWindowText(_T("6002"));             // target user id
 //	mDTMF.SetWindowText("#");
     linphone_core_enable_logs_with_cb(linphone_log_handler);

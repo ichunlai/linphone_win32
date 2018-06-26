@@ -87,6 +87,10 @@ void ortp_init()
     av_profile_init(&av_profile);
     ortp_global_stats_reset();
     init_random_number_generator();
+
+#ifdef HAVE_SRTP
+    ortp_srtp_init();
+#endif
     ortp_message("oRTP-" ORTP_VERSION " initialized.");
 }
 
@@ -129,6 +133,9 @@ void ortp_exit()
             rtp_scheduler_destroy(__ortp_scheduler);
             __ortp_scheduler = NULL;
         }
+#ifdef HAVE_SRTP
+        ortp_srtp_shutdown();
+#endif
     }
 }
 
