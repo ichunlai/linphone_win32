@@ -142,7 +142,7 @@ void linphone_core_update_streams(
                     {
                         ms_message("Early media finished, unmuting inputs...");
                         /*we were in early media, now we want to enable real media */
-                        //linphone_call_enable_camera(call, linphone_call_camera_enabled(call));
+                        linphone_call_enable_camera(call, linphone_call_camera_enabled(call));
                         if (call->audiostream)
                             linphone_core_mute_mic(lc, linphone_core_is_mic_muted(lc));
 #ifdef VIDEO_ENABLED
@@ -356,9 +356,12 @@ static void call_ringing(
         if (lc->ringstream != NULL) return; /*already ringing !*/
         if (lc->sound_conf.play_sndcard != NULL)
         {
-            ms_message("Remote ringing...");
-            lc->ringstream = ring_start(lc->sound_conf.remote_ring, 2000, lc->sound_conf.play_sndcard);
-            gstate_new_state(lc, GSTATE_CALL_OUT_RINGING, NULL);
+            MSSndCard *ringcard = lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card : lc->sound_conf.play_sndcard;
+            if (call->localdesc->streams[0].max_rate > 0) ms_snd_card_set_preferred_sample_rate(ringcard, call->localdesc->streams[0].max_rate);
+            /*we release sound before playing ringback tone*/
+            if (call->audiostream)
+                audio_stream_unprepare_sound(call->audiostream);
+            lc->ringstream = ring_start(lc->sound_conf.remote_ring, 2000, ringcard);
         }
         ms_message("Remote ringing...");
         if (lc->vtable.display_status)

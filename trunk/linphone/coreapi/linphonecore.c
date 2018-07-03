@@ -2793,6 +2793,8 @@ int linphone_core_start_invite(
     }
     linphone_core_stop_dtmf_stream(lc);
     linphone_call_init_media_streams(call);
+    if (lc->ringstream == NULL)
+        audio_stream_prepare_sound(call->audiostream, lc->sound_conf.play_sndcard, lc->sound_conf.capt_sndcard);
     linphone_call_make_local_media_description(lc, call);
     if (!lc->sip_conf.sdp_200_ack)
     {
@@ -3294,7 +3296,7 @@ int linphone_core_update_call(
                 /* Defer call update until the ICE candidates gathering process has finished. */
                 ms_message("Defer call update to gather ICE candidates");
                 linphone_call_init_video_stream(call);
-                //video_stream_prepare_video(call->videostream);
+                video_stream_prepare_video(call->videostream);
                 if (linphone_core_gather_ice_candidates(lc, call) < 0)
                 {
                     /* Ice candidates gathering failed, proceed with the call anyway. */
@@ -3310,7 +3312,7 @@ int linphone_core_update_call(
             {
                 ms_message("Defer call update to add uPnP port mappings");
                 linphone_call_init_video_stream(call);
-                //video_stream_prepare_video(call->videostream);
+                video_stream_prepare_video(call->videostream);
                 if (linphone_core_update_upnp(lc, call) < 0)
                 {
                     /* uPnP port mappings failed, proceed with the call anyway. */
@@ -3626,7 +3628,7 @@ int linphone_core_accept_call_with_params(
         linphone_call_init_media_streams(call);
     if (!was_ringing && call->audiostream->ms.ticker == NULL)
     {
-        //audio_stream_prepare_sound(call->audiostream, lc->sound_conf.play_sndcard, lc->sound_conf.capt_sndcard);
+        audio_stream_prepare_sound(call->audiostream, lc->sound_conf.play_sndcard, lc->sound_conf.capt_sndcard);
     }
 
     linphone_call_update_remote_session_id_and_ver(call);
@@ -6887,29 +6889,4 @@ int linphone_core_get_video_dscp(
     const LinphoneCore *lc)
 {
     return lp_config_get_int(lc->config, "rtp", "video_dscp", 0x2e);
-}
-
-#include <eXosip2/eXosip.h>
-
-//发送网络状态监测
-int linphone_core_network_send_quality_test(
-    LinphoneCore *lc)
-{
-    osip_message_t      *options = NULL;
-    LinphoneProxyConfig *proxy   = NULL;
-
-    linphone_core_get_default_proxy(lc, &proxy);
-
-    if (proxy == NULL) return;
-
-    eXosip_options_build_request(&options, linphone_proxy_config_get_identity(proxy), linphone_proxy_config_get_identity(proxy), linphone_proxy_config_get_route(proxy));
-
-    if (options == NULL) return;
-
-    //osip_message_set_header(options, "Session-expires", "200");
-    //osip_message_set_supported(options, "timer");
-    lc->option_time_start = ms_get_current_ms_time();
-    eXosip_lock();
-    eXosip_options_send_request(options);
-    eXosip_unlock();
 }

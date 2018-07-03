@@ -1229,7 +1229,7 @@ LinphoneProxyConfig *linphone_proxy_config_new_from_config_file(
     tmp = lp_config_get_string(config, key, "type", NULL);
     if (tmp != NULL && strlen(tmp) > 0)
         linphone_proxy_config_set_sip_setup(cfg, tmp);
-    //linphone_proxy_config_destroy(cfg);
+
     return cfg;
 }
 

@@ -202,34 +202,6 @@ LinphoneCall *linphonec_get_call(
     return NULL;
 }
 
-LinphoneCoreVTable   linphonec_vtable
-#if !defined (_MSC_VER)
-    = {
-    .show                   = (ShowInterfaceCb) stub,
-    .inv_recv               = linphonec_call_received,
-    .bye_recv               = linphonec_bye_received,
-    .notify_recv            = linphonec_notify_received,
-    .notify_presence_recv   = linphonec_notify_presence_received,
-    .new_unknown_subscriber = linphonec_new_unknown_subscriber,
-    .auth_info_requested    = linphonec_prompt_for_auth,
-    .display_status         = linphonec_display_status,
-    .display_message        = linphonec_display_something,
-    #ifdef VINCENT_MAURY_RSVP
-    /* the yes/no dialog box */
-    .display_yes_no         = (DisplayMessageCb) stub,
-    #endif
-    .display_warning        = linphonec_display_warning,
-    .display_url            = linphonec_display_url,
-    .display_question       = (DisplayQuestionCb)stub,
-    .text_received          = linphonec_text_received,
-    .general_state          = linphonec_general_state,
-    .dtmf_received          = linphonec_dtmf_received,
-    .refer_received         = linphonec_display_refer
-    }
-
-#endif /*_WIN32_WCE*/
-;
-
 /***************************************************************************
 *
 * Linphone core callbacks
@@ -483,64 +455,6 @@ static void linphonec_dtmf_received(
     fflush(stdout);
 }
 
-static void
-linphonec_general_state(
-    LinphoneCore *lc, LinphoneGeneralState *gstate)
-{
-    if (show_general_state)
-    {
-        switch (gstate->new_state)
-        {
-        case GSTATE_POWER_OFF:
-            printf("GSTATE_POWER_OFF");
-            break;
-        case GSTATE_POWER_STARTUP:
-            printf("GSTATE_POWER_STARTUP");
-            break;
-        case GSTATE_POWER_ON:
-            printf("GSTATE_POWER_ON");
-            break;
-        case GSTATE_POWER_SHUTDOWN:
-            printf("GSTATE_POWER_SHUTDOWN");
-            break;
-        case GSTATE_REG_NONE:
-            printf("GSTATE_REG_NONE");
-            break;
-        case GSTATE_REG_OK:
-            printf("GSTATE_REG_OK");
-            break;
-        case GSTATE_REG_FAILED:
-            printf("GSTATE_REG_FAILED");
-            break;
-        case GSTATE_CALL_IDLE:
-            printf("GSTATE_CALL_IDLE");
-            break;
-        case GSTATE_CALL_OUT_INVITE:
-            printf("GSTATE_CALL_OUT_INVITE");
-            break;
-        case GSTATE_CALL_OUT_CONNECTED:
-            printf("GSTATE_CALL_OUT_CONNECTED");
-            break;
-        case GSTATE_CALL_IN_INVITE:
-            printf("GSTATE_CALL_IN_INVITE");
-            break;
-        case GSTATE_CALL_IN_CONNECTED:
-            printf("GSTATE_CALL_IN_CONNECTED");
-            break;
-        case GSTATE_CALL_END:
-            printf("GSTATE_CALL_END");
-            break;
-        case GSTATE_CALL_ERROR:
-            printf("GSTATE_CALL_ERROR");
-            break;
-        default:
-            printf("GSTATE_UNKNOWN_%d", gstate->new_state);
-        }
-        if (gstate->message) printf(" %s", gstate->message);
-        printf("\n");
-    }
-}
-
 static char       received_prompt[PROMPT_MAX_LEN];
 static ms_mutex_t prompt_mutex;
 static bool_t     have_prompt = FALSE;
@@ -764,6 +678,8 @@ bool_t linphonec_get_autoanswer()
     return auto_answer;
 }
 
+LinphoneCoreVTable linphonec_vtable = {0};
+
 /***************************************************************************/
 /*
  * Main
@@ -811,7 +727,6 @@ int _tmain(
     linphonec_vtable.display_url = linphonec_display_url;
     linphonec_vtable.display_question = (DisplayQuestionCb)stub;
     linphonec_vtable.text_received = linphonec_text_received;
-    linphonec_vtable.general_state = linphonec_general_state;
     linphonec_vtable.dtmf_received = linphonec_dtmf_received;
 #else
 int
@@ -1091,9 +1006,90 @@ print_usage(
     exit(exit_status);
 }
 
+#ifdef VIDEO_ENABLED
+
+    #ifdef HAVE_X11_XLIB_H
+static void x11_apply_video_params(
+    VideoParams *params, Window window)
+{
+    XWindowChanges wc;
+    unsigned int   flags    = 0;
+    static Display *display = NULL;
+    const char     *dname   = getenv("DISPLAY");
+
+    if (display == NULL && dname != NULL)
+    {
+        XInitThreads();
+        display = XOpenDisplay(dname);
+    }
+
+    if (display == NULL)
+    {
+        ms_error("Could not open display %s", dname);
+        return;
+    }
+    memset(&wc, 0, sizeof(wc));
+    wc.x      = params->x;
+    wc.y      = params->y;
+    wc.width  = params->w;
+    wc.height = params->h;
+    if (params->x != -1)
+    {
+        flags |= CWX | CWY;
+    }
+    if (params->w != -1)
+    {
+        flags |= CWWidth | CWHeight;
+    }
+    /*printf("XConfigureWindow x=%i,y=%i,w=%i,h=%i\n",
+           wc.x, wc.y ,wc.width, wc.height);*/
+    XConfigureWindow(display, window, flags, &wc);
+    if (params->show)
+        XMapWindow(display, window);
+    else
+        XUnmapWindow(display, window);
+    XSync(display, FALSE);
+}
+
+    #endif
+
 static void lpc_apply_video_params()
 {
+    static unsigned long old_wid = 0, old_pwid = 0;
+    unsigned long        wid  = linphone_core_get_native_video_window_id(linphonec);
+    unsigned long        pwid = linphone_core_get_native_preview_window_id(linphonec);
+
+    if (wid != 0 && (lpc_video_params.refresh || old_wid != wid))
+    {
+        lpc_video_params.refresh = FALSE;
+    #ifdef HAVE_X11_XLIB_H
+        if (lpc_video_params.wid == 0)   // do not manage window if embedded
+        {
+            x11_apply_video_params(&lpc_video_params, wid);
+        }
+        else
+        {
+            linphone_core_show_video(linphonec, lpc_video_params.show);
+        }
+    #endif
+    }
+    old_wid = wid;
+    if (pwid != 0 && (lpc_preview_params.refresh || old_pwid != pwid))
+    {
+        lpc_preview_params.refresh = FALSE;
+    #ifdef HAVE_X11_XLIB_H
+        /*printf("wid=%lu pwid=%lu\n",wid,pwid);*/
+        if (lpc_preview_params.wid == 0)   // do not manage window if embedded
+        {
+            printf("Refreshing\n");
+            x11_apply_video_params(&lpc_preview_params, pwid);
+        }
+    #endif
+    }
+    old_pwid = pwid;
 }
+
+#endif
 
 /*
  *
@@ -1218,19 +1214,11 @@ static void print_prompt(
 
 static int
 linphonec_main_loop(
-    LinphoneCore *opm, char *sipAddr)
+    LinphoneCore *opm)
 {
-    char buf[LINE_MAX_LEN]; /* auto call handling */
     char *input;
 
     print_prompt(opm);
-
-    /* auto call handling */
-    if (sipAddr != NULL)
-    {
-        snprintf(buf, sizeof(buf), "call %s", sipAddr);
-        linphonec_parse_command_line(linphonec, buf);
-    }
 
     while (linphonec_running && (input = linphonec_readline(prompt)))
     {

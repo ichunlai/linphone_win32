@@ -722,49 +722,6 @@ LinphoneAddress *linphone_chat_message_get_local_address(const LinphoneChatMessa
 void linphone_chat_message_add_custom_header(LinphoneChatMessage *message, const char *header_name, const char *header_value);
 const char *linphone_chat_message_get_custom_header(LinphoneChatMessage *message, const char *header_name);
 
-/* describes the different groups of states */
-typedef enum _gstate_group {
-    GSTATE_GROUP_POWER,
-    GSTATE_GROUP_REG,
-    GSTATE_GROUP_CALL
-} gstate_group_t;
-
-typedef enum _gstate {
-    /* states for GSTATE_GROUP_POWER */
-    GSTATE_POWER_OFF = 0,      /* initial state */
-    GSTATE_POWER_STARTUP,
-    GSTATE_POWER_ON,
-    GSTATE_POWER_SHUTDOWN,
-    /* states for GSTATE_GROUP_REG */
-    GSTATE_REG_NONE = 10,     /* initial state */
-    GSTATE_REG_OK,
-    GSTATE_REG_FAILED,
-    GSTATE_REG_PENDING,    /* a registration request is ongoing*/
-    /* states for GSTATE_GROUP_CALL */
-    GSTATE_CALL_IDLE = 20, /* initial state */
-    GSTATE_CALL_OUT_INVITE,
-    GSTATE_CALL_OUT_CONNECTED,
-    GSTATE_CALL_IN_INVITE,
-    GSTATE_CALL_IN_CONNECTED,
-    GSTATE_CALL_END,
-    GSTATE_CALL_ERROR,
-    GSTATE_INVALID,
-    GSTATE_CALL_OUT_RINGING /*remote ringing*/
-} gstate_t;
-
-struct _LinphoneGeneralState {
-    gstate_t       old_state;
-    gstate_t       new_state;
-    gstate_group_t group;
-    const char     *message;
-};
-typedef struct _LinphoneGeneralState LinphoneGeneralState;
-
-/* private: set a new state */
-void gstate_new_state(struct _LinphoneCore *lc, gstate_t new_state, const char *message);
-/*private*/
-void gstate_initialize(struct _LinphoneCore *lc);
-
 /**
  * @}
  */
@@ -844,7 +801,7 @@ typedef void (*CallLogUpdated)(struct _LinphoneCore *lc, struct _LinphoneCallLog
  * @param from #LinphoneAddress from
  * @param message incoming message
  *  */
-typedef void (*TextMessageReceived)(LinphoneCore *lc, LinphoneChatRoom *room, const char *from, const char *message);
+typedef void (*TextMessageReceived)(LinphoneCore *lc, LinphoneChatRoom *room, const LinphoneAddress *from, const char *message);
 /**
  * Chat message callback prototype
  *
@@ -1439,7 +1396,6 @@ void linphone_core_set_record_file(LinphoneCore *lc, const char *file);
 void linphone_core_play_dtmf(LinphoneCore *lc, char dtmf, int duration_ms);
 void linphone_core_stop_dtmf(LinphoneCore *lc);
 
-gstate_t linphone_core_get_state(const LinphoneCore *lc, gstate_group_t group);
 int linphone_core_get_current_call_duration(const LinphoneCore *lc);
 
 int linphone_core_get_mtu(const LinphoneCore *lc);
@@ -1475,14 +1431,6 @@ void linphone_core_set_user_data(LinphoneCore *lc, void *userdata);
 /* returns LpConfig object to read/write to the config file: usefull if you wish to extend
    the config file with your own sections */
 struct _LpConfig *linphone_core_get_config(LinphoneCore *lc);
-
-/* attempts to wake up another linphone engine already running.
-   The "show" callback is called for the other linphone, causing gui to show up.
-   call_addr is an optional sip-uri to call immediately after waking up.
-   The method returns 0 if an already running linphone was found*/
-
-int linphone_core_wake_up_possible_already_running_instance(
-    const char *config_file, const char *call_addr);
 
 /*set a callback for some blocking operations, it takes you informed of the progress of the operation*/
 void linphone_core_set_waiting_callback(LinphoneCore *lc, LinphoneWaitingCallback cb, void *user_context);
@@ -1601,15 +1549,6 @@ int linphone_core_get_audio_dscp(const LinphoneCore *lc);
 
 void linphone_core_set_video_dscp(LinphoneCore *lc, int dscp);
 int linphone_core_get_video_dscp(const LinphoneCore *lc);
-
-/*for advanced users:*/
-void linphone_core_set_audio_transports(LinphoneCore *lc, RtpTransport *rtp, RtpTransport *rtcp);
-
-int linphone_core_get_current_call_stats(LinphoneCore *lc, rtp_stats_t *local, rtp_stats_t *remote);
-
-int linphone_core_network_get_idel_udp_port(int sport);
-
-int linphone_core_network_send_quality_test(LinphoneCore *lc);
 
 #ifdef __cplusplus
 }

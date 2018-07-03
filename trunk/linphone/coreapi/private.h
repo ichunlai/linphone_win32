@@ -113,9 +113,6 @@ struct _LinphoneCallLog {
     time_t               start_date_time; /**Start date of the call in seconds as expressed in a time_t */
     char                 *call_id;        /**unique id of a call*/
     bool_t               video_enabled;
-    char                 caller[128];
-    char                 called[128];
-    char                 record_file[256];
 };
 
 typedef struct _CallCallbackObj
@@ -455,7 +452,6 @@ typedef struct sip_config
     bool_t          loopback_only;
     bool_t          ipv6_enabled;
     bool_t          sdp_200_ack;
-    bool_t          only_one_codec; /*in SDP answers*/
     bool_t          register_only_when_network_is_up;
     bool_t          register_only_when_upnp_is_ok;
     bool_t          ping_with_options;
@@ -491,7 +487,6 @@ typedef struct net_config
     int    firewall_policy;
     int    mtu;
     bool_t nat_sdp_only;
-    int    down_ptime;
 } net_config_t;
 
 typedef struct sound_config
@@ -591,6 +586,7 @@ struct _LinphoneCore
     MSList                        *chatrooms;
     int                           max_call_logs;
     int                           missed_calls;
+    VideoPreview                  *previewstream;
     struct _MSEventQueue          *msevq;
     LinphoneRtpTransportFactories *rtptf;
     MSList                        *bl_reqs;
@@ -640,19 +636,6 @@ struct _LinphoneCore
 #ifdef BUILD_UPNP
     UpnpContext                   *upnp;
 #endif //BUILD_UPNP
-    struct _VideoStream           *previewstream;
-    RtpTransport                  *a_rtp, *a_rtcp;
-    LinphoneOnlineStatus          prev_mode;
-    bool_t                        ready;
-    int                           dw_audio_bw;
-    int                           up_audio_bw;
-    int                           dw_video_bw;
-    int                           up_video_bw;
-    gstate_t                      gstate_power; // power state
-    gstate_t                      gstate_reg;   // register state
-    gstate_t                      gstate_call;  // call state
-    bool_t                        audio_muted;
-    uint64_t                      option_time_start;
 };
 
 LinphoneTunnel *linphone_core_tunnel_new(LinphoneCore *lc);
