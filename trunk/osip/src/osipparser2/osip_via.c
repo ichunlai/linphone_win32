@@ -101,7 +101,6 @@ osip_message_get_via(
 
     return pos;
 }
-
 #endif
 
 int

@@ -248,7 +248,7 @@ osip_sem_init(
 {
     task_t     task   = mach_task_self();
     int        policy = SYNC_POLICY_FIFO;
-    osip_sem_t  *sem = (osip_sem_t *) osip_malloc(sizeof(osip_sem_t));
+    osip_sem_t *sem   = (osip_sem_t *) osip_malloc(sizeof(osip_sem_t));
 
     if (sem == NULL)
         return NULL;
@@ -256,15 +256,15 @@ osip_sem_init(
     if (semaphore_create(task, &sem->semid, policy, value) == KERN_SUCCESS)
         return (struct osip_sem *) sem;
 
-        return NULL;
-    }
+    return NULL;
+}
 
 int
 osip_sem_destroy(
     struct osip_sem *_sem)
 {
     task_t     task = mach_task_self();
-    osip_sem_t  *sem = (osip_sem_t *) _sem;
+    osip_sem_t *sem = (osip_sem_t *) _sem;
     if (sem == NULL)
         return OSIP_SUCCESS;
     if (semaphore_destroy(task, sem->semid) == KERN_SUCCESS)
@@ -278,7 +278,7 @@ int
 osip_sem_post(
     struct osip_sem *_sem)
 {
-    osip_sem_t    *sem = (osip_sem_t *) _sem;
+    osip_sem_t *sem = (osip_sem_t *) _sem;
     if (sem == NULL)
         return OSIP_BADPARAMETER;
     if (semaphore_signal(sem->semid) == KERN_SUCCESS)
@@ -291,7 +291,7 @@ int
 osip_sem_wait(
     struct osip_sem *_sem)
 {
-    osip_sem_t    *sem = (osip_sem_t *) _sem;
+    osip_sem_t *sem = (osip_sem_t *) _sem;
     if (sem == NULL)
         return OSIP_BADPARAMETER;
     if (semaphore_wait(sem->semid) == KERN_SUCCESS)
@@ -304,7 +304,7 @@ int
 osip_sem_trywait(
     struct osip_sem *_sem)
 {
-    osip_sem_t    *sem = (osip_sem_t *) _sem;
+    osip_sem_t      *sem      = (osip_sem_t *) _sem;
     if (sem == NULL)
         return OSIP_BADPARAMETER;
     mach_timespec_t wait_time = { 0, 0 };
@@ -325,7 +325,7 @@ osip_sem_init(
 {
     union semun val;
     int         i;
-    osip_sem_t *sem   = (osip_sem_t *) osip_malloc(sizeof(osip_sem_t));
+    osip_sem_t  *sem = (osip_sem_t *) osip_malloc(sizeof(osip_sem_t));
 
     if (sem == NULL)
         return NULL;
@@ -345,7 +345,7 @@ osip_sem_init(
         osip_free(sem);
         return NULL;
     }
-        return (struct osip_sem *) sem;
+    return (struct osip_sem *) sem;
 }
 
 int
@@ -353,7 +353,7 @@ osip_sem_destroy(
     struct osip_sem *_sem)
 {
     union semun val;
-    osip_sem_t *sem = (osip_sem_t *) _sem;
+    osip_sem_t  *sem = (osip_sem_t *) _sem;
 
     if (sem == NULL)
         return OSIP_SUCCESS;
@@ -368,7 +368,7 @@ osip_sem_post(
     struct osip_sem *_sem)
 {
     struct sembuf sb;
-    osip_sem_t *sem = (osip_sem_t *) _sem;
+    osip_sem_t    *sem = (osip_sem_t *) _sem;
 
     if (sem == NULL)
         return OSIP_BADPARAMETER;
@@ -383,7 +383,7 @@ osip_sem_wait(
     struct osip_sem *_sem)
 {
     struct sembuf sb;
-    osip_sem_t *sem = (osip_sem_t *) _sem;
+    osip_sem_t    *sem = (osip_sem_t *) _sem;
 
     if (sem == NULL)
         return OSIP_BADPARAMETER;
@@ -398,7 +398,7 @@ osip_sem_trywait(
     struct osip_sem *_sem)
 {
     struct sembuf sb;
-    osip_sem_t      *sem      = (osip_sem_t *) _sem;
+    osip_sem_t    *sem = (osip_sem_t *) _sem;
 
     if (sem == NULL)
         return OSIP_BADPARAMETER;

@@ -1,5 +1,4 @@
 #include "mediastreamer2/msfilter.h"
-#include "mediastreamer2/basedescs.h"
 
 extern MSFilterDesc ms_alaw_dec_desc;
 extern MSFilterDesc ms_alaw_enc_desc;
@@ -15,7 +14,6 @@ extern MSFilterDesc ms_speex_enc_desc;
 extern MSFilterDesc ms_gsm_dec_desc;
 extern MSFilterDesc ms_gsm_enc_desc;
 extern MSFilterDesc ms_speex_ec_desc;
-//extern MSFilterDesc ms_tee_desc;
 extern MSFilterDesc ms_conf_desc;
 extern MSFilterDesc ms_bv16_dec_desc;
 extern MSFilterDesc ms_bv16_enc_desc;
@@ -35,19 +33,10 @@ extern MSFilterDesc ms_g726_dec_desc;
 extern MSFilterDesc ms_g726_enc_desc;
 extern MSFilterDesc ms_ilbc_enc_desc;
 extern MSFilterDesc ms_ilbc_dec_desc;
-//extern MSFilterDesc alsa_write_desc;
-//extern MSFilterDesc alsa_read_desc;
-//extern MSFilterDesc oss_read_desc;
-//extern MSFilterDesc oss_write_desc;
-//extern MSFilterDesc ms_arts_read_desc;
-//extern MSFilterDesc ms_arts_write_desc;
-//extern MSFilterDesc ms_v4l_desc;
-//extern MSFilterDesc ms_sdl_out_desc;
 extern MSFilterDesc ms_h263_enc_desc;
 extern MSFilterDesc ms_h263_dec_desc;
 extern MSFilterDesc ms_h264_dec_desc;
 extern MSFilterDesc x264_enc_desc;
-//extern MSFilterDesc ms_join_desc;
 extern MSFilterDesc ms_resample_desc;
 extern MSFilterDesc ms_volume_desc;
 extern MSFilterDesc ms_equalizer_desc;
@@ -89,21 +78,11 @@ MSFilterDesc * ms_filter_descs[]={
 &ms_ilbc_enc_desc,
 &ms_ilbc_dec_desc,
 &ms_speex_ec_desc,
-//&ms_tee_desc,
 &ms_conf_desc,
-//&alsa_write_desc,
-//&alsa_read_desc,
-//&oss_read_desc,
-//&oss_write_desc,
-//&ms_arts_read_desc,
-//&ms_arts_write_desc,
-//&ms_v4l_desc,
-//&ms_sdl_out_desc,
 &ms_h263_enc_desc,
 &ms_h263_dec_desc,
 &ms_h264_dec_desc,
 &x264_enc_desc,
-//&ms_join_desc,
 #ifndef DISABLE_RESAMPLE
 &ms_resample_desc,
 #endif

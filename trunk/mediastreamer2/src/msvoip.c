@@ -51,8 +51,6 @@ extern void libmsandroidopengldisplay_init(void);
     #include <android/log.h>
 #endif
 
-#ifdef MS2_FILTERS
-
     #ifdef __ALSA_ENABLED__
 extern MSSndCardDesc alsa_card_desc;
     #endif
@@ -98,10 +96,7 @@ extern MSSndCardDesc msandroid_sound_card_desc;
 extern MSSndCardDesc android_native_snd_card_desc;
     #endif
 
-#endif /* MS2_FILTERS */
-
 static MSSndCardDesc *ms_snd_card_descs[] = {
-#ifdef MS2_FILTERS
     #ifdef __ALSA_ENABLED__
     &alsa_card_desc,
     #endif
@@ -138,13 +133,10 @@ static MSSndCardDesc *ms_snd_card_descs[] = {
     &android_native_snd_card_desc,
     &msandroid_sound_card_desc,
     #endif
-#endif /* MS2_FILTERS */
     NULL
 };
 
 #ifdef VIDEO_ENABLED
-
-    #ifdef MS2_FILTERS
 
         #ifdef HAVE_LINUX_VIDEODEV_H
 extern MSWebCamDesc v4l_desc;
@@ -183,10 +175,8 @@ extern MSWebCamDesc ms_android_video_capture_desc;
 extern MSWebCamDesc ms_v4ios_cam_desc;
         #endif
 
-    #endif /* MS2_FILTERS */
 
 static MSWebCamDesc *ms_web_cam_descs[] = {
-    #ifdef MS2_FILTERS
         #ifdef HAVE_LINUX_VIDEODEV2_H
     &v4l2_card_desc,
         #endif
@@ -212,7 +202,6 @@ static MSWebCamDesc *ms_web_cam_descs[] = {
     &mire_desc,
         #endif
     &static_image_desc,
-    #endif /*MS2_FILTERS */
     NULL
 };
 

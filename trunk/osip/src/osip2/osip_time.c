@@ -27,6 +27,9 @@ add_gettimeofday(
 {
     int m;
 
+    if (atv == NULL)
+        return;
+
     if (ms >= 1000000)
     {
         atv->tv_usec = 0;
@@ -46,7 +49,7 @@ min_timercmp(
     struct timeval *tv1,
     struct timeval *tv2)
 {
-    if (tv2->tv_sec == -1)
+    if (tv1 == NULL || tv2 == NULL || tv2->tv_sec == -1)
         return;
     if (osip_timercmp(tv1, tv2, >))
     {

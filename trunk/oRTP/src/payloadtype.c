@@ -41,23 +41,33 @@ PayloadType *payload_type_new()
 }
 
 // clone playload type
+// not complete?
 PayloadType *payload_type_clone(PayloadType *payload)
 {
-	PayloadType *newpayload=(PayloadType *)ortp_new0(PayloadType,1);
-	memcpy(newpayload,payload,sizeof(PayloadType));
-	newpayload->mime_type=ortp_strdup(payload->mime_type);
-	if (payload->recv_fmtp!=NULL) {
-		newpayload->recv_fmtp=ortp_strdup(payload->recv_fmtp);
-	}
-	if (payload->send_fmtp!=NULL){
-		newpayload->send_fmtp=ortp_strdup(payload->send_fmtp);
-	}
-	newpayload->flags|=PAYLOAD_TYPE_ALLOCATED;
-	return newpayload;
+    if (payload != NULL)
+    {
+        PayloadType *newpayload = (PayloadType *)ortp_new0(PayloadType, 1);
+        if (newpayload != NULL)
+        {
+            memcpy(newpayload, payload, sizeof(PayloadType));
+            if (payload->mime_type != NULL) {
+                newpayload->mime_type = ortp_strdup(payload->mime_type);
+            }
+            if (payload->recv_fmtp != NULL) {
+                newpayload->recv_fmtp = ortp_strdup(payload->recv_fmtp);
+            }
+            if (payload->send_fmtp != NULL) {
+                newpayload->send_fmtp = ortp_strdup(payload->send_fmtp);
+            }
+            newpayload->flags |= PAYLOAD_TYPE_ALLOCATED;
+        }
+        return newpayload;
+    }
+    return NULL;
 }
 
 static bool_t canWrite(PayloadType *pt){
-	if (!(pt->flags & PAYLOAD_TYPE_ALLOCATED)) {
+	if ((pt == NULL) || !(pt->flags & PAYLOAD_TYPE_ALLOCATED)) {
 		ortp_error("Cannot change parameters of statically defined payload types: make your"
 			" own copy using payload_type_clone() first.");
 		return FALSE;

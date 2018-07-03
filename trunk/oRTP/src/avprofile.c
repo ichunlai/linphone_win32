@@ -325,6 +325,8 @@ RtpProfile av_profile;
 void av_profile_init(
     RtpProfile *profile)
 {
+    if (profile == NULL)
+        return;
     rtp_profile_clear_all(profile);                               //
     profile->name = "AV profile";
     rtp_profile_set_payload(profile, 0,  &payload_type_pcmu8000); // profile id -> payload type mapping

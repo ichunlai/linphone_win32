@@ -76,6 +76,8 @@ extern "C" {
     #endif
 #endif
 
+#define lp_free(p) do { if (p != NULL) { free(p); } } while(0)
+
 struct _LinphoneCallParams {
     LinphoneCall            *referer;     /*in case this call creation is consecutive to an incoming transfer, this points to the original call */
     int                     audio_bw;     /* bandwidth limit for audio stream */
@@ -564,7 +566,7 @@ struct _LinphoneCore
     LinphoneCoreVTable            vtable;
     Sal                           *sal;
     LinphoneGlobalState           state;
-    struct _LpConfig              *config;
+    struct _LpConfig              *config;              // config
     RtpProfile                    *default_profile;
     net_config_t                  net_conf;
     sip_config_t                  sip_conf;
@@ -596,7 +598,7 @@ struct _LinphoneCore
     int                           minutes_away;
     LinphoneOnlineStatus          presence_mode;
     char                          *alt_contact;
-    void                          *data;
+    void                          *data;        // user data, passed by linphone_core_new()
     char                          *play_file;
     char                          *rec_file;
     time_t                        prevtime;

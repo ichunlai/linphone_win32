@@ -163,6 +163,20 @@ typedef enum _LinphoneCallStatus {
  **/
 typedef struct _LinphoneCallLog LinphoneCallLog;
 
+typedef enum _LCCryptType {
+    PHONE_CRYPT_NONE = 0,
+    PHONE_CRYPT_RC4,
+    PHONE_CRYPT_CBCOM,
+    PHONE_CRYPT_MYCRYTP
+} LCCryptType;
+
+typedef enum _LCCryptSignal {
+    SIGNAL_NONE = 0,
+    SIGNAL_SIP,
+    SIGNAL_RTP,
+    SIGNAL_SIP_AND_RTP
+} LCCryptSignal;
+
 /**
  * Enum describing type of media encryption types.
  **/
@@ -722,48 +736,6 @@ LinphoneAddress *linphone_chat_message_get_local_address(const LinphoneChatMessa
 void linphone_chat_message_add_custom_header(LinphoneChatMessage *message, const char *header_name, const char *header_value);
 const char *linphone_chat_message_get_custom_header(LinphoneChatMessage *message, const char *header_name);
 
-/* describes the different groups of states */
-typedef enum _gstate_group {
-    GSTATE_GROUP_POWER,
-    GSTATE_GROUP_REG,
-    GSTATE_GROUP_CALL
-} gstate_group_t;
-
-typedef enum _gstate {
-    /* states for GSTATE_GROUP_POWER */
-    GSTATE_POWER_OFF = 0,      /* initial state */
-    GSTATE_POWER_STARTUP,
-    GSTATE_POWER_ON,
-    GSTATE_POWER_SHUTDOWN,
-    /* states for GSTATE_GROUP_REG */
-    GSTATE_REG_NONE = 10,     /* initial state */
-    GSTATE_REG_OK,
-    GSTATE_REG_FAILED,
-    GSTATE_REG_PENDING,    /* a registration request is ongoing*/
-    /* states for GSTATE_GROUP_CALL */
-    GSTATE_CALL_IDLE = 20, /* initial state */
-    GSTATE_CALL_OUT_INVITE,
-    GSTATE_CALL_OUT_CONNECTED,
-    GSTATE_CALL_IN_INVITE,
-    GSTATE_CALL_IN_CONNECTED,
-    GSTATE_CALL_END,
-    GSTATE_CALL_ERROR,
-    GSTATE_INVALID,
-    GSTATE_CALL_OUT_RINGING /*remote ringing*/
-} gstate_t;
-
-struct _LinphoneGeneralState {
-    gstate_t       old_state;
-    gstate_t       new_state;
-    gstate_group_t group;
-    const char     *message;
-};
-typedef struct _LinphoneGeneralState LinphoneGeneralState;
-
-/* private: set a new state */
-void gstate_new_state(struct _LinphoneCore *lc, gstate_t new_state, const char *message);
-/*private*/
-void gstate_initialize(struct _LinphoneCore *lc);
 
 /**
  * @}
@@ -779,10 +751,10 @@ void gstate_initialize(struct _LinphoneCore *lc);
  * It is notified via the LinphoneCoreVTable::global_state_changed
  **/
 typedef enum _LinphoneGlobalState {
-    LinphoneGlobalOff,      // Already Off
-    LinphoneGlobalStartup,  // Starting up
-    LinphoneGlobalOn,       // Already On
-    LinphoneGlobalShutdown  // Shutdowning
+    LinphoneGlobalOff,
+    LinphoneGlobalStartup,
+    LinphoneGlobalOn,
+    LinphoneGlobalShutdown
 } LinphoneGlobalState;
 
 const char *linphone_global_state_to_string(LinphoneGlobalState gs);
@@ -872,34 +844,33 @@ typedef void (*MediaQualityMonitor)(struct _LinphoneCore *lc, int jitter, float 
  * This structure holds all callbacks that the application should implement.
  *  None is mandatory.
  **/
-typedef struct _LinphoneVTable                             // 基本上就是一堆 application 應該實作的 callback function
-{
-    ShowInterfaceCb              show;                     /**< Notifies the application that it should show up*/
-    InviteReceivedCb             inv_recv;                 /**< Notifies incoming calls */
-    ByeReceivedCb                bye_recv;                 /**< Notify calls terminated by far end*/
-    NotifyPresenceReceivedCb     notify_presence_recv;     /**< Notify received presence events*/
-    NewSubscribtionRequestCb     new_subscription_request; /**< Notify about pending subscription request */
-    AuthInfoRequested            auth_info_requested;      /**< Ask the application some authentication information */
-    CallLogUpdated               call_log_updated;         /**< Notifies that call log list has been updated */
-    TextMessageReceived          text_received;            /** @deprecated, use #message_received instead <br> A text message has been received */
-    MessageReceived              message_received;         /** a message is received, can be text or external body*/
-    DtmfReceived                 dtmf_received;            /**< A dtmf has been received received */
-    ReferReceived                refer_received;           /**< An out of call refer was received */
-    CallEncryptionChangedCb      call_encryption_changed;  /**<Notifies on change in the encryption of call streams */
-    LinphoneTransferStateChanged transfer_state_changed;   /**<Notifies when a transfer is in progress */
-    BuddyInfoUpdated             buddy_info_updated;       /**< a LinphoneFriend's BuddyInfo has changed*/
-    NotifyReceivedCb             notify_recv;              /**< Other notifications*/
-    CallStatsUpdated             call_stats_updated;       /**<Notifies on refreshing of call's statistics. */
+typedef struct _LinphoneVTable {
+    LinphoneGlobalStateCb        global_state_changed;       /**<Notifies globlal state changes*/
+    LinphoneRegistrationStateCb  registration_state_changed; /**<Notifies registration state changes*/
+    LinphoneCallStateCb          call_state_changed;         /**<Notifies call state changes*/
+    NotifyPresenceReceivedCb     notify_presence_recv;       /**< Notify received presence events*/
+    NewSubscribtionRequestCb     new_subscription_request;   /**< Notify about pending subscription request */
+    AuthInfoRequested            auth_info_requested;        /**< Ask the application some authentication information */
+    CallLogUpdated               call_log_updated;           /**< Notifies that call log list has been updated */
+    TextMessageReceived          text_received;              /** @deprecated, use #message_received instead <br> A text message has been received */
+    MessageReceived              message_received;           /** a message is received, can be text or external body*/
+    DtmfReceived                 dtmf_received;              /**< A dtmf has been received received */
+    ReferReceived                refer_received;             /**< An out of call refer was received */
+    CallEncryptionChangedCb      call_encryption_changed;    /**<Notifies on change in the encryption of call streams */
+    LinphoneTransferStateChanged transfer_state_changed;     /**<Notifies when a transfer is in progress */
+    BuddyInfoUpdated             buddy_info_updated;         /**< a LinphoneFriend's BuddyInfo has changed*/
+    NotifyReceivedCb             notify_recv;                /**< Other notifications*/
+    CallStatsUpdated             call_stats_updated;         /**<Notifies on refreshing of call's statistics. */
     DisplayStatusCb              display_status;             /**< DEPRECATED Callback that notifies various events with human readable text.*/
     DisplayMessageCb             display_message;            /**< DEPRECATED Callback to display a message to the user */
     DisplayMessageCb             display_warning;            /**< DEPRECATED Callback to display a warning to the user */
     DisplayUrlCb                 display_url;                /**< DEPRECATED */
+    ShowInterfaceCb              show;                       /**< DEPRECATED Notifies the application that it should show up*/
+    InviteReceivedCb             inv_recv;                   /**< Notifies incoming calls */
+    ByeReceivedCb                bye_recv;                   /**< Notify calls terminated by far end*/
     DisplayQuestionCb            display_question;
     NetworkQualityMonitor        network_quality_monitor;
     MediaQualityMonitor          media_quality_monitor;
-    LinphoneGlobalStateCb        global_state_changed;       /**<Notifies globlal state changes*/
-    LinphoneRegistrationStateCb  registration_state_changed; /**<Notifies registration state changes*/
-    LinphoneCallStateCb          call_state_changed;         /**<Notifies call state changes*/
 } LinphoneCoreVTable;
 
 /**
@@ -1439,7 +1410,6 @@ void linphone_core_set_record_file(LinphoneCore *lc, const char *file);
 void linphone_core_play_dtmf(LinphoneCore *lc, char dtmf, int duration_ms);
 void linphone_core_stop_dtmf(LinphoneCore *lc);
 
-gstate_t linphone_core_get_state(const LinphoneCore *lc, gstate_group_t group);
 int linphone_core_get_current_call_duration(const LinphoneCore *lc);
 
 int linphone_core_get_mtu(const LinphoneCore *lc);
@@ -1475,14 +1445,6 @@ void linphone_core_set_user_data(LinphoneCore *lc, void *userdata);
 /* returns LpConfig object to read/write to the config file: usefull if you wish to extend
    the config file with your own sections */
 struct _LpConfig *linphone_core_get_config(LinphoneCore *lc);
-
-/* attempts to wake up another linphone engine already running.
-   The "show" callback is called for the other linphone, causing gui to show up.
-   call_addr is an optional sip-uri to call immediately after waking up.
-   The method returns 0 if an already running linphone was found*/
-
-int linphone_core_wake_up_possible_already_running_instance(
-    const char *config_file, const char *call_addr);
 
 /*set a callback for some blocking operations, it takes you informed of the progress of the operation*/
 void linphone_core_set_waiting_callback(LinphoneCore *lc, LinphoneWaitingCallback cb, void *user_context);
@@ -1601,15 +1563,6 @@ int linphone_core_get_audio_dscp(const LinphoneCore *lc);
 
 void linphone_core_set_video_dscp(LinphoneCore *lc, int dscp);
 int linphone_core_get_video_dscp(const LinphoneCore *lc);
-
-/*for advanced users:*/
-void linphone_core_set_audio_transports(LinphoneCore *lc, RtpTransport *rtp, RtpTransport *rtcp);
-
-int linphone_core_get_current_call_stats(LinphoneCore *lc, rtp_stats_t *local, rtp_stats_t *remote);
-
-int linphone_core_network_get_idel_udp_port(int sport);
-
-int linphone_core_network_send_quality_test(LinphoneCore *lc);
 
 #ifdef __cplusplus
 }

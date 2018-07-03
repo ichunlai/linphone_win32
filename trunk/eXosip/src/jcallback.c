@@ -1761,6 +1761,7 @@ cb_sndresp_retransmission(int type, osip_transaction_t * tr, osip_message_t * si
 static void
 cb_rcvreq_retransmission(int type, osip_transaction_t * tr, osip_message_t * sip)
 {
+    // received INVITE
 	OSIP_TRACE(osip_trace
 			   (__FILE__, __LINE__, OSIP_INFO1, NULL,
 				"cb_rcvreq_retransmission (id=%i)\r\n", tr->transactionid));

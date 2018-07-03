@@ -45,7 +45,7 @@ osip_message_set_from(
 {
     int i;
 
-    if (hvalue == NULL || hvalue[0] == '\0')
+    if (sip == NULL || hvalue == NULL || hvalue[0] == '\0')
         return OSIP_SUCCESS;
 
     if (sip->from != NULL)
@@ -72,9 +72,10 @@ osip_from_t *
 osip_message_get_from(
     const osip_message_t *sip)
 {
+    if (sip == NULL)
+        return NULL;
     return sip->from;
 }
-
 #endif
 
 int
@@ -86,7 +87,6 @@ osip_from_init(
         return OSIP_NOMEM;
     (*from)->displayname = NULL;
     (*from)->url         = NULL;
-
     osip_list_init(&(*from)->gen_params);
 
     return OSIP_SUCCESS;
@@ -146,7 +146,6 @@ osip_from_parse(
      */
 
     displayname = strchr(hvalue, '"');
-
     url         = strchr(hvalue, '<');
     if (url != NULL)
     {
@@ -235,7 +234,6 @@ osip_from_parse(
             url_end = url + strlen(url);
     }
     else                        /* jack <sip:jack@atosc.org;user=phone>;tag=azer */
-
     {
         gen_params = strchr(url_end, ';');
         url_end--;              /* place pointer on the beginning of url */
@@ -357,6 +355,8 @@ osip_from_set_displayname(
     osip_from_t *from,
     char        *displayname)
 {
+    if (from == NULL)
+        return;
     from->displayname = displayname;
 }
 
@@ -374,6 +374,8 @@ osip_from_set_url(
     osip_from_t *from,
     osip_uri_t  *url)
 {
+    if (from == NULL)
+        return;
     from->url = url;
 }
 

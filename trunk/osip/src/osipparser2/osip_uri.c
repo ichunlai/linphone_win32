@@ -729,7 +729,6 @@ osip_uri_free(
     }
 
     osip_free(url->string);
-
     osip_free(url);
 }
 

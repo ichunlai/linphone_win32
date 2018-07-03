@@ -34,7 +34,8 @@ extern void __register_ffmpeg_encoders_if_possible(void);
 #include "mediastreamer2/mscommon.h"
 #include "mediastreamer2/msfilter.h"
 
-#include "alldescs.h"
+#include "mediastreamer2/basedescs.h"
+#include "mediastreamer2/voipdescs.h"
 #include "mediastreamer2/mssndcard.h"
 #include "mediastreamer2/mswebcam.h"
 
@@ -86,8 +87,11 @@ MSList *ms_list_new(
     void *data)
 {
     MSList *new_elem = (MSList *)ms_new(MSList, 1);
-    new_elem->prev = new_elem->next = NULL;
-    new_elem->data = data;
+    if (new_elem)
+    {
+        new_elem->prev = new_elem->next = NULL;
+        new_elem->data = data;
+    }
     return new_elem;
 }
 
@@ -96,10 +100,13 @@ MSList *ms_list_append_link(
 {
     MSList *it = elem;
     if (elem == NULL) return new_elem;
-    while (it->next != NULL)
-        it = ms_list_next(it);
-    it->next       = new_elem;
-    new_elem->prev = it;
+    if (new_elem != NULL)
+    {
+        while (it->next != NULL)
+            it = ms_list_next(it);
+        it->next = new_elem;
+        new_elem->prev = it;
+    }
     return elem;
 }
 
@@ -525,144 +532,6 @@ void ms_unload_plugins()
 #endif
 }
 
-#ifdef __ALSA_ENABLED__
-extern MSSndCardDesc alsa_card_desc;
-#endif
-
-#ifdef HAVE_SYS_SOUNDCARD_H
-extern MSSndCardDesc oss_card_desc;
-#endif
-
-#ifdef __ARTS_ENABLED__
-extern MSSndCardDesc arts_card_desc;
-#endif
-
-#ifdef WIN32
-extern MSSndCardDesc winsnd_card_desc;
-#endif
-
-#ifdef __DIRECTSOUND_ENABLED__
-extern MSSndCardDesc winsndds_card_desc;
-#endif
-
-#ifdef __MACSND_ENABLED__
-extern MSSndCardDesc ca_card_desc;
-#endif
-
-#ifdef __PORTAUDIO_ENABLED__
-extern MSSndCardDesc pasnd_card_desc;
-#endif
-
-#ifdef __MAC_AQ_ENABLED__
-extern MSSndCardDesc aq_card_desc;
-#endif
-
-#ifdef __PULSEAUDIO_ENABLED__
-extern MSSndCardDesc pulse_card_desc;
-#endif
-
-#ifdef __MACIOUNIT_ENABLED__
-extern MSSndCardDesc au_card_desc;
-#endif
-
-#ifdef ANDROID
-extern MSSndCardDesc msandroid_sound_card_desc;
-#endif
-
-static MSSndCardDesc *ms_snd_card_descs[] = {
-#ifdef __ALSA_ENABLED__
-    &alsa_card_desc,
-#endif
-#ifdef HAVE_SYS_SOUNDCARD_H
-    &oss_card_desc,
-#endif
-#ifdef __ARTS_ENABLED__
-    &arts_card_desc,
-#endif
-#ifdef WIN32
-    &winsnd_card_desc,
-#endif
-#ifdef __DIRECTSOUND_ENABLED__
-    &winsndds_card_desc,
-#endif
-#ifdef __PORTAUDIO_ENABLED__
-    &pasnd_card_desc,
-#endif
-#ifdef __MACSND_ENABLED__
-    &ca_card_desc,
-#endif
-#ifdef __MAC_AQ_ENABLED__
-    &aq_card_desc,
-#endif
-#ifdef __PULSEAUDIO_ENABLED__
-    &pulse_card_desc,
-#endif
-
-#ifdef __MACIOUNIT_ENABLED__
-    &au_card_desc,
-#endif
-#ifdef ANDROID
-    &msandroid_sound_card_desc,
-#endif
-    NULL
-};
-
-#ifdef VIDEO_ENABLED
-
-    #ifdef __linux
-extern MSWebCamDesc v4l_desc;
-    #endif
-
-    #ifdef HAVE_LINUX_VIDEODEV2_H
-extern MSWebCamDesc v4l2_card_desc;
-    #endif
-
-    #ifdef WIN32
-extern MSWebCamDesc ms_vfw_cam_desc;
-    #endif
-
-    #if defined(WIN32) && defined(HAVE_DIRECTSHOW)
-extern MSWebCamDesc ms_directx_cam_desc;
-    #endif
-
-    #if defined(__MINGW32__) || defined (HAVE_DIRECTSHOW)
-extern MSWebCamDesc ms_dshow_cam_desc;
-    #endif
-
-    #ifdef __APPLE__
-extern MSWebCamDesc ms_v4m_cam_desc;
-    #endif
-
-    #if !defined(NO_FFMPEG)
-extern MSWebCamDesc static_image_desc;
-extern MSWebCamDesc mire_desc;
-    #endif
-
-static MSWebCamDesc *ms_web_cam_descs[] = {
-    #ifdef HAVE_LINUX_VIDEODEV2_H
-    &v4l2_card_desc,
-    #endif
-    #ifdef __linux
-    &v4l_desc,
-    #endif
-    #if defined(WIN32) && defined(HAVE_VFW)
-    &ms_vfw_cam_desc,
-    #endif
-    #if defined(__MINGW32__) || defined (HAVE_DIRECTSHOW)
-    &ms_dshow_cam_desc,
-    #endif
-    #ifdef __APPLE__
-    &ms_v4m_cam_desc,
-    #endif
-
-    #if !defined(NO_FFMPEG)
-    &mire_desc,
-    &static_image_desc,
-    #endif
-    NULL
-};
-
-#endif
 
 #ifdef ANDROID
     #define LOG_DOMAIN "mediastreamer"
@@ -690,7 +559,7 @@ static void ms_android_log_handler(
 
 #endif
 
-void ms_init()
+void ms_base_init()
 {
     int              i;
     MSSndCardManager *cm;
@@ -719,26 +588,7 @@ void ms_init()
         ms_filter_register(ms_filter_descs[i]);
     }
     ms_message("Registering all soundcard handlers");
-    cm = ms_snd_card_manager_get();
-    for (i = 0; ms_snd_card_descs[i] != NULL; i++)
-    {
-        ms_snd_card_manager_register_desc(cm, ms_snd_card_descs[i]);
-    }
 
-#ifdef VIDEO_ENABLED
-    ms_message("Registering all webcam handlers");
-    {
-        MSWebCamManager *wm;
-        wm = ms_web_cam_manager_get();
-        for (i = 0; ms_web_cam_descs[i] != NULL; i++)
-        {
-            ms_web_cam_manager_register_desc(wm, ms_web_cam_descs[i]);
-        }
-    }
-    #if !defined(NO_FFMPEG)
-    __register_ffmpeg_encoders_if_possible();
-    #endif
-#endif
 #ifdef PACKAGE_PLUGINS_DIR
     ms_message("Loading plugins");
     ms_load_plugins(PACKAGE_PLUGINS_DIR);
@@ -746,13 +596,18 @@ void ms_init()
     ms_message("ms_init() done");
 }
 
-void ms_exit()
+void ms_base_exit()
 {
     ms_filter_unregister_all();
     ms_snd_card_manager_destroy();
 #ifdef VIDEO_ENABLED
     ms_web_cam_manager_destroy();
 #endif
+}
+
+void ms_plugins_init(
+    void)
+{
 }
 
 void ms_sleep(

@@ -16,14 +16,15 @@ extern "C" {
 
 static LinphoneCoreVTable vTable;
 static const char         *config_file   = "libsipua2.ini";
-static const char         *factoryConfig = "libsipua2.ini";
+static const char         *factoryConfig = NULL;
 static LinphoneCore       *the_core      = NULL;
 
 const wchar_t *GetWC(const char *c)
 {
     const size_t cSize = strlen(c) + 1;
+    size_t outSize;
     wchar_t* wc = new wchar_t[cSize];
-    mbstowcs(wc, c, cSize);
+    mbstowcs_s(&outSize, wc, cSize, c, cSize -1);
 
     return wc;
 }
@@ -275,7 +276,7 @@ CMicroVoiceLiteDlg::OnInitDialog()
 
     mUsername.SetWindowText(_T("ichunlai"));        // local user id
     mPassword.SetWindowText(_T("mmbbs"));
-    mHost.SetWindowText(_T("192.168.190.165"));       // local ip address
+    mHost.SetWindowText(_T("192.168.190.20"));       // local ip address
     mDialNum.SetWindowText(_T("6002"));             // target user id
 //	mDTMF.SetWindowText("#");
     linphone_core_enable_logs_with_cb(linphone_log_handler);
@@ -621,7 +622,7 @@ CMicroVoiceLiteDlg::OnBnClickedBntSendDtmf()
 void
 CMicroVoiceLiteDlg::OnBnClickedButtonTest()
 {
-    linphone_core_network_send_quality_test(the_core);
+//    linphone_core_network_send_quality_test(the_core);
 }
 
 void

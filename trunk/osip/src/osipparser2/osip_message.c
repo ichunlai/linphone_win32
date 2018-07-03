@@ -91,6 +91,9 @@ osip_message_set_reason_phrase(
     osip_message_t *sip,
     char           *reason)
 {
+    if (sip == NULL)
+        return;
+
     sip->reason_phrase = reason;
 }
 
@@ -99,6 +102,9 @@ osip_message_set_status_code(
     osip_message_t *sip,
     int            status_code)
 {
+    if (sip == NULL)
+        return;
+
     sip->status_code = status_code;
 }
 
@@ -107,6 +113,9 @@ osip_message_set_method(
     osip_message_t *sip,
     char           *sip_method)
 {
+    if (sip == NULL)
+        return;
+
     sip->sip_method = sip_method;
 }
 
@@ -115,6 +124,9 @@ osip_message_set_version(
     osip_message_t *sip,
     char           *sip_version)
 {
+    if (sip == NULL)
+        return;
+
     sip->sip_version = sip_version;
 }
 
@@ -123,6 +135,9 @@ osip_message_set_uri(
     osip_message_t *sip,
     osip_uri_t     *url)
 {
+    if (sip == NULL)
+        return;
+
     sip->req_uri = url;
 }
 

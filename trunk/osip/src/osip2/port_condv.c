@@ -114,12 +114,15 @@ osip_cond_init()
 {
     osip_cond_t *cond = (osip_cond_t *) osip_malloc(sizeof(osip_cond_t));
 
-    if (cond && (cond->mut = osip_mutex_init()) != NULL)
+    if (cond)
     {
-        cond->sem = osip_sem_init(0);   /* initially locked */
-        return (struct osip_cond *) (cond);
+        if ((cond->mut = osip_mutex_init()) != NULL)
+        {
+            cond->sem = osip_sem_init(0);   /* initially locked */
+            return (struct osip_cond *) (cond);
+        }
+        osip_free(cond);
     }
-    osip_free(cond);
 
     return NULL;
 }
@@ -128,19 +131,17 @@ int
 osip_cond_destroy(
     struct osip_cond *_cond)
 {
-    if (!_cond)
-        return OSIP_SUCCESS;
-    if (_cond->sem == NULL)
-        return OSIP_SUCCESS;
+    if (_cond != NULL)
+    {
+        if (_cond->sem != NULL)
+            osip_sem_destroy(_cond->sem);
 
-    osip_sem_destroy(_cond->sem);
+        if (_cond->mut != NULL)
+            osip_mutex_destroy(_cond->mut);
 
-    if (_cond->mut == NULL)
-        return OSIP_SUCCESS;
-
-    osip_mutex_destroy(_cond->mut);
-    osip_free(_cond);
-    return (0);
+        osip_free(_cond);
+    }
+    return OSIP_SUCCESS;
 }
 
 int

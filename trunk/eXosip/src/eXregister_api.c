@@ -226,10 +226,10 @@ eXosip_register_build_initial_register_withqvalue(
     eXosip_reg_t *jr = NULL;
     int          i;
 
-    *reg = NULL;
-
-    if (from == NULL || proxy == NULL)
+    if (from == NULL || proxy == NULL || reg == NULL)
         return OSIP_BADPARAMETER;
+
+    *reg = NULL;
 
 #ifdef REJECT_DOUBLE_REGISTRATION
     /* Avoid adding the same registration info twice to prevent mem leaks */

@@ -46,6 +46,7 @@ static void *ortp_libc_realloc(void *ptr, size_t sz){
 }
 
 static void ortp_libc_free(void*ptr){
+	if (ptr != NULL)
 	free(ptr);
 }
 

@@ -68,6 +68,10 @@ static bool_t win32_init_sockets(
     return TRUE;
 }
 
+static void win32_uninit_sockets()
+{
+    WSACleanup();
+}
 #endif
 
 static int ortp_initialized = 0;
@@ -135,6 +139,9 @@ void ortp_exit()
         }
 #ifdef HAVE_SRTP
         ortp_srtp_shutdown();
+#endif
+#ifdef WIN32
+        win32_uninit_sockets();
 #endif
     }
 }

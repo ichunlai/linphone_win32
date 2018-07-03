@@ -26,9 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static MSSndCardManager *scm=NULL;
 
 static MSSndCardManager * create_manager(){
-	MSSndCardManager *obj=(MSSndCardManager *)ms_new(MSSndCardManager,1);
-	obj->cards=NULL;
-	obj->descs=NULL;
+	MSSndCardManager *obj=(MSSndCardManager *)ms_new0(MSSndCardManager,1);
 	return obj;
 }
 
@@ -111,8 +109,11 @@ static void card_detect(MSSndCardManager *m, MSSndCardDesc *desc){
 }
 
 void ms_snd_card_manager_register_desc(MSSndCardManager *m, MSSndCardDesc *desc){
-	m->descs=ms_list_append(m->descs,desc);
-	card_detect(m,desc);
+    if (m != NULL && desc != NULL)
+    {
+        m->descs = ms_list_append(m->descs, desc);
+        card_detect(m, desc);
+    }
 }
 
 void ms_snd_card_manager_reload(MSSndCardManager *m){

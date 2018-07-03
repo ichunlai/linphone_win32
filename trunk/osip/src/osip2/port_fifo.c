@@ -47,7 +47,6 @@ osip_fifo_add(
 #ifdef OSIP_MT
     osip_mutex_lock(ff->qislocked);
 #endif
-
     if (ff->state != osip_full)
     {
         /* ff->nb_elt++; */
@@ -117,16 +116,18 @@ int
 osip_fifo_size(
     osip_fifo_t *ff)
 {
-    int i;
+    int i = 0;
 
+    if (ff != NULL)
+    {
 #ifdef OSIP_MT
-    osip_mutex_lock(ff->qislocked);
+        osip_mutex_lock(ff->qislocked);
 #endif
-
-    i = osip_list_size(&ff->queue);
+        i = osip_list_size(&ff->queue);
 #ifdef OSIP_MT
-    osip_mutex_unlock(ff->qislocked);
+        osip_mutex_unlock(ff->qislocked);
 #endif
+    }
     return i;
 }
 
@@ -138,7 +139,6 @@ osip_fifo_get(
 
 #ifdef OSIP_MT
     int  i   = osip_sem_wait(ff->qisempty);
-
     if (i != 0)
         return NULL;
     osip_mutex_lock(ff->qislocked);

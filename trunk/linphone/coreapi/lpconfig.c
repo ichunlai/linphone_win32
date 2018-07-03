@@ -25,6 +25,7 @@
 #define MAX_LEN 16384
 
 #include "linphonecore.h"
+#include "private.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,73 +42,98 @@
 #include "lpconfig.h"
 
 typedef struct _LpItem {
-    char   *key;
-    char   *value;
+    char *key;      // item's name
+    char *value;    // item's value
 } LpItem;
 
 typedef struct _LpSection {
-    char   *name;
-    MSList *items;
+    char   *name;   // section name
+    MSList *items;  // items in the section
 } LpSection;
 
 struct _LpConfig {
-    FILE    *file;
-    char    *filename;
-    MSList  *sections;
-    int     modified;
+    FILE   *file;       // config file handle
+    char   *filename;   // config file name1
+    MSList *sections;   // sections that have been loaded in to memory
+    int    modified;
     int    readonly;
 };
 
+// create a new item
 LpItem *lp_item_new(
     const char *key, const char *value)
 {
     LpItem *item = lp_new0(LpItem, 1);
-    item->key       = ortp_strdup(key);
-    item->value     = ortp_strdup(value);
+    if (item != NULL)
+    {
+        item->key   = ortp_strdup(key);
+        item->value = ortp_strdup(value);
+    }
     return item;
 }
 
+// create a new section
 LpSection *lp_section_new(
     const char *name)
 {
     LpSection *sec = lp_new0(LpSection, 1);
-    sec->name = ortp_strdup(name);
+    if (sec != NULL)
+    {
+        sec->name = ortp_strdup(name);
+    }
     return sec;
 }
 
+// destroy an item
 void lp_item_destroy(
     void *pitem)
 {
     LpItem *item = (LpItem *)pitem;
-    free(item->key);
-    free(item->value);
-    free(item);
+    if (item != NULL)
+    {
+        lp_free(item->key);
+        lp_free(item->value);
+        free(item);
+    }
 }
 
+// destroy a section
 void lp_section_destroy(
     LpSection *sec)
 {
-    free(sec->name);
-    ms_list_for_each(sec->items, lp_item_destroy);
-    ms_list_free(sec->items);
-    free(sec);
+    if (sec != NULL)
+    {
+        lp_free(sec->name);
+        ms_list_for_each(sec->items, lp_item_destroy);
+        ms_list_free(sec->items);
+        free(sec);
+    }
 }
 
+// add an item @item in section @sec
 void lp_section_add_item(
     LpSection *sec, LpItem *item)
 {
+    if (item == NULL || sec == NULL)
+        return;
     sec->items = ms_list_append(sec->items, (void *)item);
 }
 
+// add a section @section in config @lpconfig
 void lp_config_add_section(
     LpConfig *lpconfig, LpSection *section)
 {
+    if (section == NULL || lpconfig == NULL)
+        return;
     lpconfig->sections = ms_list_append(lpconfig->sections, (void *)section);
 }
 
+// remove and destroy a section @section in config @lpconfig
 void lp_config_remove_section(
     LpConfig *lpconfig, LpSection *section)
 {
+    if (section == NULL || lpconfig == NULL)
+        return;
     lpconfig->sections = ms_list_remove(lpconfig->sections, (void *)section);
     lp_section_destroy(section);
 }
@@ -123,11 +149,15 @@ static bool_t is_first_char(
     return TRUE;
 }
 
+// find section with section name @name in config @lpconfig in memory
 LpSection *lp_config_find_section(
     const LpConfig *lpconfig, const char *name)
 {
     LpSection *sec;
     MSList    *elem;
+
+    if (name == NULL || lpconfig == NULL)
+        return NULL;
     /*printf("Looking for section %s\n",name);*/
     for (elem = lpconfig->sections; elem != NULL; elem = ms_list_next(elem))
     {
@@ -141,11 +171,15 @@ LpSection *lp_config_find_section(
     return NULL;
 }
 
+// find item with item name @name in section @sec in memory
 LpItem *lp_section_find_item(
     const LpSection *sec, const char *name)
 {
     MSList *elem;
     LpItem *item;
+
+    if (name == NULL || sec == NULL)
+        return NULL;
     /*printf("Looking for item %s\n",name);*/
     for (elem = sec->items; elem != NULL; elem = ms_list_next(elem))
     {
@@ -159,26 +193,27 @@ LpItem *lp_section_find_item(
     return NULL;
 }
 
+// parse file @file into config @lpconfig
 void lp_config_parse(
     LpConfig *lpconfig, FILE *file)
 {
     char      tmp[MAX_LEN] = {'\0'};
-    LpSection *cur = NULL;
+    LpSection *cur         = NULL;
 
-    if (file == NULL) return;
+    if (file == NULL || lpconfig == NULL) return;
 
     while (fgets(tmp, MAX_LEN, file) != NULL)
     {
         tmp[sizeof(tmp) - 1] = '\0';
         char *pos1, *pos2;
-        pos1 = strchr(tmp, '[');
+        pos1                 = strchr(tmp, '[');
         if (pos1 != NULL && is_first_char(tmp, pos1))
         {
             pos2 = strchr(pos1, ']');
-            if (pos2 != NULL)
+            if (pos2 != NULL)   // may be a section
             {
                 int  nbs;
-                char secname[MAX_LEN];
+                char secname[MAX_LEN];  // section name without '[' and ']'
                 secname[0] = '\0';
                 /* found section */
                 *pos2      = '\0';
@@ -187,7 +222,7 @@ void lp_config_parse(
                 {
                     if (strlen(secname) > 0)
                     {
-                        cur = lp_config_find_section(lpconfig, secname);
+                        cur = lp_config_find_section(lpconfig, secname);    // if the section @secname is not stored in memory
                         if (cur == NULL)
                         {
                             cur = lp_section_new(secname);
@@ -204,9 +239,9 @@ void lp_config_parse(
         else
         {
             pos1 = strchr(tmp, '=');
-            if (pos1 != NULL)
+            if (pos1 != NULL)      // may be an item
             {
-                char key[MAX_LEN];
+                char key[MAX_LEN]; // item's key name
                 key[0] = '\0';
 
                 *pos1  = '\0';
@@ -215,7 +250,7 @@ void lp_config_parse(
                     pos1++;
                     pos2 = strchr(pos1, '\r');
                     if (pos2 == NULL)
-                    pos2 = strchr(pos1, '\n');
+                        pos2 = strchr(pos1, '\n');
                     if (pos2 == NULL) pos2 = pos1 + strlen(pos1);
                     else
                     {
@@ -234,11 +269,11 @@ void lp_config_parse(
                             LpItem *item = lp_section_find_item(cur, key);
                             if (item == NULL)
                             {
-                                lp_section_add_item(cur, lp_item_new(key, pos1));
+                                lp_section_add_item(cur, lp_item_new(key, pos1));   // pos1 is the item value
                             }
                             else
                             {
-                                ms_free(item->value);
+                                lp_free(item->value);
                                 item->value = strdup(pos1);
                             }
                             /*ms_message("Found %s=%s",key,pos1);*/
@@ -254,6 +289,7 @@ void lp_config_parse(
     }
 }
 
+// create a LpConfig
 LpConfig *lp_config_new(
     const char *filename)
 {
@@ -264,6 +300,8 @@ LpConfig *lp_config_new_with_factory(
     const char *config_filename, const char *factory_config_filename)
 {
     LpConfig *lpconfig = lp_new0(LpConfig, 1);
+    if (lpconfig == NULL)
+        return lpconfig;
     if (config_filename != NULL)
     {
         ms_message("Using (r/w) config information from %s", config_filename);
@@ -277,7 +315,7 @@ LpConfig *lp_config_new_with_factory(
 #if !(defined(_WIN32_WCE) || defined(_WIN32))
             if ((stat(config_filename, &fileStat) == 0) && (S_ISREG(fileStat.st_mode)))
             {
-            /* make existing configuration files non-group/world-accessible */
+                /* make existing configuration files non-group/world-accessible */
                 if (chmod(config_filename, S_IRUSR | S_IWUSR) == -1)
                 {
                     ms_warning("unable to correct permissions on "
@@ -311,27 +349,37 @@ int lp_config_read_file(
     return -1;
 }
 
+// set value @value of item @item
 void lp_item_set_value(
     LpItem *item, const char *value)
 {
-    free(item->value);
-    item->value    = ortp_strdup(value);
+    if (item != NULL && value != NULL)
+    {
+        lp_free(item->value);   // free original value
+        item->value = ortp_strdup(value);
+    }
 }
 
 void lp_config_destroy(
     LpConfig *lpconfig)
 {
-    if (lpconfig->filename != NULL) free(lpconfig->filename);
-    ms_list_for_each(lpconfig->sections, (void (*)(void *))lp_section_destroy);
-    ms_list_free(lpconfig->sections);
-    free(lpconfig);
+    if (lpconfig != NULL)
+    {
+        lp_free(lpconfig->filename);
+        ms_list_for_each(lpconfig->sections, (void (*)(void *))lp_section_destroy);
+        ms_list_free(lpconfig->sections);
+        free(lpconfig);
+    }
 }
 
 void lp_section_remove_item(
     LpSection *sec, LpItem *item)
 {
-    sec->items = ms_list_remove(sec->items, (void *)item);
-    lp_item_destroy(item);
+    if (sec != NULL && item != NULL)
+    {
+        sec->items = ms_list_remove(sec->items, (void *)item);
+        lp_item_destroy(item);
+    }
 }
 
 const char *lp_config_get_string(
@@ -563,12 +611,14 @@ void lp_config_clean_section(
     if (sec != NULL)
     {
         lp_config_remove_section(lpconfig, sec);
+        lpconfig->modified++;
     }
-    lpconfig->modified++;
 }
 
 int lp_config_needs_commit(
     const LpConfig *lpconfig)
 {
-    return lpconfig->modified > 0;
+    if (lpconfig != NULL)
+        return lpconfig->modified > 0;
+    return 0;
 }

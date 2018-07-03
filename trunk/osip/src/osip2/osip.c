@@ -2089,6 +2089,8 @@ osip_set_message_callback(
     int               type,
     osip_message_cb_t cb)
 {
+    if (config == NULL)
+        return OSIP_BADPARAMETER;
     if (type >= OSIP_MESSAGE_CALLBACK_COUNT)
     {
         OSIP_TRACE(osip_trace
@@ -2107,6 +2109,8 @@ osip_set_kill_transaction_callback(
     int                        type,
     osip_kill_transaction_cb_t cb)
 {
+    if (config == NULL)
+        return OSIP_BADPARAMETER;
     if (type >= OSIP_KILL_CALLBACK_COUNT)
     {
         OSIP_TRACE(osip_trace
@@ -2124,6 +2128,8 @@ osip_set_transport_error_callback(
     int                       type,
     osip_transport_error_cb_t cb)
 {
+    if (config == NULL)
+        return OSIP_BADPARAMETER;
     if (type >= OSIP_TRANSPORT_ERROR_CALLBACK_COUNT)
     {
         OSIP_TRACE(osip_trace

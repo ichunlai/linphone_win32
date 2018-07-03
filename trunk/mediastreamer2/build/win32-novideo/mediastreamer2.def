@@ -2,8 +2,6 @@ LIBRARY mediastreamer2
 
 EXPORTS
 
-	ms_init
-	ms_exit
 
 	
 	ms_event_queue_new

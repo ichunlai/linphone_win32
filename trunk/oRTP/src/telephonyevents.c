@@ -72,7 +72,8 @@ int rtp_session_send_telephone_events_supported(RtpSession *session)
  * @param session a rtp session 
  *
  * @return the payload type number used for telephony events if found, -1 if not found.
-**/int rtp_session_recv_telephone_events_supported(RtpSession *session)
+**/
+int rtp_session_recv_telephone_events_supported(RtpSession *session)
 {
 	/* search for a telephony event payload in the current profile */
 	session->rcv.telephone_events_pt=rtp_profile_get_payload_number_from_mime(session->rcv.profile,"telephone-event");

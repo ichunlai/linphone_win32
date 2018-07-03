@@ -209,12 +209,6 @@
     <ClInclude Include="..\..\src\_kiss_fft_guts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="alldescs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mediastreamer2\allfilters.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\mediastreamer2\dsptools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -276,6 +270,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\private.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mediastreamer2\allfilters.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="basedescs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="voipdescs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\mediastreamer2\voipdescs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

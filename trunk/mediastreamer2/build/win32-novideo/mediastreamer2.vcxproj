@@ -267,12 +267,14 @@
     <ClInclude Include="..\..\include\mediastreamer2\msticker.h" />
     <ClInclude Include="..\..\include\mediastreamer2\msvolume.h" />
     <ClInclude Include="..\..\include\mediastreamer2\rfc2429.h" />
+    <ClInclude Include="..\..\include\mediastreamer2\voipdescs.h" />
     <ClInclude Include="..\..\include\mediastreamer2\waveheader.h" />
     <ClInclude Include="..\..\src\kiss_fft.h" />
     <ClInclude Include="..\..\src\kiss_fftr.h" />
     <ClInclude Include="..\..\src\private.h" />
     <ClInclude Include="..\..\src\_kiss_fft_guts.h" />
-    <ClInclude Include="alldescs.h" />
+    <ClInclude Include="basedescs.h" />
+    <ClInclude Include="voipdescs.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="mediastreamer2.def" />

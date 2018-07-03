@@ -1,5 +1,7 @@
 #include "mediastreamer2/msfilter.h"
 
+#ifndef BASEDESCS_H
+#define BASEDESCS_H
 extern MSFilterDesc ms_tee_desc;
 extern MSFilterDesc ms_join_desc;
 extern MSFilterDesc ms_void_sink_desc;
@@ -13,3 +15,4 @@ MSFilterDesc * ms_base_filter_descs[] = {
     &ms_itc_source_desc,
     NULL
 };
+#endif

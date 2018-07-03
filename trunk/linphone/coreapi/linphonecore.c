@@ -1,4 +1,4 @@
-﻿/*
+/*
    linphone
    Copyright (C) 2000  Simon MORLAT (simon.morlat@linphone.org)
 
@@ -838,14 +838,14 @@ static void rtp_config_read(
         linphone_core_set_video_port(lc, min_port);
     }
 
-    jitt_comp                 = lp_config_get_int(lc->config, "rtp", "audio_jitt_comp", 60);
+    jitt_comp                  = lp_config_get_int(lc->config, "rtp", "audio_jitt_comp", 60);
     linphone_core_set_audio_jittcomp(lc, jitt_comp);
-    jitt_comp                 = lp_config_get_int(lc->config, "rtp", "video_jitt_comp", 60);
+    jitt_comp                  = lp_config_get_int(lc->config, "rtp", "video_jitt_comp", 60);
     if (jitt_comp == 0) jitt_comp = 60;
     linphone_core_set_video_jittcomp(lc, jitt_comp);
-    nortp_timeout             = lp_config_get_int(lc->config, "rtp", "nortp_timeout", 30);
+    nortp_timeout              = lp_config_get_int(lc->config, "rtp", "nortp_timeout", 30);
     linphone_core_set_nortp_timeout(lc, nortp_timeout);
-    rtp_no_xmit_on_audio_mute = lp_config_get_int(lc->config, "rtp", "rtp_no_xmit_on_audio_mute", FALSE);
+    rtp_no_xmit_on_audio_mute  = lp_config_get_int(lc->config, "rtp", "rtp_no_xmit_on_audio_mute", FALSE);
     linphone_core_set_rtp_no_xmit_on_audio_mute(lc, rtp_no_xmit_on_audio_mute);
     adaptive_jitt_comp_enabled = lp_config_get_int(lc->config, "rtp", "audio_adaptive_jitt_comp_enabled", TRUE);
     linphone_core_enable_audio_adaptive_jittcomp(lc, adaptive_jitt_comp_enabled);
@@ -909,7 +909,7 @@ static bool_t get_codec(
     fmtp     = lp_config_get_string(config, codeckey, "recv_fmtp", NULL);
     channels = lp_config_get_int(config, codeckey, "channels", 0);
     enabled  = lp_config_get_int(config, codeckey, "enabled", 1);
-    pt       = find_payload(&av_profile, mime, rate, channels, fmtp);
+    pt       = find_payload(lc->default_profile, mime, rate, channels, fmtp);
     if (pt && enabled) pt->flags |= PAYLOAD_TYPE_ENABLED;
     //ms_message("Found codec %s/%i",pt->mime_type,pt->clock_rate);
     if (pt == NULL)
@@ -974,7 +974,7 @@ static MSList *add_missing_codecs(
     int i;
     for (i = 0; i < RTP_PROFILE_MAX_PAYLOADS; ++i)
     {
-        PayloadType *pt = rtp_profile_get_payload(&av_profile, i);
+        PayloadType *pt = rtp_profile_get_payload(lc->default_profile, i);
         if (pt)
         {
             if (mtype == SalVideo && pt->type != PAYLOAD_VIDEO)
@@ -1076,14 +1076,14 @@ static void video_config_read(
 #ifdef VIDEO_ENABLED
     int                 capture, display, self_view;
 #endif
-    const char   *str;
+    const char          *str;
 #ifdef VIDEO_ENABLED
     LinphoneVideoPolicy vpol;
     memset(&vpol, 0, sizeof(LinphoneVideoPolicy));
 #endif
     build_video_devices_table(lc);
 
-    str                 = lp_config_get_string(lc->config, "video", "device", NULL);
+    str = lp_config_get_string(lc->config, "video", "device", NULL);
     if (str && str[0] == 0) str = NULL;
     linphone_core_set_video_device(lc, str);
 
@@ -1311,7 +1311,11 @@ static void linphone_core_assign_payload_type(
     LinphoneCore *lc, PayloadType *const_pt, int number, const char *recv_fmtp)
 {
     PayloadType *pt;
+    if (lc == NULL || const_pt == NULL)
+        return;
     pt = payload_type_clone(const_pt);
+    if (pt == NULL)
+        return;
     if (number == -1)
     {
         /*look for a free number */
@@ -1342,9 +1346,9 @@ static void linphone_core_assign_payload_type(
         }
     }
     ms_message("assigning %s/%i payload type number %i", pt->mime_type, pt->clock_rate, number);
-    payload_type_set_number(pt, number);              // number 是做啥的？
+    payload_type_set_number(pt, number);                      // number 是做啥的？
     if (recv_fmtp != NULL) payload_type_set_recv_fmtp(pt, recv_fmtp);
-    rtp_profile_set_payload(&av_profile, number, pt); // 額外再加掛 rtp profile id 與 payload mapping
+    rtp_profile_set_payload(lc->default_profile, number, pt); // 額外再加掛 rtp profile id 與 payload mapping
     linphone_payload_types = ms_list_append(linphone_payload_types, pt);
 }
 
@@ -1379,10 +1383,12 @@ static void linphone_core_free_payload_types(
 void linphone_core_set_state(
     LinphoneCore *lc, LinphoneGlobalState gstate, const char *message)
 {
+    if (lc == NULL)
+        return;
     lc->state = gstate;
-    //if (lc->vtable.global_state_changed)
+    if (lc->vtable.global_state_changed)
     {
-        //lc->vtable.global_state_changed(lc, gstate, message);
+        lc->vtable.global_state_changed(lc, gstate, message);
     }
 }
 
@@ -1400,10 +1406,11 @@ static void linphone_core_init(
     ms_message("Initializing LinphoneCore %s", linphone_core_get_version());
     memset(lc, 0, sizeof(LinphoneCore));
     lc->config                 = config;
-    lc->data = userdata;
+    lc->data                   = userdata;
     lc->ringstream_autorelease = TRUE;
 
-    memcpy(&lc->vtable, vtable, sizeof(LinphoneCoreVTable));
+    if (vtable != NULL)
+        memcpy(&lc->vtable, vtable, sizeof(LinphoneCoreVTable));
 
     linphone_core_set_state(lc, LinphoneGlobalStartup, "Starting up");
     ortp_init();
@@ -1464,7 +1471,7 @@ static void linphone_core_init(
     lc->msevq = ms_event_queue_new();
     ms_set_global_event_queue(lc->msevq);
 
-    lc->sal = sal_init();
+    lc->sal   = sal_init();
     sal_set_user_pointer(lc->sal, lc);
     sal_set_callbacks(lc->sal, &linphone_sal_callbacks);
 
@@ -1523,7 +1530,8 @@ LinphoneCore *linphone_core_new_with_config(
     const LinphoneCoreVTable *vtable, struct _LpConfig *config, void *userdata)
 {
     LinphoneCore *core = ms_new(LinphoneCore, 1);
-    linphone_core_init(core, vtable, config, userdata);
+    if (core != NULL)
+        linphone_core_init(core, vtable, config, userdata);
     return core;
 }
 
@@ -2012,11 +2020,11 @@ static void apply_user_agent(
 {
     char ua_string[256];
     snprintf(ua_string, sizeof(ua_string) - 1, "%s/%s (eXosip2/%s)", _ua_name, _ua_version,
-     #ifdef HAVE_EXOSIP_GET_VERSION
-       eXosip_get_version()
-     #else
-       "unknown"
-     #endif
+#ifdef HAVE_EXOSIP_GET_VERSION
+             eXosip_get_version()
+#else
+             "unknown"
+#endif
              );
     if (lc->sal) sal_set_user_agent(lc->sal, ua_string);
 }
@@ -2355,9 +2363,9 @@ void linphone_core_iterate(
 {
     MSList       *calls;
     LinphoneCall *call;
-    time_t curtime            = time(NULL);
-    int    elapsed;
-    bool_t one_second_elapsed = FALSE;
+    time_t       curtime            = time(NULL);
+    int          elapsed;
+    bool_t       one_second_elapsed = FALSE;
 
     if (curtime - lc->prevtime >= 1)
     {
@@ -2791,9 +2799,9 @@ int linphone_core_start_invite(
         call->media_pending = TRUE;
         sal_call_set_local_media_description(call->op, call->localdesc);
     }
-    real_url = linphone_address_as_string(call->log->to);
-    from     = linphone_address_as_string(call->log->from);
-    err      = sal_call(call->op, from, real_url);
+    real_url           = linphone_address_as_string(call->log->to);
+    from               = linphone_address_as_string(call->log->from);
+    err                = sal_call(call->op, from, real_url);
     call->log->call_id = ms_strdup(sal_op_get_call_id(call->op)); /*must be known at that time*/
 
     if (lc->sip_conf.sdp_200_ack)
@@ -2920,7 +2928,7 @@ LinphoneCall *linphone_core_invite_address_with_params(
     LinphoneProxyConfig *proxy = NULL, *dest_proxy = NULL;
     LinphoneAddress     *parsed_url2 = NULL;
     char                *real_url    = NULL;
-    LinphoneCall       *call;
+    LinphoneCall        *call;
     bool_t              defer        = FALSE;
 
     linphone_core_preempt_sound_resources(lc);
@@ -3018,7 +3026,7 @@ LinphoneCall *linphone_core_invite_address_with_params(
             defer              = TRUE;
         }
     }
-    
+
     if (defer == FALSE) linphone_core_start_invite(lc, call);
 
     if (real_url != NULL) ms_free(real_url);
@@ -3534,8 +3542,8 @@ int linphone_core_accept_call(
 int linphone_core_accept_call_with_params(
     LinphoneCore *lc, LinphoneCall *call, const LinphoneCallParams *params)
 {
-    LinphoneProxyConfig *cfg     = NULL;
-    const char          *contact = NULL;
+    LinphoneProxyConfig *cfg        = NULL;
+    const char          *contact    = NULL;
     SalOp               *replaced;
     SalMediaDescription *new_md;
     bool_t              was_ringing = FALSE;
@@ -3624,7 +3632,7 @@ int linphone_core_accept_call_with_params(
     linphone_call_update_remote_session_id_and_ver(call);
     sal_call_accept(call->op);
     if (lc->vtable.display_status != NULL)
-    lc->vtable.display_status(lc, _("Connected."));
+        lc->vtable.display_status(lc, _("Connected."));
     lc->current_call = call;
     linphone_call_set_state(call, LinphoneCallConnected, "Connected");
     new_md           = sal_call_get_final_media_description(call->op);
@@ -4236,7 +4244,7 @@ float linphone_core_get_mic_gain_db(
 void linphone_core_set_playback_gain_db(
     LinphoneCore *lc, float gaindb)
 {
-    float       gain = gaindb;
+    float        gain  = gaindb;
     LinphoneCall *call = linphone_core_get_current_call(lc);
     AudioStream  *st;
 
@@ -4559,7 +4567,7 @@ void linphone_core_set_ring(
         lc->sound_conf.local_ring = NULL;
     }
     if (path)
-    lc->sound_conf.local_ring = ms_strdup(path);
+        lc->sound_conf.local_ring = ms_strdup(path);
     if (linphone_core_ready(lc) && lc->sound_conf.local_ring)
         lp_config_set_string(lc->config, "sound", "local_ring", lc->sound_conf.local_ring);
 }
@@ -5537,13 +5545,13 @@ int linphone_core_get_camera_sensor_rotation(
 }
 
 static MSVideoSizeDef supported_resolutions[] = {
-    { { MS_VIDEO_SIZE_SVGA_W, MS_VIDEO_SIZE_SVGA_H   }, "svga" },
-    { { MS_VIDEO_SIZE_4CIF_W, MS_VIDEO_SIZE_4CIF_H   }, "4cif" },
-    { { MS_VIDEO_SIZE_VGA_W,  MS_VIDEO_SIZE_VGA_H    }, "vga"  },
-    { { MS_VIDEO_SIZE_CIF_W,  MS_VIDEO_SIZE_CIF_H    }, "cif"  },
-    { { MS_VIDEO_SIZE_QVGA_W, MS_VIDEO_SIZE_QVGA_H   }, "qvga" },
-    { { MS_VIDEO_SIZE_QCIF_W, MS_VIDEO_SIZE_QCIF_H   }, "qcif" },
-    { {                    0,                      0 }, NULL   }
+    { { MS_VIDEO_SIZE_SVGA_W, MS_VIDEO_SIZE_SVGA_H    }, "svga" },
+    { { MS_VIDEO_SIZE_4CIF_W, MS_VIDEO_SIZE_4CIF_H    }, "4cif" },
+    { { MS_VIDEO_SIZE_VGA_W,  MS_VIDEO_SIZE_VGA_H     }, "vga"  },
+    { { MS_VIDEO_SIZE_CIF_W,  MS_VIDEO_SIZE_CIF_H     }, "cif"  },
+    { { MS_VIDEO_SIZE_QVGA_W, MS_VIDEO_SIZE_QVGA_H    }, "qvga" },
+    { { MS_VIDEO_SIZE_QCIF_W, MS_VIDEO_SIZE_QCIF_H    }, "qcif" },
+    { {                    0,                       0 }, NULL   }
 };
 
 /**
@@ -5963,7 +5971,7 @@ void net_config_uninit(
     {
         ms_free(lc->net_conf.nat_address_ip);
     }
-    lp_config_set_int(lc->config, "net", "mtu",             config->mtu);
+    lp_config_set_int(lc->config, "net", "mtu", config->mtu);
 }
 
 void sip_config_uninit(
@@ -6063,8 +6071,8 @@ static void video_config_uninit(
     LinphoneCore *lc)
 {
     lp_config_set_string(lc->config, "video", "size", video_size_get_name(linphone_core_get_preferred_video_size(lc)));
-    lp_config_set_int(lc->config, "video", "display",    lc->video_conf.display);
-    lp_config_set_int(lc->config, "video", "capture",    lc->video_conf.capture);
+    lp_config_set_int(lc->config, "video", "display", lc->video_conf.display);
+    lp_config_set_int(lc->config, "video", "capture", lc->video_conf.capture);
     if (lc->video_conf.cams)
         ms_free(lc->video_conf.cams);
 }
@@ -6152,7 +6160,7 @@ static void linphone_core_uninit(
         linphone_core_terminate_call(lc, the_call);
         linphone_core_iterate(lc);
 #ifdef WIN32
-        Sleep(50000);
+        Sleep(50);
 #else
         usleep(50000);
 #endif
@@ -6191,8 +6199,8 @@ static void linphone_core_uninit(
     lc->config = NULL; /* Mark the config as NULL to block further calls */
     sip_setup_unregister_all();
 
-    ms_list_for_each(lc->call_logs, (void (*)(void *))linphone_call_log_destroy);
-    lc->call_logs = ms_list_free(lc->call_logs);
+    ms_list_for_each(lc->call_logs,         (void (*)(void *))linphone_call_log_destroy);
+    lc->call_logs         = ms_list_free(lc->call_logs);
 
     ms_list_for_each(lc->last_recv_msg_ids, ms_free);
     lc->last_recv_msg_ids = ms_list_free(lc->last_recv_msg_ids);
@@ -6741,11 +6749,9 @@ int linphone_core_set_media_encryption(
     const char *type = "none";
     int        ret   = 0;
     if (menc == LinphoneMediaEncryptionSRTP)
-    {
-    }
+    {}
     else if (menc == LinphoneMediaEncryptionZRTP)
-    {
-    }
+    {}
     lp_config_set_string(lc->config, "sip", "media_encryption", type);
     return ret;
 }

@@ -99,13 +99,16 @@ static bool_t read_event(
 MSEventQueue *ms_event_queue_new()
 {
     MSEventQueue *q      = ms_new0(MSEventQueue, 1);
-    int          bufsize = MS_EVENT_BUF_SIZE;
-    ms_mutex_init(&q->mutex, NULL);
-    q->lim      = q->buffer + bufsize;
-    q->freeroom = bufsize;
-    q->wptr     = q->rptr = q->buffer;
-    q->endptr   = q->lim;
-    q->size     = bufsize;
+    if (q != NULL)
+    {
+        int          bufsize = MS_EVENT_BUF_SIZE;
+        ms_mutex_init(&q->mutex, NULL);
+        q->lim = q->buffer + bufsize;
+        q->freeroom = bufsize;
+        q->wptr = q->rptr = q->buffer;
+        q->endptr = q->lim;
+        q->size = bufsize;
+    }
     return q;
 }
 

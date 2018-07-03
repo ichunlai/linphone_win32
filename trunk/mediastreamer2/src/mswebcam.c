@@ -28,9 +28,7 @@ static MSWebCamManager *scm = NULL;
 
 static MSWebCamManager *create_manager()
 {
-    MSWebCamManager *obj = (MSWebCamManager *)ms_new(MSWebCamManager, 1);
-    obj->cams  = NULL;
-    obj->descs = NULL;
+    MSWebCamManager *obj = (MSWebCamManager *)ms_new0(MSWebCamManager, 1);
     return obj;
 }
 
