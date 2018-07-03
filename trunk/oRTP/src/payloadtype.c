@@ -24,19 +24,29 @@
 
 char *payload_type_get_rtpmap(PayloadType *pt)
 {
-	int len=(int)strlen(pt->mime_type)+15;
-	char *rtpmap=(char *) ortp_malloc(len);
-	if (pt->channels>0)
-		snprintf(rtpmap,len,"%s/%i/%i",pt->mime_type,pt->clock_rate,pt->channels);
-	else
-		 snprintf(rtpmap,len,"%s/%i",pt->mime_type,pt->clock_rate);
-	return rtpmap;
+    if (pt != NULL)
+    {
+        int len = (int)strlen(pt->mime_type) + 15;
+        char *rtpmap = (char *)ortp_malloc(len);
+        if (rtpmap != NULL)
+        {
+            if (pt->channels > 0)
+                snprintf(rtpmap, len, "%s/%i/%i", pt->mime_type, pt->clock_rate, pt->channels);
+            else
+                snprintf(rtpmap, len, "%s/%i", pt->mime_type, pt->clock_rate);
+        }
+        return rtpmap;
+    }
+    return NULL;
 }
 
 PayloadType *payload_type_new()
 {
 	PayloadType *newpayload=(PayloadType *)ortp_new0(PayloadType,1);
-	newpayload->flags|=PAYLOAD_TYPE_ALLOCATED;
+    if (newpayload != NULL)
+    {
+        newpayload->flags |= PAYLOAD_TYPE_ALLOCATED;
+    }
 	return newpayload;
 }
 
@@ -133,10 +143,13 @@ void payload_type_append_send_fmtp(PayloadType *pt, const char *fmtp){
 **/
 void payload_type_destroy(PayloadType *pt)
 {
-	if (pt->mime_type) ortp_free(pt->mime_type);
-	if (pt->recv_fmtp) ortp_free(pt->recv_fmtp);
-	if (pt->send_fmtp) ortp_free(pt->send_fmtp);
-	ortp_free(pt);
+    if (pt != NULL)
+    {
+        if (pt->mime_type) ortp_free(pt->mime_type);
+        if (pt->recv_fmtp) ortp_free(pt->recv_fmtp);
+        if (pt->send_fmtp) ortp_free(pt->send_fmtp);
+        ortp_free(pt);
+    }
 }
 
 /**

@@ -41,6 +41,8 @@ BOOL CMicroVoiceLiteApp::InitInstance()
     InitCtrls.dwICC  = ICC_WIN95_CLASSES;
     InitCommonControlsEx(&InitCtrls);
 
+    _CrtSetBreakAlloc(12149);
+
     CWinAppEx::InitInstance();
 
     if (!AfxSocketInit())

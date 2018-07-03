@@ -46,6 +46,8 @@ void linphone_proxy_config_write_all_to_config_file(
 static void linphone_proxy_config_init(
     LinphoneCore *lc, LinphoneProxyConfig *obj)
 {
+    if (obj == NULL)
+        return;
     memset(obj, 0, sizeof(LinphoneProxyConfig));
     obj->magic            = linphone_proxy_config_magic;
     obj->expires          = LP_CONFIG_DEFAULT_INT((lc ? lc->config : NULL), "reg_expires", 3600);
@@ -85,15 +87,19 @@ LinphoneProxyConfig *linphone_core_create_proxy_config(
 void linphone_proxy_config_destroy(
     LinphoneProxyConfig *obj)
 {
-    if (obj->reg_proxy != NULL) ms_free(obj->reg_proxy);
-    if (obj->reg_identity != NULL) ms_free(obj->reg_identity);
-    if (obj->reg_route != NULL) ms_free(obj->reg_route);
-    if (obj->ssctx != NULL) sip_setup_context_free(obj->ssctx);
-    if (obj->realm != NULL) ms_free(obj->realm);
-    if (obj->type != NULL) ms_free(obj->type);
-    if (obj->dial_prefix != NULL) ms_free(obj->dial_prefix);
-    if (obj->op) sal_op_release(obj->op);
-    if (obj->publish_op) sal_op_release(obj->publish_op);
+    if (obj != NULL)
+    {
+        if (obj->reg_proxy != NULL) ms_free(obj->reg_proxy);
+        if (obj->reg_identity != NULL) ms_free(obj->reg_identity);
+        if (obj->reg_route != NULL) ms_free(obj->reg_route);
+        if (obj->ssctx != NULL) sip_setup_context_free(obj->ssctx);
+        if (obj->realm != NULL) ms_free(obj->realm);
+        if (obj->type != NULL) ms_free(obj->type);
+        if (obj->dial_prefix != NULL) ms_free(obj->dial_prefix);
+        if (obj->op) sal_op_release(obj->op);
+        if (obj->publish_op) sal_op_release(obj->publish_op);
+        ms_free(obj);
+    }
 }
 
 /**
@@ -1223,7 +1229,7 @@ LinphoneProxyConfig *linphone_proxy_config_new_from_config_file(
     tmp = lp_config_get_string(config, key, "type", NULL);
     if (tmp != NULL && strlen(tmp) > 0)
         linphone_proxy_config_set_sip_setup(cfg, tmp);
-
+    //linphone_proxy_config_destroy(cfg);
     return cfg;
 }
 
