@@ -76,9 +76,6 @@
     <ClCompile Include="..\..\linphone\coreapi\friend.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\linphone\coreapi\general_state.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\linphone\coreapi\linphonecore.c">
       <Filter>Source Files</Filter>
     </ClCompile>

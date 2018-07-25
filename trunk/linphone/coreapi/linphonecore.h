@@ -37,10 +37,7 @@
 extern "C" {
 #endif
 
-struct _MSSndCard;
 struct _LinphoneCore;
-struct SalOp;
-
 /**
  * Linphone core main object created by function linphone_core_new() .
  * @ingroup initializing
@@ -122,12 +119,6 @@ bool_t linphone_address_weak_equal(const LinphoneAddress *a1, const LinphoneAddr
 void linphone_address_destroy(LinphoneAddress *u);
 
 struct _SipSetupContext;
-
-/**
- * The LinphoneCall object represents a call issued or received by the LinphoneCore
- **/
-struct _LinphoneCall;
-typedef struct _LinphoneCall LinphoneCall;
 
 /**
  * Enum representing the direction of a call.
@@ -829,34 +820,32 @@ typedef void (*MediaQualityMonitor)(struct _LinphoneCore *lc, int jitter, float 
  * This structure holds all callbacks that the application should implement.
  *  None is mandatory.
  **/
-typedef struct _LinphoneVTable                             // 基本上就是一堆 application 應該實作的 callback function
+typedef struct _LinphoneVTable                               // 基本上就是一堆 application 應該實作的 callback function
 {
-    ShowInterfaceCb              show;                     /**< Notifies the application that it should show up*/
-    InviteReceivedCb             inv_recv;                 /**< Notifies incoming calls */
-    ByeReceivedCb                bye_recv;                 /**< Notify calls terminated by far end*/
-    NotifyPresenceReceivedCb     notify_presence_recv;     /**< Notify received presence events*/
-    NewSubscribtionRequestCb     new_subscription_request; /**< Notify about pending subscription request */
-    AuthInfoRequested            auth_info_requested;      /**< Ask the application some authentication information */
-    CallLogUpdated               call_log_updated;         /**< Notifies that call log list has been updated */
-    TextMessageReceived          text_received;            /** @deprecated, use #message_received instead <br> A text message has been received */
-    MessageReceived              message_received;         /** a message is received, can be text or external body*/
-    DtmfReceived                 dtmf_received;            /**< A dtmf has been received received */
-    ReferReceived                refer_received;           /**< An out of call refer was received */
-    CallEncryptionChangedCb      call_encryption_changed;  /**<Notifies on change in the encryption of call streams */
-    LinphoneTransferStateChanged transfer_state_changed;   /**<Notifies when a transfer is in progress */
-    BuddyInfoUpdated             buddy_info_updated;       /**< a LinphoneFriend's BuddyInfo has changed*/
-    NotifyReceivedCb             notify_recv;              /**< Other notifications*/
-    CallStatsUpdated             call_stats_updated;       /**<Notifies on refreshing of call's statistics. */
+    LinphoneGlobalStateCb        global_state_changed;       /**<Notifies globlal state changes*/
+    LinphoneRegistrationStateCb  registration_state_changed; /**<Notifies registration state changes*/
+    LinphoneCallStateCb          call_state_changed;         /**<Notifies call state changes*/
+    NotifyPresenceReceivedCb     notify_presence_recv;       /**< Notify received presence events*/
+    NewSubscribtionRequestCb     new_subscription_request;   /**< Notify about pending subscription request */
+    AuthInfoRequested            auth_info_requested;        /**< Ask the application some authentication information */
+    CallLogUpdated               call_log_updated;           /**< Notifies that call log list has been updated */
+    TextMessageReceived          text_received;              /** @deprecated, use #message_received instead <br> A text message has been received */
+    MessageReceived              message_received;           /** a message is received, can be text or external body*/
+    DtmfReceived                 dtmf_received;              /**< A dtmf has been received received */
+    ReferReceived                refer_received;             /**< An out of call refer was received */
+    CallEncryptionChangedCb      call_encryption_changed;    /**<Notifies on change in the encryption of call streams */
+    LinphoneTransferStateChanged transfer_state_changed;     /**<Notifies when a transfer is in progress */
+    BuddyInfoUpdated             buddy_info_updated;         /**< a LinphoneFriend's BuddyInfo has changed*/
+    NotifyReceivedCb             notify_recv;                /**< Other notifications*/
+    CallStatsUpdated             call_stats_updated;         /**<Notifies on refreshing of call's statistics. */
     DisplayStatusCb              display_status;             /**< DEPRECATED Callback that notifies various events with human readable text.*/
     DisplayMessageCb             display_message;            /**< DEPRECATED Callback to display a message to the user */
     DisplayMessageCb             display_warning;            /**< DEPRECATED Callback to display a warning to the user */
     DisplayUrlCb                 display_url;                /**< DEPRECATED */
+    ShowInterfaceCb              show;                       /**< DEPRECATED Notifies the application that it should show up*/
+    InviteReceivedCb             inv_recv;                   /**< Notifies incoming calls */
+    ByeReceivedCb                bye_recv;                   /**< Notify calls terminated by far end*/
     DisplayQuestionCb            display_question;
-    NetworkQualityMonitor        network_quality_monitor;
-    MediaQualityMonitor          media_quality_monitor;
-    LinphoneGlobalStateCb        global_state_changed;       /**<Notifies globlal state changes*/
-    LinphoneRegistrationStateCb  registration_state_changed; /**<Notifies registration state changes*/
-    LinphoneCallStateCb          call_state_changed;         /**<Notifies call state changes*/
 } LinphoneCoreVTable;
 
 /**
@@ -883,8 +872,6 @@ typedef enum _LinphoneWaitingState {
     LinphoneWaitingFinished
 } LinphoneWaitingState;
 typedef void * (*LinphoneWaitingCallback)(struct _LinphoneCore *lc, void *context, LinphoneWaitingState ws, const char *purpose, float progress);
-
-typedef struct _LinphoneCore LinphoneCore;
 
 /* THE main API */
 

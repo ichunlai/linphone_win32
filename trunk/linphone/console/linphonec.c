@@ -426,33 +426,21 @@ static void linphonec_call_state_changed(
  * Linphone core callback
  */
 static void
-linphonec_bye_received(
-    LinphoneCore *lc, const char *from)
-{
-    // Should change prompt back to original maybe
-
-    // printing this is unneeded as we'd get a "Communication ended"
-    // message trough display_status callback anyway
-    //printf("Bye received from %s\n", from);
-}
-
-/*
- * Linphone core callback
- */
-static void
 linphonec_text_received(
     LinphoneCore *lc, LinphoneChatRoom *cr,
-    const char *from, const char *msg)
+    const LinphoneAddress *from, const char *msg)
 {
     linphonec_out("Message received from %s: %s\n", linphone_address_as_string(from), msg);
     // TODO: provide mechanism for answering.. ('say' command?)
 }
 
 static void linphonec_dtmf_received(
-    LinphoneCore *lc, int dtmf)
+    LinphoneCore *lc, LinphoneCall *call, int dtmf)
 {
-    fprintf(stdout, "Receiving tone %c\n", dtmf);
+    char *from = linphone_call_get_remote_address_as_string(call);
+    fprintf(stdout, "Receiving tone %c from %s\n", dtmf, from);
     fflush(stdout);
+    ms_free(from);
 }
 
 static char       received_prompt[PROMPT_MAX_LEN];
@@ -679,7 +667,6 @@ bool_t linphonec_get_autoanswer()
 }
 
 LinphoneCoreVTable linphonec_vtable = {0};
-
 /***************************************************************************/
 /*
  * Main
@@ -734,6 +721,7 @@ main(
     int argc, char *argv[])
 {
 #endif
+//    _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 
     if (!linphonec_init(argc, argv)) exit(EXIT_FAILURE);
 
@@ -828,6 +816,12 @@ linphonec_init(
      */
     linphonec         = linphone_core_new(&linphonec_vtable, configfile_name, NULL, NULL);
     linphone_core_enable_video(linphonec, vcap_enabled, display_enabled);
+    if (display_enabled && window_id != 0)
+    {
+        printf("Setting window_id: 0x%x\n", window_id);
+        linphone_core_set_native_video_window_id(linphonec, window_id);
+    }
+
     linphone_core_enable_video_preview(linphonec, preview_enabled);
     if (!(vcap_enabled || display_enabled)) printf("Warning: video is disabled in linphonec, use -V or -C or -D to enable.\n");
 #ifdef HAVE_READLINE
@@ -867,8 +861,7 @@ linphonec_finish(
     linphonec_out("Terminating...\n");
 
     /* Terminate any pending call */
-    linphonec_parse_command_line(linphonec, "terminate");
-    linphonec_command_finished();
+    linphone_core_terminate_all_calls(linphonec);
 #ifdef HAVE_READLINE
     linphonec_finish_readline();
 #endif

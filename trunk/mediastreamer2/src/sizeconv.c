@@ -45,22 +45,28 @@ For now it only supports QCIF->CIF, QVGA->CIF and CIF->CIF (does nothing in this
 
 static void size_conv_init(MSFilter *f){
 	SizeConvState *s=(SizeConvState *)ms_new(SizeConvState,1);
-	s->target_vsize.width = MS_VIDEO_SIZE_CIF_W;
-	s->target_vsize.height = MS_VIDEO_SIZE_CIF_H;
-	s->in_vsize.width=0;
-	s->in_vsize.height=0;
-	s->sws_ctx=NULL;
-	s->om=NULL;
-	s->start_time=0;
-	s->frame_count=-1;
-	s->fps=-1; /* default to process ALL frames */
-	qinit(&s->rq);
-	f->data=s;
+    if (s != NULL)
+    {
+        s->target_vsize.width = MS_VIDEO_SIZE_CIF_W;
+        s->target_vsize.height = MS_VIDEO_SIZE_CIF_H;
+        s->in_vsize.width = 0;
+        s->in_vsize.height = 0;
+        s->sws_ctx = NULL;
+        s->om = NULL;
+        s->start_time = 0;
+        s->frame_count = -1;
+        s->fps = -1; /* default to process ALL frames */
+        qinit(&s->rq);
+        f->data = s;
+    }
 }
 
 static void size_conv_uninit(MSFilter *f){
-	SizeConvState *s=(SizeConvState*)f->data;
-	ms_free(s);
+    if (f != NULL && f->data != NULL)
+    {
+	    SizeConvState *s=(SizeConvState*)f->data;
+	    ms_free(s);
+    }
 }
 
 static void size_conv_postprocess(MSFilter *f){
@@ -74,7 +80,7 @@ static void size_conv_postprocess(MSFilter *f){
 		s->om=NULL;
 	}
 	flushq(&s->rq,0);
-  s->frame_count=-1;
+    s->frame_count=-1;
 }
 
 static mblk_t *size_conv_alloc_mblk(SizeConvState *s){

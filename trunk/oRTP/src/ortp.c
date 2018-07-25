@@ -26,7 +26,7 @@
 #include <inttypes.h>
 #include "scheduler.h"
 
-rtp_stats_t  ortp_global_stats;
+rtp_stats_t  ortp_global_stats; // for statistics
 
 #ifdef ENABLE_MEMCHECK
 int          ortp_allocations = 0;

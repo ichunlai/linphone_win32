@@ -414,11 +414,14 @@ LinphoneCallStatus linphone_call_log_video_enabled(
 void linphone_call_log_destroy(
     LinphoneCallLog *cl)
 {
-    if (cl->from != NULL) linphone_address_destroy(cl->from);
-    if (cl->to != NULL) linphone_address_destroy(cl->to);
-    if (cl->refkey != NULL) ms_free(cl->refkey);
-    if (cl->call_id) ms_free(cl->call_id);
-    ms_free(cl);
+    if (cl != NULL)
+    {
+        if (cl->from != NULL) linphone_address_destroy(cl->from);
+        if (cl->to != NULL) linphone_address_destroy(cl->to);
+        if (cl->refkey != NULL) ms_free(cl->refkey);
+        if (cl->call_id) ms_free(cl->call_id);
+        ms_free(cl);
+    }
 }
 
 /**
@@ -1305,8 +1308,6 @@ const char *linphone_core_get_version(
     return liblinphone_version;
 }
 
-static MSList *linphone_payload_types = NULL;
-
 static void linphone_core_assign_payload_type(
     LinphoneCore *lc, PayloadType *const_pt, int number, const char *recv_fmtp)
 {
@@ -1349,7 +1350,7 @@ static void linphone_core_assign_payload_type(
     payload_type_set_number(pt, number);                      // number 是做啥的？
     if (recv_fmtp != NULL) payload_type_set_recv_fmtp(pt, recv_fmtp);
     rtp_profile_set_payload(lc->default_profile, number, pt); // 額外再加掛 rtp profile id 與 payload mapping
-    linphone_payload_types = ms_list_append(linphone_payload_types, pt);
+    lc->payload_types = ms_list_append(lc->payload_types, pt);
 }
 
 static void linphone_core_handle_static_payloads(
@@ -1375,9 +1376,9 @@ static void linphone_core_free_payload_types(
 {
     rtp_profile_clear_all(lc->default_profile);
     rtp_profile_destroy(lc->default_profile);
-    ms_list_for_each(linphone_payload_types, (void (*)(void *))payload_type_destroy);
-    ms_list_free(linphone_payload_types);
-    linphone_payload_types = NULL;
+    ms_list_for_each(lc->payload_types, (void (*)(void *))payload_type_destroy);
+    ms_list_free(lc->payload_types);
+    lc->payload_types = NULL;
 }
 
 void linphone_core_set_state(
@@ -1446,12 +1447,10 @@ static void linphone_core_init(
         PayloadType *pt;
         pt                     = payload_type_clone(&payload_type_gsm);
         pt->clock_rate         = 11025;
-        rtp_profile_set_payload(&av_profile, 114, pt);
-        linphone_payload_types = ms_list_append(linphone_payload_types, pt);
-        pt                     = payload_type_clone(&payload_type_gsm);
+        linphone_core_assign_payload_type(lc, pt, -1, NULL);
         pt->clock_rate         = 22050;
-        rtp_profile_set_payload(&av_profile, 115, pt);
-        linphone_payload_types = ms_list_append(linphone_payload_types, pt);
+        linphone_core_assign_payload_type(lc, pt, -1, NULL);
+        payload_type_destroy(pt);
     }
 #endif
 
@@ -2400,6 +2399,7 @@ void linphone_core_iterate(
     while (calls != NULL)
     {
         call    = (LinphoneCall *)calls->data;
+        ms_message("calls(%X)call(%X)", calls, call);
         elapsed = curtime - call->start_time;
         /* get immediately a reference to next one in case the one
            we are going to examine is destroy and removed during
@@ -3696,7 +3696,7 @@ static void terminate_call(
     if (lc->vtable.display_status != NULL)
         lc->vtable.display_status(lc, _("Call ended"));
     linphone_call_set_state(call, LinphoneCallEnd, "Call terminated");
-    linphone_call_destroy(call);
+    //linphone_call_destroy(call);
 }
 
 int linphone_core_redirect_call(
@@ -4204,27 +4204,30 @@ void linphone_core_set_ring_level(
 void linphone_core_set_mic_gain_db(
     LinphoneCore *lc, float gaindb)
 {
-    float        gain  = gaindb;
-    LinphoneCall *call = linphone_core_get_current_call(lc);
-    AudioStream  *st;
-
-    lc->sound_conf.soft_mic_lev = gaindb;
-
-    if (linphone_core_ready(lc))
+    if (lc != NULL)
     {
-        lp_config_set_float(lc->config, "sound", "mic_gain_db", lc->sound_conf.soft_mic_lev);
-    }
+        float        gain = gaindb;
+        LinphoneCall *call = linphone_core_get_current_call(lc);
+        AudioStream  *st;
 
-    if (call == NULL || (st = call->audiostream) == NULL)
-    {
-        ms_message("linphone_core_set_mic_gain_db(): no active call.");
-        return;
+        lc->sound_conf.soft_mic_lev = gaindb;
+
+        if (linphone_core_ready(lc))
+        {
+            lp_config_set_float(lc->config, "sound", "mic_gain_db", lc->sound_conf.soft_mic_lev);
+        }
+
+        if (call == NULL || (st = call->audiostream) == NULL)
+        {
+            ms_message("linphone_core_set_mic_gain_db(): no active call.");
+            return;
+        }
+        if (st->volrecv)
+        {
+            ms_filter_call_method(st->volsend, MS_VOLUME_SET_DB_GAIN, &gain);
+        }
+        else ms_warning("Could not apply gain: gain control wasn't activated.");
     }
-    if (st->volrecv)
-    {
-        ms_filter_call_method(st->volsend, MS_VOLUME_SET_DB_GAIN, &gain);
-    }
-    else ms_warning("Could not apply gain: gain control wasn't activated.");
 }
 
 /**
@@ -4246,26 +4249,29 @@ float linphone_core_get_mic_gain_db(
 void linphone_core_set_playback_gain_db(
     LinphoneCore *lc, float gaindb)
 {
-    float        gain  = gaindb;
-    LinphoneCall *call = linphone_core_get_current_call(lc);
-    AudioStream  *st;
+    if (lc != NULL)
+    {
+        float        gain = gaindb;
+        LinphoneCall *call = linphone_core_get_current_call(lc);
+        AudioStream  *st;
 
-    lc->sound_conf.soft_play_lev = gaindb;
-    if (linphone_core_ready(lc))
-    {
-        lp_config_set_float(lc->config, "sound", "playback_gain_db", lc->sound_conf.soft_play_lev);
-    }
+        lc->sound_conf.soft_play_lev = gaindb;
+        if (linphone_core_ready(lc))
+        {
+            lp_config_set_float(lc->config, "sound", "playback_gain_db", lc->sound_conf.soft_play_lev);
+        }
 
-    if (call == NULL || (st = call->audiostream) == NULL)
-    {
-        ms_message("linphone_core_set_playback_gain_db(): no active call.");
-        return;
+        if (call == NULL || (st = call->audiostream) == NULL)
+        {
+            ms_message("linphone_core_set_playback_gain_db(): no active call.");
+            return;
+        }
+        if (st->volrecv)
+        {
+            ms_filter_call_method(st->volrecv, MS_VOLUME_SET_DB_GAIN, &gain);
+        }
+        else ms_warning("Could not apply gain: gain control wasn't activated.");
     }
-    if (st->volrecv)
-    {
-        ms_filter_call_method(st->volrecv, MS_VOLUME_SET_DB_GAIN, &gain);
-    }
-    else ms_warning("Could not apply gain: gain control wasn't activated.");
 }
 
 /**
@@ -4863,7 +4869,9 @@ void linphone_core_set_stun_server(
 const char *linphone_core_get_stun_server(
     const LinphoneCore *lc)
 {
-    return lc->net_conf.stun_server;
+    return (lc != NULL)
+        ? lc->net_conf.stun_server
+        : NULL;
 }
 
 bool_t linphone_core_upnp_available()
@@ -6222,13 +6230,13 @@ static void linphone_core_uninit(
     }
 
     linphone_core_free_payload_types(lc);
-
     linphone_core_message_storage_close(lc);
     ortp_exit();
     linphone_core_set_state(lc, LinphoneGlobalOff, "Off");
 #ifdef TUNNEL_ENABLED
     if (lc->tunnel) linphone_tunnel_destroy(lc->tunnel);
 #endif
+    ms_exit();
 }
 
 static void set_network_reachable(
@@ -6282,6 +6290,8 @@ void linphone_core_refresh_registers(
     LinphoneCore *lc)
 {
     const MSList *elem;
+    if (lc == NULL)
+        return;
     if (!lc->network_reachable)
     {
         ms_warning("Refresh register operation not available (network unreachable)");
@@ -6316,6 +6326,8 @@ void __linphone_core_invalidate_registers(
 void linphone_core_set_network_reachable(
     LinphoneCore *lc, bool_t isReachable)
 {
+    if (lc == NULL)
+        return;
     //first disable automatic mode
     if (lc->auto_net_state_mon)
     {
@@ -6345,8 +6357,11 @@ ortp_socket_t linphone_core_get_sip_socket(
 void linphone_core_destroy(
     LinphoneCore *lc)
 {
-    linphone_core_uninit(lc);
-    ms_free(lc);
+    if (lc != NULL)
+    {
+        linphone_core_uninit(lc);
+        ms_free(lc);
+    }
 }
 
 /**
@@ -6357,8 +6372,7 @@ void linphone_core_destroy(
 int linphone_core_get_calls_nb(
     const LinphoneCore *lc)
 {
-    return ms_list_size(lc->calls);
-    ;
+    return lc != NULL ? ms_list_size(lc->calls) : 0;
 }
 
 /**
@@ -6369,9 +6383,12 @@ int linphone_core_get_calls_nb(
 bool_t linphone_core_can_we_add_call(
     LinphoneCore *lc)
 {
-    if (linphone_core_get_calls_nb(lc) < lc->max_calls)
-        return TRUE;
-    ms_message("Maximum amount of simultaneous calls reached !");
+    if (lc != NULL)
+    {
+        if (linphone_core_get_calls_nb(lc) < lc->max_calls)
+            return TRUE;
+        ms_message("Maximum amount of simultaneous calls reached !");
+    }
     return FALSE;
 }
 

@@ -39,7 +39,7 @@ extern bool_t libmsandroiddisplay_init(void);
 extern void libmsandroiddisplaybad_init(void);
 extern void libmsandroidopengldisplay_init(void);
 
-#include "voipdescs.h"
+#include "mediastreamer2/voipdescs.h"
 #include "mediastreamer2/mssndcard.h"
 #include "mediastreamer2/mswebcam.h"
 

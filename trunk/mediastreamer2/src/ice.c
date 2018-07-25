@@ -329,19 +329,22 @@ static IceCandidatePair *ice_pair_new(
     IceCheckList *cl, IceCandidate *local_candidate, IceCandidate *remote_candidate)
 {
     IceCandidatePair *pair = ms_new0(IceCandidatePair, 1);
-    pair->local                    = local_candidate;
-    pair->remote                   = remote_candidate;
-    pair->state                    = ICP_Frozen;
-    pair->is_default               = FALSE;
-    pair->is_nominated             = FALSE;
-    pair->use_candidate            = FALSE;
-    pair->wait_transaction_timeout = FALSE;
-    if ((pair->local->is_default == TRUE) && (pair->remote->is_default == TRUE)) pair->is_default = TRUE;
-    else pair->is_default = FALSE;
-    pair->rto                      = ICE_DEFAULT_RTO_DURATION;
-    pair->retransmissions          = 0;
-    pair->role                     = cl->session->role;
-    ice_compute_pair_priority(pair, &cl->session->role);
+    if (pair != NULL)
+    {
+        pair->local = local_candidate;
+        pair->remote = remote_candidate;
+        pair->state = ICP_Frozen;
+        pair->is_default = FALSE;
+        pair->is_nominated = FALSE;
+        pair->use_candidate = FALSE;
+        pair->wait_transaction_timeout = FALSE;
+        if ((pair->local->is_default == TRUE) && (pair->remote->is_default == TRUE)) pair->is_default = TRUE;
+        else pair->is_default = FALSE;
+        pair->rto = ICE_DEFAULT_RTO_DURATION;
+        pair->retransmissions = 0;
+        pair->role = cl->session->role;
+        ice_compute_pair_priority(pair, &cl->session->role);
+    }
     return pair;
 }
 
@@ -401,6 +404,8 @@ static void ice_free_candidate(
 void ice_check_list_destroy(
     IceCheckList *cl)
 {
+    if (cl == NULL)
+        return;
     if (cl->remote_ufrag) ms_free(cl->remote_ufrag);
     if (cl->remote_pwd) ms_free(cl->remote_pwd);
     ms_list_for_each(cl->stun_server_checks, (void (*)(void *))ice_free_stun_server_check);
@@ -422,7 +427,7 @@ void ice_check_list_destroy(
     ms_list_free(cl->pairs);
     ms_list_free(cl->remote_candidates);
     ms_list_free(cl->local_candidates);
-    memset(cl, 0, sizeof(IceCheckList));
+    // memset(cl, 0, sizeof(IceCheckList));
     ms_free(cl);
 }
 
@@ -433,7 +438,10 @@ void ice_check_list_destroy(
 const char *ice_candidate_type(
     const IceCandidate *candidate)
 {
-    return candidate_type_values[candidate->type];
+    if (candidate != NULL 
+     && candidate->type < (sizeof(candidate_type_values) / sizeof(candidate_type_values[0])))
+        return candidate_type_values[candidate->type];
+    return NULL;
 }
 
 /******************************************************************************
@@ -470,7 +478,7 @@ void ice_check_list_set_state(
 {
     IceCheckListState check_state;
 
-    if (cl->state != state)
+    if (cl != NULL && cl->state != state)
     {
         cl->state   = state;
         check_state = ICL_Running;
@@ -494,21 +502,26 @@ void ice_check_list_set_state(
 void ice_check_list_set_rtp_session(
     IceCheckList *cl, RtpSession *rtp_session)
 {
-    cl->rtp_session = rtp_session;
+    if (cl != NULL)
+        cl->rtp_session = rtp_session;
 }
 
 const char *ice_check_list_local_ufrag(
     const IceCheckList *cl)
 {
     /* Do not handle media specific ufrag for the moment, so use the session local ufrag. */
-    return cl->session->local_ufrag;
+    return (cl != NULL && cl->session != NULL)
+        ? cl->session->local_ufrag
+        : NULL;
 }
 
 const char *ice_check_list_local_pwd(
     const IceCheckList *cl)
 {
     /* Do not handle media specific pwd for the moment, so use the session local pwd. */
-    return cl->session->local_pwd;
+    return (cl != NULL && cl->session != NULL)
+        ? cl->session->local_pwd
+        : NULL;
 }
 
 const char *ice_check_list_remote_ufrag(
@@ -659,7 +672,7 @@ void ice_check_list_check_completed(
 {
     CheckList_Bool cb;
 
-    if (cl->state != ICL_Completed)
+    if (cl != NULL && cl->state != ICL_Completed)
     {
         cb.cl     = cl;
         cb.result = TRUE;
@@ -732,25 +745,33 @@ IceCheckList *ice_session_check_list(
 const char *ice_session_local_ufrag(
     const IceSession *session)
 {
-    return session->local_ufrag;
+    return session != NULL
+        ? session->local_ufrag
+        : NULL;
 }
 
 const char *ice_session_local_pwd(
     const IceSession *session)
 {
-    return session->local_pwd;
+    return session != NULL
+        ? session->local_pwd
+        : NULL;
 }
 
 const char *ice_session_remote_ufrag(
     const IceSession *session)
 {
-    return session->remote_ufrag;
+    return session != NULL
+        ? session->remote_ufrag
+        : NULL;
 }
 
 const char *ice_session_remote_pwd(
     const IceSession *session)
 {
-    return session->remote_pwd;
+    return session != NULL
+        ? session->remote_pwd
+        : NULL;
 }
 
 static void ice_check_list_compute_pair_priorities(
@@ -2170,7 +2191,7 @@ void ice_handle_stun_packet(
     char                    tr_id_str[25];
     int                     recvport = ice_get_recv_port_from_rtp_session(rtp_session, evt_data);
 
-    if (cl->session == NULL) return;
+    if (cl == NULL || cl->session == NULL) return;
 
     memset(&msg, 0, sizeof(msg));
     res = stunParseMessage((char *) mp->b_rptr, mp->b_wptr - mp->b_rptr, &msg);
@@ -2522,13 +2543,15 @@ int ice_session_nb_losing_pairs(
 void ice_check_list_unselect_valid_pair(
     IceValidCandidatePair *valid_pair)
 {
-    valid_pair->selected = FALSE;
+    if (valid_pair != NULL)
+        valid_pair->selected = FALSE;
 }
 
 void ice_check_list_unselect_valid_pairs(
     IceCheckList *cl)
 {
-    ms_list_for_each(cl->valid_list, (void (*)(void *))ice_check_list_unselect_valid_pair);
+    if (cl != NULL)
+        ms_list_for_each(cl->valid_list, (void (*)(void *))ice_check_list_unselect_valid_pair);
 }
 
 /******************************************************************************
@@ -2578,7 +2601,8 @@ static void ice_check_list_compute_candidates_foundations(
 void ice_session_compute_candidates_foundations(
     IceSession *session)
 {
-    ms_list_for_each(session->streams, (void (*)(void *))ice_check_list_compute_candidates_foundations);
+    if (session != NULL)
+        ms_list_for_each(session->streams, (void (*)(void *))ice_check_list_compute_candidates_foundations);
 }
 
 /******************************************************************************
@@ -3383,7 +3407,7 @@ void ice_check_list_process(
     MSTimeSpec            curtime;
     bool_t                retransmissions_pending = FALSE;
 
-    if (cl->session == NULL) return;
+    if (cl == NULL || cl->session == NULL) return;
     curtime = ice_current_time();
 
     /* Send STUN server requests to gather candidates if needed. */

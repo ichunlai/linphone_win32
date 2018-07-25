@@ -23,7 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TYPE_FU_A 28    /*fragmented unit 0x1C*/
 #define TYPE_STAP_A 24  /*single time aggregation packet  0x18*/
 
-
 static inline void nal_header_init(uint8_t *h, uint8_t nri, uint8_t type){
 	*h=((nri&0x3)<<5) | (type & ((1<<5)-1));
 }
@@ -303,7 +302,6 @@ void rfc3984_unpack(Rfc3984Context *ctx, mblk_t *im, MSQueue *out){
 		}
 	}
 }
-
 
 void rfc3984_pack(Rfc3984Context *ctx, MSQueue *naluq, MSQueue *rtpq, uint32_t ts){
 	switch(ctx->mode){

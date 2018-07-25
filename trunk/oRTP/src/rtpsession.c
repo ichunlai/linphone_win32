@@ -18,9 +18,9 @@
  */
 
 #if defined(WIN32) || defined(_WIN32_WCE)
-    #include "ortp-config-win32.h"
+#include "ortp-config-win32.h"
 #elif HAVE_CONFIG_H
-    #include "ortp-config.h"
+#include "ortp-config.h"
 #endif
 
 #include "ortp/ortp.h"
@@ -32,13 +32,13 @@
 #include "rtpsession_priv.h"
 
 #if (_WIN32_WINNT >= 0x0600)
-    #ifdef ENABLE_QOS
-        #include <delayimp.h>
-        #undef ExternC /* avoid redefinition... */
-    #ifndef WINAPI_FAMILY_PHONE_APP
-        #include <QOS2.h>
-    #endif
-    #endif
+#ifdef ENABLE_QOS
+#include <delayimp.h>
+#undef ExternC /* avoid redefinition... */
+#ifndef WINAPI_FAMILY_PHONE_APP
+#include <QOS2.h>
+#endif
+#endif
 #endif
 
 extern mblk_t *rtcp_create_simple_bye_packet(uint32_t ssrc, const char *reason);
@@ -65,7 +65,7 @@ void wait_point_init(
 {
     ortp_mutex_init(&wp->lock, NULL);
     ortp_cond_init(&wp->cond, NULL);
-    wp->time   = 0;
+    wp->time = 0;
     wp->wakeup = FALSE;
 }
 
@@ -82,7 +82,7 @@ void wait_point_uninit(
 void wait_point_wakeup_at(
     WaitPoint *wp, uint32_t t, bool_t dosleep)
 {
-    wp->time   = t;
+    wp->time = t;
     wp->wakeup = TRUE;
     if (dosleep) ortp_cond_wait(&wp->cond, &wp->lock);
 }
@@ -97,7 +97,7 @@ bool_t wait_point_check(
         if (TIME_IS_NEWER_THAN(t, wp->time))
         {
             wp->wakeup = FALSE;
-            ok         = TRUE;
+            ok = TRUE;
         }
     }
     return ok;
@@ -106,7 +106,7 @@ bool_t wait_point_check(
 #define wait_point_wakeup(wp) ortp_cond_signal(&(wp)->cond);
 
 extern void rtp_parse(RtpSession *session, mblk_t *mp, uint32_t local_str_ts,
-                      struct sockaddr *addr, socklen_t addrlen);
+    struct sockaddr *addr, socklen_t addrlen);
 
 static uint32_t uint32_t_random()
 {
@@ -192,10 +192,10 @@ mblk_t *rtp_getq(
                 (*rejected)++;
                 freemsg(old);
             }
-            ret      = getq(q); /* dequeue the packet, since it has an interesting timestamp*/
+            ret = getq(q); /* dequeue the packet, since it has an interesting timestamp*/
             ts_found = tmprtp->timestamp;
             ortp_debug("rtp_getq: Found packet with ts=%i", tmprtp->timestamp);
-            old      = ret;
+            old = ret;
         }
         else
         {
@@ -221,7 +221,7 @@ mblk_t *rtp_getq_permissive(
     }
     /* return the packet with the older timestamp (provided that it is older than
        the asked timestamp) */
-    tmp    = qfirst(q);
+    tmp = qfirst(q);
     tmprtp = (rtp_header_t *)tmp->b_rptr;
     ortp_debug("rtp_getq_permissive: Seeing packet with ts=%i", tmprtp->timestamp);
     if (RTP_TIMESTAMP_IS_NEWER_THAN(timestamp, tmprtp->timestamp))
@@ -243,7 +243,7 @@ rtp_session_init(
         return;
     }
     memset(session, 0, sizeof(RtpSession));
-    session->mode = (RtpSessionMode) mode;
+    session->mode = (RtpSessionMode)mode;
     if ((mode == RTP_SESSION_RECVONLY) || (mode == RTP_SESSION_SENDRECV))
     {
         rtp_session_set_flag(session, RTP_SESSION_RECV_SYNC);
@@ -255,35 +255,35 @@ rtp_session_init(
         session->snd.ssrc = uint32_t_random();
         /* set default source description */
         rtp_session_set_source_description(session, "unknown@unknown", NULL, NULL,
-                                           NULL, NULL, "oRTP-" ORTP_VERSION, NULL);
+            NULL, NULL, "oRTP-" ORTP_VERSION, NULL);
     }
     session->snd.telephone_events_pt = -1;         /* not defined a priori */
     session->rcv.telephone_events_pt = -1;         /* not defined a priori */
     rtp_session_set_profile(session, &av_profile); /*the default profile to work with */
-    session->rtp.socket              = -1;
-    session->rtcp.socket             = -1;
+    session->rtp.socket = -1;
+    session->rtcp.socket = -1;
 #ifndef WIN32
-    session->rtp.snd_socket_size     = 0; /*use OS default value unless on windows where they are definitely too short*/
-    session->rtp.rcv_socket_size     = 0;
+    session->rtp.snd_socket_size = 0; /*use OS default value unless on windows where they are definitely too short*/
+    session->rtp.rcv_socket_size = 0;
 #else
-    session->rtp.snd_socket_size     = session->rtp.rcv_socket_size = 65536;
+    session->rtp.snd_socket_size = session->rtp.rcv_socket_size = 65536;
 #endif
-    session->rtp.ssrc_changed_thres  = 50;
-    session->dscp                    = RTP_DEFAULT_DSCP;
-    session->multicast_ttl           = RTP_DEFAULT_MULTICAST_TTL;
-    session->multicast_loopback      = RTP_DEFAULT_MULTICAST_LOOPBACK;
+    session->rtp.ssrc_changed_thres = 50;
+    session->dscp = RTP_DEFAULT_DSCP;
+    session->multicast_ttl = RTP_DEFAULT_MULTICAST_TTL;
+    session->multicast_loopback = RTP_DEFAULT_MULTICAST_LOOPBACK;
     qinit(&session->rtp.rq);
     qinit(&session->rtp.tev_rq);
     qinit(&session->contributing_sources);
     session->eventqs = NULL;
     /* init signal tables */
-    rtp_signal_table_init(&session->on_ssrc_changed,           session, "ssrc_changed");
-    rtp_signal_table_init(&session->on_payload_type_changed,   session, "payload_type_changed");
-    rtp_signal_table_init(&session->on_telephone_event,        session, "telephone-event");
+    rtp_signal_table_init(&session->on_ssrc_changed, session, "ssrc_changed");
+    rtp_signal_table_init(&session->on_payload_type_changed, session, "payload_type_changed");
+    rtp_signal_table_init(&session->on_telephone_event, session, "telephone-event");
     rtp_signal_table_init(&session->on_telephone_event_packet, session, "telephone-event_packet");
-    rtp_signal_table_init(&session->on_timestamp_jump,         session, "timestamp_jump");
-    rtp_signal_table_init(&session->on_network_error,          session, "network_error");
-    rtp_signal_table_init(&session->on_rtcp_bye,               session, "rtcp_bye");
+    rtp_signal_table_init(&session->on_timestamp_jump, session, "timestamp_jump");
+    rtp_signal_table_init(&session->on_network_error, session, "network_error");
+    rtp_signal_table_init(&session->on_rtcp_bye, session, "rtcp_bye");
     wait_point_init(&session->snd.wp);
     wait_point_init(&session->rcv.wp);
     /*defaults send payload type to 0 (pcmu)*/
@@ -291,11 +291,11 @@ rtp_session_init(
     /*sets supposed recv payload type to undefined */
     rtp_session_set_recv_payload_type(session, -1);
     /* configure jitter buffer with working default parameters */
-    jbp.min_size    = RTP_DEFAULT_JITTER_TIME;
-    jbp.nom_size    = RTP_DEFAULT_JITTER_TIME;
-    jbp.max_size    = -1;
+    jbp.min_size = RTP_DEFAULT_JITTER_TIME;
+    jbp.nom_size = RTP_DEFAULT_JITTER_TIME;
+    jbp.max_size = -1;
     jbp.max_packets = 100;/* maximum number of packet allowed to be queued */
-    jbp.adaptive    = TRUE;
+    jbp.adaptive = TRUE;
     rtp_session_enable_jitter_buffer(session, TRUE);
     rtp_session_set_jitter_buffer_params(session, &jbp);
     rtp_session_set_time_jump_limit(session, 5000);
@@ -303,8 +303,8 @@ rtp_session_init(
     rtp_session_set_rtcp_report_interval(session, RTCP_DEFAULT_REPORT_INTERVAL);
     session->recv_buf_size = UDP_MAX_SIZE;
     session->symmetric_rtp = FALSE;
-    session->permissive    = FALSE;
-    session->reuseaddr     = TRUE;
+    session->permissive = FALSE;
+    session->reuseaddr = TRUE;
     msgb_allocator_init(&session->allocator);
 }
 
@@ -322,7 +322,7 @@ rtp_session_new(
     int mode)
 {
     RtpSession *session;
-    session = (RtpSession *) ortp_malloc(sizeof(RtpSession));
+    session = (RtpSession *)ortp_malloc(sizeof(RtpSession));
     if (session == NULL)
     {
         ortp_error("rtp_session_new: Memory allocation failed");
@@ -361,7 +361,7 @@ rtp_session_set_scheduling_mode(
         }
         else
             ortp_warning
-                ("rtp_session_set_scheduling_mode: Cannot use scheduled mode because the "
+            ("rtp_session_set_scheduling_mode: Cannot use scheduled mode because the "
                 "scheduler is not started. Use ortp_scheduler_init() before.");
     }
     else
@@ -454,9 +454,9 @@ void rtp_session_set_rtcp_report_interval(
 }
 
 /**
- *	Set the RTP profile to be used for the sending by this session. By default, all session are created by
- *	rtp_session_new() are initialized with the AV profile, as defined in RFC 3551. The application
- *	can set any other profile instead using that function.
+ * Set the RTP profile to be used for the sending by this session. By default, all session are created by
+ * rtp_session_new() are initialized with the AV profile, as defined in RFC 3551. The application
+ * can set any other profile instead using that function.
  * @param session a rtp session
  * @param profile a rtp profile
  *
@@ -471,9 +471,9 @@ rtp_session_set_send_profile(
 }
 
 /**
- *	Set the RTP profile to be used for the receiveing by this session. By default, all session are created by
- *	rtp_session_new() are initialized with the AV profile, as defined in RFC 3551. The application
- *	can set any other profile instead using that function.
+ * Set the RTP profile to be used for the receiveing by this session. By default, all session are created by
+ * rtp_session_new() are initialized with the AV profile, as defined in RFC 3551. The application
+ * can set any other profile instead using that function.
  *
  * @param session a rtp session
  * @param profile a rtp profile
@@ -488,10 +488,10 @@ rtp_session_set_recv_profile(
 }
 
 /**
- *@param session a rtp session
+ * @param session a rtp session
  *
- *	DEPRECATED! Returns current send profile.
- *	Use rtp_session_get_send_profile() or rtp_session_get_recv_profile()
+ * DEPRECATED! Returns current send profile.
+ * Use rtp_session_get_send_profile() or rtp_session_get_recv_profile()
  *
  **/
 RtpProfile *rtp_session_get_profile(
@@ -501,9 +501,9 @@ RtpProfile *rtp_session_get_profile(
 }
 
 /**
- *@param session a rtp session
+ * @param session a rtp session
  *
- *	Returns current send profile.
+ * Returns current send profile.
  *
  **/
 RtpProfile *rtp_session_get_send_profile(
@@ -513,9 +513,9 @@ RtpProfile *rtp_session_get_send_profile(
 }
 
 /**
- *@param session a rtp session
+ * @param session a rtp session
  *
- *	Returns current receive profile.
+ * Returns current receive profile.
  *
  **/
 RtpProfile *rtp_session_get_recv_profile(
@@ -525,9 +525,9 @@ RtpProfile *rtp_session_get_recv_profile(
 }
 
 /**
- *	The default value is UDP_MAX_SIZE bytes, a value which is working for mostly everyone.
- *	However if your application can make assumption on the sizes of received packet,
- *	it can be interesting to set it to a lower value in order to save memory.
+ * The default value is UDP_MAX_SIZE bytes, a value which is working for mostly everyone.
+ * However if your application can make assumption on the sizes of received packet,
+ * it can be interesting to set it to a lower value in order to save memory.
  *
  * @param session a rtp session
  * @param bufsize max size in bytes for receiving packets
@@ -539,8 +539,8 @@ void rtp_session_set_recv_buf_size(
 }
 
 /**
- *	Set kernel send maximum buffer size for the rtp socket.
- *	A value of zero defaults to the operating system default.
+ * Set kernel send maximum buffer size for the rtp socket.
+ * A value of zero defaults to the operating system default.
  **/
 void rtp_session_set_rtp_socket_send_buffer_size(
     RtpSession *session, unsigned int size)
@@ -549,8 +549,8 @@ void rtp_session_set_rtp_socket_send_buffer_size(
 }
 
 /**
- *	Set kernel recv maximum buffer size for the rtp socket.
- *	A value of zero defaults to the operating system default.
+ * Set kernel recv maximum buffer size for the rtp socket.
+ * A value of zero defaults to the operating system default.
  **/
 void rtp_session_set_rtp_socket_recv_buffer_size(
     RtpSession *session, unsigned int size)
@@ -559,36 +559,36 @@ void rtp_session_set_rtp_socket_recv_buffer_size(
 }
 
 /**
- *	This function provides the way for an application to be informed of various events that
- *	may occur during a rtp session. @signal is a string identifying the event, and @cb is
- *	a user supplied function in charge of processing it. The application can register
- *	several callbacks for the same signal, in the limit of #RTP_CALLBACK_TABLE_MAX_ENTRIES.
- *	Here are name and meaning of supported signals types:
+ * This function provides the way for an application to be informed of various events that
+ * may occur during a rtp session. @signal is a string identifying the event, and @cb is
+ * a user supplied function in charge of processing it. The application can register
+ * several callbacks for the same signal, in the limit of #RTP_CALLBACK_TABLE_MAX_ENTRIES.
+ * Here are name and meaning of supported signals types:
  *
- *	"ssrc_changed" : the SSRC of the incoming stream has changed.
+ * "ssrc_changed" : the SSRC of the incoming stream has changed.
  *
- *	"payload_type_changed" : the payload type of the incoming stream has changed.
+ * "payload_type_changed" : the payload type of the incoming stream has changed.
  *
- *	"telephone-event_packet" : a telephone-event rtp packet (RFC2833) is received.
+ * "telephone-event_packet" : a telephone-event rtp packet (RFC2833) is received.
  *
- *	"telephone-event" : a telephone event has occured. This is a high-level shortcut for "telephone-event_packet".
+ * "telephone-event" : a telephone event has occured. This is a high-level shortcut for "telephone-event_packet".
  *
- *	"network_error" : a network error happened on a socket. Arguments of the callback functions are
- *						a const char * explaining the error, an int errno error code and the user_data as usual.
+ * "network_error" : a network error happened on a socket. Arguments of the callback functions are
+ *                   a const char * explaining the error, an int errno error code and the user_data as usual.
  *
- *	"timestamp_jump" : we have received a packet with timestamp in far future compared to last timestamp received.
- *						The farness of far future is set by rtp_sesssion_set_time_jump_limit()
+ * "timestamp_jump" : we have received a packet with timestamp in far future compared to last timestamp received.
+ *                    The farness of far future is set by rtp_sesssion_set_time_jump_limit()
  *  "rtcp_bye": we have received a RTCP bye packet. Arguments of the callback
  *              functions are a const char * containing the leaving reason and
  *              the user_data.
  *
- *	Returns: 0 on success, -EOPNOTSUPP if the signal does not exists, -1 if no more callbacks
- *	can be assigned to the signal type.
+ * Returns: 0 on success, -EOPNOTSUPP if the signal does not exists, -1 if no more callbacks
+ * can be assigned to the signal type.
  *
- * @param session   a rtp session
- * @param signal_name	the name of a signal
- * @param cb		a RtpCallback
- * @param user_data	a pointer to any data to be passed when invoking the callback.
+ * @param session     a rtp session
+ * @param signal_name the name of a signal
+ * @param cb          a RtpCallback
+ * @param user_data   a pointer to any data to be passed when invoking the callback.
  *
  **/
 int
@@ -599,7 +599,7 @@ rtp_session_signal_connect(
     OList *elem;
     for (elem = session->signal_tables; elem != NULL; elem = o_list_next(elem))
     {
-        RtpSignalTable *s = (RtpSignalTable *) elem->data;
+        RtpSignalTable *s = (RtpSignalTable *)elem->data;
         if (strcmp(signal_name, s->signal_name) == 0)
         {
             return rtp_signal_table_add(s, cb, user_data);
@@ -610,7 +610,7 @@ rtp_session_signal_connect(
 }
 
 /**
- *	Removes callback function @cb to the list of callbacks for signal @signal.
+ * Removes callback function @cb to the list of callbacks for signal @signal.
  *
  * @param session a rtp session
  * @param signal_name	a signal name
@@ -625,7 +625,7 @@ rtp_session_signal_disconnect_by_callback(
     OList *elem;
     for (elem = session->signal_tables; elem != NULL; elem = o_list_next(elem))
     {
-        RtpSignalTable *s = (RtpSignalTable *) elem->data;
+        RtpSignalTable *s = (RtpSignalTable *)elem->data;
         if (strcmp(signal_name, s->signal_name) == 0)
         {
             return rtp_signal_table_remove_by_callback(s, cb);
@@ -711,7 +711,7 @@ void rtp_session_update_payload_type(
     {
         session->hw_recv_pt = paytype;
         ortp_message("payload type changed to %i(%s) !",
-                     paytype, pt->mime_type);
+            paytype, pt->mime_type);
         payload_type_changed(session, pt);
     }
     else
@@ -767,9 +767,9 @@ rtp_session_set_recv_payload_type(
     RtpSession *session, int paytype)
 {
     PayloadType *pt;
-    session->rcv.pt     = paytype;
+    session->rcv.pt = paytype;
     session->hw_recv_pt = paytype;
-    pt                  = rtp_profile_get_payload(session->rcv.profile, paytype);
+    pt = rtp_profile_get_payload(session->rcv.profile, paytype);
     if (pt != NULL)
     {
         payload_type_changed(session, pt);
@@ -808,29 +808,29 @@ int rtp_session_set_payload_type(
 static void rtp_header_init_from_session(
     rtp_header_t *rtp, RtpSession *session)
 {
-    rtp->version    = 2;
-    rtp->padbit     = 0;
-    rtp->extbit     = 0;
-    rtp->markbit    = 0;
-    rtp->cc         = 0;
-    rtp->paytype    = session->snd.pt;
-    rtp->ssrc       = session->snd.ssrc;
-    rtp->timestamp  = 0; /* set later, when packet is sended */
+    rtp->version = 2;
+    rtp->padbit = 0;
+    rtp->extbit = 0;
+    rtp->markbit = 0;
+    rtp->cc = 0;
+    rtp->paytype = session->snd.pt;
+    rtp->ssrc = session->snd.ssrc;
+    rtp->timestamp = 0; /* set later, when packet is sended */
     /* set a seq number */
     rtp->seq_number = session->rtp.snd_seq;
 }
 
 /**
- *	Allocates a new rtp packet. In the header, ssrc and payload_type according to the session's
- *	context. Timestamp is not set, it will be set when the packet is going to be
- *	sent with rtp_session_sendm_with_ts(). Sequence number is initalized to previous sequence number sent + 1
- *	If payload_size is zero, thus an empty packet (just a RTP header) is returned.
+ * Allocates a new rtp packet. In the header, ssrc and payload_type according to the session's
+ * context. Timestamp is not set, it will be set when the packet is going to be
+ * sent with rtp_session_sendm_with_ts(). Sequence number is initalized to previous sequence number sent + 1
+ * If payload_size is zero, thus an empty packet (just a RTP header) is returned.
  *
- *@param session a rtp session.
- *@param header_size the rtp header size. For standart size (without extensions), it is RTP_FIXED_HEADER_SIZE
- *@param payload data to be copied into the rtp packet.
- *@param payload_size size of data carried by the rtp packet.
- *@return a rtp packet in a mblk_t (message block) structure.
+ * @param session a rtp session.
+ * @param header_size the rtp header size. For standart size (without extensions), it is RTP_FIXED_HEADER_SIZE
+ * @param payload data to be copied into the rtp packet.
+ * @param payload_size size of data carried by the rtp packet.
+ * @return a rtp packet in a mblk_t (message block) structure.
  **/
 mblk_t *rtp_session_create_packet(
     RtpSession *session, int header_size, const uint8_t *payload, int payload_size)
@@ -839,15 +839,18 @@ mblk_t *rtp_session_create_packet(
     int          msglen = header_size + payload_size;
     rtp_header_t *rtp;
 
-    mp          = allocb(msglen, BPRI_MED);
-    rtp         = (rtp_header_t *)mp->b_rptr;
-    rtp_header_init_from_session(rtp, session);
-    /*copy the payload, if any */
-    mp->b_wptr += header_size;
-    if (payload_size)
+    mp = allocb(msglen, BPRI_MED);
+    if (mp != NULL)
     {
-        memcpy(mp->b_wptr, payload, payload_size);
-        mp->b_wptr += payload_size;
+        rtp = (rtp_header_t *)mp->b_rptr;
+        rtp_header_init_from_session(rtp, session);
+        /*copy the payload, if any */
+        mp->b_wptr += header_size;
+        if (payload_size)
+        {
+            memcpy(mp->b_wptr, payload, payload_size);
+            mp->b_wptr += payload_size;
+        }
     }
     return mp;
 }
@@ -869,21 +872,21 @@ mblk_t *rtp_session_create_packet(
  **/
 
 mblk_t *rtp_session_create_packet_with_data(
-    RtpSession *session, uint8_t *payload, int payload_size, void (*freefn)(void *))
+    RtpSession *session, uint8_t *payload, int payload_size, void(*freefn)(void *))
 {
     mblk_t       *mp, *mpayload;
     int          header_size = RTP_FIXED_HEADER_SIZE; /* revisit when support for csrc is done */
     rtp_header_t *rtp;
 
-    mp                = allocb(header_size, BPRI_MED);
-    rtp               = (rtp_header_t *)mp->b_rptr;
+    mp = allocb(header_size, BPRI_MED);
+    rtp = (rtp_header_t *)mp->b_rptr;
     rtp_header_init_from_session(rtp, session);
-    mp->b_wptr       += header_size;
+    mp->b_wptr += header_size;
     /* create a mblk_t around the user supplied payload buffer */
-    mpayload          = esballoc(payload, payload_size, BPRI_MED, freefn);
+    mpayload = esballoc(payload, payload_size, BPRI_MED, freefn);
     mpayload->b_wptr += payload_size;
     /* link it with the header */
-    mp->b_cont        = mpayload;
+    mp->b_cont = mpayload;
     return mp;
 }
 
@@ -901,12 +904,12 @@ mblk_t *rtp_session_create_packet_with_data(
  * @return a rtp packet in a mblk_t (message block) structure.
  **/
 mblk_t *rtp_session_create_packet_in_place(
-    RtpSession *session, uint8_t *buffer, int size, void (*freefn)(void *))
+    RtpSession *session, uint8_t *buffer, int size, void(*freefn)(void *))
 {
     mblk_t       *mp;
     rtp_header_t *rtp;
 
-    mp  = esballoc(buffer, size, BPRI_MED, freefn);
+    mp = esballoc(buffer, size, BPRI_MED, freefn);
 
     rtp = (rtp_header_t *)mp->b_rptr;
     rtp_header_init_from_session(rtp, session);
@@ -919,14 +922,14 @@ __rtp_session_sendm_with_ts(
 {
     rtp_header_t *rtp;
     uint32_t     packet_time;
-    int          error   = 0;
+    int          error = 0;
     int          packsize;
-    RtpScheduler *sched  = session->sched;
+    RtpScheduler *sched = session->sched;
     RtpStream    *stream = &session->rtp;
 
     if (session->flags & RTP_SESSION_SEND_NOT_STARTED)
     {
-        session->rtp.snd_ts_offset = send_ts;
+        session->rtp.snd_ts_offset = send_ts;   // first timestamp sent
         /* Set initial last_rcv_time to first send time. */
         if ((session->flags & RTP_SESSION_RECV_NOT_STARTED)
             || session->mode == RTP_SESSION_SENDONLY)
@@ -939,7 +942,8 @@ __rtp_session_sendm_with_ts(
         }
         rtp_session_unset_flag(session, RTP_SESSION_SEND_NOT_STARTED);
     }
-    /* if we are in blocking mode, then suspend the process until the scheduler it's time to send  the
+
+    /* if we are in blocking mode, then suspend the process until the scheduler it's time to send the
      * next packet */
     /* if the timestamp of the packet queued is older than current time, then you we must
      * not block */
@@ -948,10 +952,10 @@ __rtp_session_sendm_with_ts(
         wait_point_lock(&session->snd.wp);
         packet_time =
             rtp_session_ts_to_time(session,
-                                   send_ts -
-                                   session->rtp.snd_ts_offset) +
+                send_ts -
+                session->rtp.snd_ts_offset) +
             session->rtp.snd_time_offset;
-        /*ortp_message("rtp_session_send_with_ts: packet_time=%i time=%i",packet_time,sched->time_);*/
+        //ortp_message("rtp_session_send_with_ts: packet_time=%i time=%i",packet_time,sched->time_);
         if (TIME_IS_STRICTLY_NEWER_THAN(packet_time, sched->time_))
         {
             wait_point_wakeup_at(&session->snd.wp, packet_time, (session->flags & RTP_SESSION_BLOCKING_MODE) != 0);
@@ -968,17 +972,15 @@ __rtp_session_sendm_with_ts(
         return 0;
     }
 
-    rtp      = (rtp_header_t *)mp->b_rptr;
-
+    rtp = (rtp_header_t *)mp->b_rptr;
     packsize = msgdsize(mp);
-
     if (rtp->version == 0)
     {
         /* We are probably trying to send a STUN packet so don't change its content. */
     }
     else
     {
-        rtp->timestamp = packet_ts;
+        rtp->timestamp = packet_ts; // set the rtp packet time
         if (session->snd.telephone_events_pt == rtp->paytype)
         {
             rtp->seq_number = session->rtp.snd_seq;
@@ -986,36 +988,38 @@ __rtp_session_sendm_with_ts(
         }
         else
             session->rtp.snd_seq = rtp->seq_number + 1;
-        session->rtp.snd_last_ts    = packet_ts;
+        session->rtp.snd_last_ts = packet_ts;
 
-        ortp_global_stats.sent     += packsize;
+        ortp_global_stats.sent += packsize;
         stream->sent_payload_bytes += packsize - RTP_FIXED_HEADER_SIZE;
-        stream->stats.sent         += packsize;
+        stream->stats.sent += packsize;
         ortp_global_stats.packet_sent++;
         stream->stats.packet_sent++;
+
+        ortp_warning("rtp_session_send_with_ts: pt=%d, ts=%i, size=%d, m=%d\n", 
+            rtp->paytype, packet_ts, packsize, rtp->markbit);
     }
 
     error = rtp_session_rtp_send(session, mp);
     /*send RTCP packet if needed */
     rtp_session_rtcp_process_send(session);
     /* receives rtcp packet if session is send-only*/
-    /*otherwise it is done in rtp_session_recvm_with_ts */
+    /* otherwise it is done in rtp_session_recvm_with_ts */
     if (session->mode == RTP_SESSION_SENDONLY) rtp_session_rtcp_recv(session);
     return error;
 }
 
 /**
- *	Send the rtp datagram @mp to the destination set by rtp_session_set_remote_addr()
+ *	Send the rtp datagram @packet to the destination set by rtp_session_set_remote_addr()
  *	with timestamp @timestamp. For audio data, the timestamp is the number
  *	of the first sample resulting of the data transmitted. See rfc1889 for details.
- *  The packet (@mp) is freed once it is sended.
+ *  The packet (@packet) is freed once it is sended.
  *
- *@param session a rtp session.
- *@param mp a rtp packet presented as a mblk_t.
- *@param timestamp the timestamp of the data to be sent.
+ * @param session a rtp session.
+ * @param packet a rtp packet presented as a mblk_t.
+ * @param timestamp the timestamp of the data to be sent.
  * @return the number of bytes sent over the network.
  **/
-
 int rtp_session_sendm_with_ts(
     RtpSession *session, mblk_t *packet, uint32_t timestamp)
 {
@@ -1042,9 +1046,9 @@ rtp_session_send_with_ts(
     mblk_t *m;
     int    err;
 #ifdef USE_SENDMSG
-    m   = rtp_session_create_packet_with_data(session, (uint8_t *)buffer, len, NULL);
+    m = rtp_session_create_packet_with_data(session, (uint8_t *)buffer, len, NULL);
 #else
-    m   = rtp_session_create_packet(session, RTP_FIXED_HEADER_SIZE, (uint8_t *)buffer, len);
+    m = rtp_session_create_packet(session, RTP_FIXED_HEADER_SIZE, (uint8_t *)buffer, len);
 #endif
     err = rtp_session_sendm_with_ts(session, m, userts);
     return err;
@@ -1069,7 +1073,6 @@ static void payload_type_changed_notify(
  *
  *	This function returns the entire packet (with header).
  *
- *	 *
  * @param session a rtp session.
  * @param sequence_number a sequence number.
  *
@@ -1131,9 +1134,9 @@ rtp_session_recvm_with_ts(
     rtp_header_t *rtp;
     uint32_t     ts;
     uint32_t     packet_time;
-    RtpScheduler *sched      = session->sched;
-    RtpStream    *stream     = &session->rtp;
-    int          rejected    = 0;
+    RtpScheduler *sched = session->sched;
+    RtpStream    *stream = &session->rtp;
+    int          rejected = 0;
     bool_t       read_socket = TRUE;
 
     /* if we are scheduled, remember the scheduler time at which the application has
@@ -1174,7 +1177,7 @@ rtp_session_recvm_with_ts(
     {
         int msgsize = msgdsize(mp);
         ortp_global_stats.recv += msgsize;
-        stream->stats.recv     += msgsize;
+        stream->stats.recv += msgsize;
         rtp_signal_table_emit2(&session->on_telephone_event_packet, (long)mp);
         rtp_session_check_telephone_events(session, mp);
         freemsg(mp);
@@ -1193,10 +1196,10 @@ rtp_session_recvm_with_ts(
             ortp_debug("Queue is empty.");
             goto end;
         }
-        rtp                          = (rtp_header_t *) qfirst(q)->b_rptr;
-        session->rtp.rcv_ts_offset   = rtp->timestamp;
+        rtp = (rtp_header_t *)qfirst(q)->b_rptr;
+        session->rtp.rcv_ts_offset = rtp->timestamp;
         session->rtp.rcv_last_ret_ts = user_ts; /* just to have an init value */
-        session->rcv.ssrc            = rtp->ssrc;
+        session->rcv.ssrc = rtp->ssrc;
         /* delete the recv synchronisation flag */
         rtp_session_unset_flag(session, RTP_SESSION_RECV_SYNC);
     }
@@ -1214,7 +1217,7 @@ rtp_session_recvm_with_ts(
     }
     else mp = getq(&session->rtp.rq); /*no jitter buffer at all*/
 
-    stream->stats.outoftime     += rejected;
+    stream->stats.outoftime += rejected;
     ortp_global_stats.outoftime += rejected;
 
     goto end;
@@ -1225,9 +1228,9 @@ end:
         int      msgsize = msgdsize(mp); /* evaluate how much bytes (including header) is received by app */
         uint32_t packet_ts;
         ortp_global_stats.recv += msgsize;
-        stream->stats.recv     += msgsize;
-        rtp                     = (rtp_header_t *) mp->b_rptr;
-        packet_ts               = rtp->timestamp;
+        stream->stats.recv += msgsize;
+        rtp = (rtp_header_t *)mp->b_rptr;
+        packet_ts = rtp->timestamp;
         ortp_debug("Returning mp with ts=%i", packet_ts);
         /* check for payload type changes */
         if (session->rcv.pt != rtp->paytype)
@@ -1243,7 +1246,7 @@ end:
                timestamps*/
             if (packet_ts != session->rtp.rcv_last_ts)
                 jitter_control_update_corrective_slide(&session->rtp.jittctl);
-            changed_ts     = packet_ts + session->rtp.jittctl.corrective_slide;
+            changed_ts = packet_ts + session->rtp.jittctl.corrective_slide;
             rtp->timestamp = changed_ts;
             /*ortp_debug("Returned packet has timestamp %u, with clock slide compensated it is %u",packet_ts,rtp->timestamp);*/
         }
@@ -1263,13 +1266,13 @@ end:
     {
         /* if we are in blocking mode, then suspend the calling process until timestamp
          * wanted expires */
-        /* but we must not block the process if the timestamp wanted by the application is older
-         * than current time */
+         /* but we must not block the process if the timestamp wanted by the application is older
+          * than current time */
         wait_point_lock(&session->rcv.wp);
         packet_time =
             rtp_session_ts_to_time(session,
-                                   user_ts -
-                                   session->rtp.rcv_query_ts_offset) +
+                user_ts -
+                session->rtp.rcv_query_ts_offset) +
             session->rtp.rcv_time_offset;
         ortp_debug("rtp_session_recvm_with_ts: packet_time=%i, time=%i", packet_time, sched->time_);
 
@@ -1334,7 +1337,7 @@ int rtp_session_recv_with_ts(
     {
         if (session->pending)
         {
-            mp               = session->pending;
+            mp = session->pending;
             session->pending = NULL;
         }
         else
@@ -1349,20 +1352,20 @@ int rtp_session_recv_with_ts(
             {
                 memcpy(buffer, mp->b_rptr, plen);
                 buffer += plen;
-                blen   += plen;
-                len    -= plen;
+                blen += plen;
+                len -= plen;
                 freemsg(mp);
-                mp      = NULL;
+                mp = NULL;
             }
             else
             {
                 memcpy(buffer, mp->b_rptr, len);
-                mp->b_rptr      += len;
-                buffer          += len;
-                blen            += len;
-                len              = 0;
+                mp->b_rptr += len;
+                buffer += len;
+                blen += len;
+                len = 0;
                 session->pending = mp;
-                *have_more       = 1;
+                *have_more = 1;
                 break;
             }
         }
@@ -1398,8 +1401,8 @@ uint32_t rtp_session_get_current_send_ts(
         return 0;
     }
     session_time = sched->time_ - session->rtp.snd_time_offset;
-    userts       = (uint32_t)(((double)(session_time) * (double) payload->clock_rate ) / 1000.0)
-                   + session->rtp.snd_ts_offset;
+    userts = (uint32_t)(((double)(session_time) * (double)payload->clock_rate) / 1000.0)
+        + session->rtp.snd_ts_offset;
     return userts;
 }
 
@@ -1426,8 +1429,8 @@ uint32_t rtp_session_get_current_recv_ts(
         return 0;
     }
     session_time = sched->time_ - session->rtp.rcv_time_offset;
-    userts       = (uint32_t)(((double)(session_time) * (double) payload->clock_rate ) / 1000.0)
-                   + session->rtp.rcv_ts_offset;
+    userts = (uint32_t)(((double)(session_time) * (double)payload->clock_rate) / 1000.0)
+        + session->rtp.rcv_ts_offset;
     return userts;
 }
 
@@ -1446,7 +1449,7 @@ void rtp_session_set_time_jump_limit(
 {
     uint32_t ts;
     session->rtp.time_jump = milisecs;
-    ts                     = rtp_session_time_to_ts(session, milisecs);
+    ts = rtp_session_time_to_ts(session, milisecs);
     if (ts == 0) session->rtp.ts_jump = 1 << 31; /* do not detect ts jump */
     else session->rtp.ts_jump = ts;
 }
@@ -1459,7 +1462,7 @@ void rtp_session_release_sockets(
 {
     if (session->rtp.socket != (ortp_socket_t)-1) close_socket(session->rtp.socket);
     if (session->rtcp.socket != (ortp_socket_t)-1) close_socket(session->rtcp.socket);
-    session->rtp.socket  = -1;
+    session->rtp.socket = -1;
     session->rtcp.socket = -1;
 
     if (session->rtp.tr && session->rtp.tr->t_close)
@@ -1525,7 +1528,7 @@ void rtp_session_uninit(
         rtp_scheduler_remove_session(session->sched, session);
     }
     /*flush all queues */
-    flushq(&session->rtp.rq,     FLUSHALL);
+    flushq(&session->rtp.rq, FLUSHALL);
     flushq(&session->rtp.tev_rq, FLUSHALL);
 
     if (session->eventqs != NULL) o_list_free(session->eventqs);
@@ -1551,10 +1554,10 @@ void rtp_session_uninit(
         OSVERSIONINFOEX ovi;
         memset(&ovi, 0, sizeof(ovi));
         ovi.dwOSVersionInfoSize = sizeof(ovi);
-        GetVersionEx((LPOSVERSIONINFO) &ovi);
+        GetVersionEx((LPOSVERSIONINFO)&ovi);
 
         ortp_message("check OS support for qwave.lib: %i %i %i\n",
-                     ovi.dwMajorVersion, ovi.dwMinorVersion, ovi.dwBuildNumber);
+            ovi.dwMajorVersion, ovi.dwMinorVersion, ovi.dwBuildNumber);
         if (ovi.dwMajorVersion > 5)
         {
             if (FAILED(__HrLoadAllImportsForDll("qwave.dll")))
@@ -1565,14 +1568,14 @@ void rtp_session_uninit(
             {
                 BOOL QoSResult;
                 QoSResult = QOSRemoveSocketFromFlow(session->rtp.QoSHandle,
-                                                    0,
-                                                    session->rtp.QoSFlowID,
-                                                    0);
+                    0,
+                    session->rtp.QoSFlowID,
+                    0);
 
                 if (QoSResult != TRUE)
                 {
                     ortp_error("QOSRemoveSocketFromFlow failed to end a flow with error %d\n",
-                               GetLastError());
+                        GetLastError());
                 }
                 session->rtp.QoSFlowID = 0;
             }
@@ -1583,7 +1586,7 @@ void rtp_session_uninit(
     {
         QOSCloseHandle(session->rtp.QoSHandle);
         session->rtp.QoSHandle = NULL;
-    }
+}
 #endif
 }
 
@@ -1624,19 +1627,19 @@ void rtp_session_reset(
     rtp_session_set_flag(session, RTP_SESSION_RECV_NOT_STARTED);
     rtp_session_set_flag(session, RTP_SESSION_SEND_NOT_STARTED);
     //session->ssrc=0;
-    session->rtp.snd_time_offset     = 0;
-    session->rtp.snd_ts_offset       = 0;
-    session->rtp.snd_rand_offset     = 0;
-    session->rtp.snd_last_ts         = 0;
-    session->rtp.rcv_time_offset     = 0;
-    session->rtp.rcv_ts_offset       = 0;
+    session->rtp.snd_time_offset = 0;
+    session->rtp.snd_ts_offset = 0;
+    session->rtp.snd_rand_offset = 0;
+    session->rtp.snd_last_ts = 0;
+    session->rtp.rcv_time_offset = 0;
+    session->rtp.rcv_ts_offset = 0;
     session->rtp.rcv_query_ts_offset = 0;
-    session->rtp.rcv_last_ts         = 0;
-    session->rtp.rcv_last_app_ts     = 0;
-    session->rtp.hwrcv_extseq        = 0;
+    session->rtp.rcv_last_ts = 0;
+    session->rtp.rcv_last_app_ts = 0;
+    session->rtp.hwrcv_extseq = 0;
     session->rtp.hwrcv_since_last_SR = 0;
-    session->rtp.snd_seq             = 0;
-    session->rtp.sent_payload_bytes  = 0;
+    session->rtp.snd_seq = 0;
+    session->rtp.sent_payload_bytes = 0;
     rtp_session_clear_send_error_code(session);
     rtp_session_clear_recv_error_code(session);
     rtp_stats_reset(&session->rtp.stats);
@@ -1673,7 +1676,7 @@ void rtp_session_rtcp_set_lost_packet_value(
     struct _RtpSession *s, const unsigned int value)
 {
     s->lost_packets_test_vector = value;
-    s->flags                   |= RTCP_OVERRIDE_LOST_PACKETS;
+    s->flags |= RTCP_OVERRIDE_LOST_PACKETS;
 }
 
 /**
@@ -1687,7 +1690,7 @@ void rtp_session_rtcp_set_jitter_value(
     struct _RtpSession *s, const unsigned int value)
 {
     s->interarrival_jitter_test_vector = value;
-    s->flags                          |= RTCP_OVERRIDE_JITTER;
+    s->flags |= RTCP_OVERRIDE_JITTER;
 }
 
 /**
@@ -1715,7 +1718,7 @@ void rtp_session_rtcp_set_delay_value(
     struct _RtpSession *s, const unsigned int value)
 {
     s->delay_test_vector = value;
-    s->flags            |= RTCP_OVERRIDE_DELAY;
+    s->flags |= RTCP_OVERRIDE_DELAY;
 }
 
 void rtp_session_reset_stats(
@@ -1790,8 +1793,8 @@ static float compute_bw(
     if (bytes == 0) return 0;
     gettimeofday(&current, NULL);
     time = (float)(current.tv_sec - orig->tv_sec) +
-           ((float)(current.tv_usec - orig->tv_usec) * 1e-6);
-    bw   = ((float)bytes) * 8 / (time + 0.001);
+        ((float)(current.tv_usec - orig->tv_usec) * 1e-6);
+    bw = ((float)bytes) * 8 / (time + 0.001);
     /*+0.0001 avoids a division by zero without changing the results significatively*/
     return bw;
 }
@@ -1800,7 +1803,7 @@ float rtp_session_compute_recv_bandwidth(
     RtpSession *session)
 {
     float bw;
-    bw                      = compute_bw(&session->rtp.recv_bw_start, session->rtp.recv_bytes);
+    bw = compute_bw(&session->rtp.recv_bw_start, session->rtp.recv_bytes);
     session->rtp.recv_bytes = 0;
     return bw;
 }
@@ -1809,7 +1812,7 @@ float rtp_session_compute_send_bandwidth(
     RtpSession *session)
 {
     float bw;
-    bw                      = compute_bw(&session->rtp.send_bw_start, session->rtp.sent_bytes);
+    bw = compute_bw(&session->rtp.send_bw_start, session->rtp.sent_bytes);
     session->rtp.sent_bytes = 0;
     return bw;
 }
@@ -1961,7 +1964,7 @@ int rtp_get_extheader(
 }
 
 /**
- *  Gets last time a valid RTP or RTCP packet was received.
+ * Gets last time a valid RTP or RTCP packet was received.
  * @param session RtpSession to get last receive time from.
  * @param tv Pointer to struct timeval to fill.
  *
@@ -1983,15 +1986,15 @@ uint32_t rtp_session_time_to_ts(
     PayloadType *payload;
     payload =
         rtp_profile_get_payload(session->snd.profile,
-                                session->snd.pt);
+            session->snd.pt);
     if (payload == NULL)
     {
         ortp_warning
-            ("rtp_session_ts_to_t: use of unsupported payload type %d.", session->snd.pt);
+        ("rtp_session_ts_to_t: use of unsupported payload type %d.", session->snd.pt);
         return 0;
     }
     /* the return value is in milisecond */
-    return (uint32_t) (payload->clock_rate * (double) (millisecs / 1000.0f));
+    return (uint32_t)(payload->clock_rate * (double)(millisecs / 1000.0f));
 }
 
 /* function used by the scheduler only:*/
@@ -2001,17 +2004,17 @@ uint32_t rtp_session_ts_to_time(
     PayloadType *payload;
     payload =
         rtp_profile_get_payload(session->snd.profile,
-                                session->snd.pt);
+            session->snd.pt);
     if (payload == NULL)
     {
         ortp_warning
-            ("rtp_session_ts_to_t: use of unsupported payload type %d.", session->snd.pt);
+        ("rtp_session_ts_to_t: use of unsupported payload type %d.", session->snd.pt);
         return 0;
     }
     /* the return value is in milisecond */
-    return (uint32_t) (1000.0 *
-                       ((double) timestamp /
-                        (double) payload->clock_rate));
+    return (uint32_t)(1000.0 *
+        ((double)timestamp /
+        (double)payload->clock_rate));
 }
 
 /* time is the number of miliseconds elapsed since the start of the scheduler */

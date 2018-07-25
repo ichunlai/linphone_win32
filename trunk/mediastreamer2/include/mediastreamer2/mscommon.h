@@ -56,7 +56,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef MEDIASTREAMER2_EXPORTS
 #define MS2_PUBLIC	__declspec(dllexport)
 #else
-#define MS2_PUBLIC	__declspec(dllimport)
+//#define MS2_PUBLIC	__declspec(dllimport)
+#define MS2_PUBLIC extern
 #endif
 #else
 #define MS2_PUBLIC

@@ -1500,6 +1500,10 @@ void linphone_proxy_config_set_state(
 {
     LinphoneCore *lc = cfg->lc;
     cfg->state = state;
+    if (lc && lc->vtable.registration_state_changed)
+    {
+        lc->vtable.registration_state_changed(lc, cfg, state, message);
+    }
 }
 
 LinphoneRegistrationState linphone_proxy_config_get_state(

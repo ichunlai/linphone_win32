@@ -333,9 +333,16 @@ sendMessage( Socket fd, char* buf, int l,
       to.sin_port = htons(dstPort);
       to.sin_addr.s_addr = htonl(dstIp);
 
-      ortp_error("%s(%d): sendto\r\n", __FILE__, __LINE__);
+      //ortp_error("%s(%d): sendto\r\n", __FILE__, __LINE__);
+      if (1)
+      {
+          char *ip = inet_ntoa(((struct sockaddr_in*)&to)->sin_addr);
+          int port = htons(((struct sockaddr_in*)&to)->sin_port);
+          ortp_error("%s(%d): sendMessage to %s:%d\n", __FILE__, __LINE__, ip, port);
+          //free(ip);
+      }
       s = sendto(fd, buf, l, 0,(struct sockaddr*)&to, toLen);
-      ortp_error("%s(%d): s(%d)\r\n", __FILE__, __LINE__, s);
+      //ortp_error("%s(%d): s(%d)\r\n", __FILE__, __LINE__, s);
    }
     
    if ( s == SOCKET_ERROR )

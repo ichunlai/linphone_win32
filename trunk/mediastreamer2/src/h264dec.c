@@ -22,9 +22,7 @@
 #include "mediastreamer2/rfc3984.h"
 #include "mediastreamer2/msvideo.h"
 #include "mediastreamer2/msticker.h"
-
 #include "ffmpeg-priv.h"
-
 #include "ortp/b64.h"
 
 extern "C" {
@@ -75,6 +73,8 @@ static void dec_init(
     MSFilter *f)
 {
     DecData *d = (DecData *)ms_new(DecData, 1);
+    if (d == NULL)
+        return;
     ffmpeg_init();
     d->yuv_msg                  = NULL;
     d->sps                      = NULL;
@@ -108,14 +108,17 @@ static void dec_reinit(
 static void dec_uninit(
     MSFilter *f)
 {
-    DecData *d = (DecData *)f->data;
-    rfc3984_uninit(&d->unpacker);
-    avcodec_close(&d->av_context);
-    if (d->yuv_msg) freemsg(d->yuv_msg);
-    if (d->sps) freemsg(d->sps);
-    if (d->pps) freemsg(d->pps);
-    ms_free(d->bitstream);
-    ms_free(d);
+    if (f != NULL && f->data != NULL)
+    {
+        DecData *d = (DecData *)f->data;
+        rfc3984_uninit(&d->unpacker);
+        avcodec_close(&d->av_context);
+        if (d->yuv_msg) freemsg(d->yuv_msg);
+        if (d->sps) freemsg(d->sps);
+        if (d->pps) freemsg(d->pps);
+        ms_free(d->bitstream);
+        ms_free(d);
+    }
 }
 
 static mblk_t *get_as_yuvmsg(
@@ -323,6 +326,7 @@ static void dec_process(
                 pkt.data = p;
                 pkt.size = end - p;
                 len      = avcodec_decode_video2(&d->av_context, &orig, &got_picture, &pkt);
+                ms_warning("avcodec_decode_video2=%d", len);
                 if (len <= 0)
                 {
                     ms_warning("ms_AVdecoder_process: error %i.", len);

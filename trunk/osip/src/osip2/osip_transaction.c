@@ -643,7 +643,7 @@ __osip_transaction_matching_response_osip_to_xict_17_1_3(
     }
 
     if ((b_request->gvalue == NULL)
-        || (b_response->gvalue == NULL))
+     || (b_response->gvalue == NULL))
     {
         OSIP_TRACE(osip_trace
                        (__FILE__, __LINE__, OSIP_BUG, NULL,

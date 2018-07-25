@@ -72,11 +72,11 @@ eXosip_event_t *eXosip_event_init_for_call(int type, eXosip_call_t * jc,
 	if (je == NULL)
 		return NULL;
 
-	je->cid = jc->c_id;
+	je->cid = jc->c_id;     // call id
 	if (jd != NULL)
-		je->did = jd->d_id;
+		je->did = jd->d_id; // dialog id
 	if (tr != NULL)
-		je->tid = tr->transactionid;
+		je->tid = tr->transactionid;    // transaction id
 
 	je->external_reference = jc->external_reference;
 
@@ -108,7 +108,6 @@ eXosip_event_t *eXosip_event_init_for_subscribe(int type, eXosip_subscribe_t * j
 	je->ss_reason = js->s_ss_reason;
 
 	/* je->external_reference = js->external_reference; */
-
 	_eXosip_event_fill_messages(je, tr);
 
 	return je;
@@ -136,7 +135,6 @@ eXosip_event_t *eXosip_event_init_for_notify(int type, eXosip_notify_t * jn,
 	je->ss_reason = jn->n_ss_reason;
 
 	/*je->external_reference = jc->external_reference; */
-
 	_eXosip_event_fill_messages(je, tr);
 
 	return je;
@@ -176,6 +174,7 @@ eXosip_event_t *eXosip_event_init_for_message(int type, osip_transaction_t * tr)
 	return je;
 }
 
+// malloc event and set event type
 int eXosip_event_init(eXosip_event_t ** je, int type)
 {
 	*je = (eXosip_event_t *) osip_malloc(sizeof(eXosip_event_t));
@@ -466,5 +465,4 @@ eXosip_event_t *eXosip_event_get()
 	je = (eXosip_event_t *) osip_fifo_get(eXosip.j_events);
 	return je;
 }
-
 #endif

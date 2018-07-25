@@ -35,7 +35,6 @@ extern void __register_ffmpeg_encoders_if_possible(void);
 #include "mediastreamer2/msfilter.h"
 
 #include "mediastreamer2/basedescs.h"
-#include "mediastreamer2/voipdescs.h"
 #include "mediastreamer2/mssndcard.h"
 #include "mediastreamer2/mswebcam.h"
 
@@ -532,7 +531,6 @@ void ms_unload_plugins()
 #endif
 }
 
-
 #ifdef ANDROID
     #define LOG_DOMAIN "mediastreamer"
 static void ms_android_log_handler(
@@ -562,7 +560,6 @@ static void ms_android_log_handler(
 void ms_base_init()
 {
     int              i;
-    MSSndCardManager *cm;
 
 #if !defined(_WIN32_WCE)
     if (getenv("MEDIASTREAMER_DEBUG") != NULL)
@@ -582,27 +579,12 @@ void ms_base_init()
     }
 
     ms_message("ms_base_init() done");
-    /* register builtin MSFilter's */
-    for (i = 0; ms_filter_descs[i] != NULL; i++)
-    {
-        ms_filter_register(ms_filter_descs[i]);
-    }
-    ms_message("Registering all soundcard handlers");
-
-#ifdef PACKAGE_PLUGINS_DIR
-    ms_message("Loading plugins");
-    ms_load_plugins(PACKAGE_PLUGINS_DIR);
-#endif
-    ms_message("ms_init() done");
 }
 
 void ms_base_exit()
 {
     ms_filter_unregister_all();
-    ms_snd_card_manager_destroy();
-#ifdef VIDEO_ENABLED
-    ms_web_cam_manager_destroy();
-#endif
+    ms_unload_plugins();
 }
 
 void ms_plugins_init(

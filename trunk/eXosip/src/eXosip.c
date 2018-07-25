@@ -789,6 +789,7 @@ eXosip_retransmit_lost200ok()
                         if (i == OSIP_SUCCESS)
                         {
                             report_call_event(EXOSIP_CALL_CLOSED, jc, jd, NULL);
+                            report_call_event(EXOSIP_CALL_RELEASED, jc, jd, NULL);    // iclai
                         }
                     }
                     else if (jd->d_timer < now)

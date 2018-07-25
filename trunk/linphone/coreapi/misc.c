@@ -774,7 +774,7 @@ void linphone_core_update_ice_state_in_call_stats(
     IceCheckList    *video_check_list;
     IceSessionState session_state;
 
-    if (call->ice_session == NULL) return;
+    if (call == NULL || call->ice_session == NULL) return;
     audio_check_list = ice_session_check_list(call->ice_session, 0);
     video_check_list = ice_session_check_list(call->ice_session, 1);
     if (audio_check_list == NULL) return;

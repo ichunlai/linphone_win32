@@ -48,7 +48,7 @@ osip_message_set_from(
     if (sip == NULL || hvalue == NULL || hvalue[0] == '\0')
         return OSIP_SUCCESS;
 
-    if (sip->from != NULL)
+    if (sip->from != NULL)  // already has value
         return OSIP_SYNTAXERROR;
     i                     = osip_from_init(&(sip->from));
     if (i != 0)
@@ -78,6 +78,8 @@ osip_message_get_from(
 }
 #endif
 
+// malloc and init the osip_from_t object which is used to store the SIP from address.
+// return 0 if success, otherwise the error code.
 int
 osip_from_init(
     osip_from_t **from)
@@ -87,7 +89,7 @@ osip_from_init(
         return OSIP_NOMEM;
     (*from)->displayname = NULL;
     (*from)->url         = NULL;
-    osip_list_init(&(*from)->gen_params);
+    osip_list_init(&(*from)->gen_params);   // general parameters
 
     return OSIP_SUCCESS;
 }
@@ -98,17 +100,15 @@ void
 osip_from_free(
     osip_from_t *from)
 {
-    if (from == NULL)
-        return;
-    if (from->url != NULL)
+    if (from != NULL)
     {
         osip_uri_free(from->url);
+        osip_free(from->displayname);
+
+        osip_generic_param_freelist(&from->gen_params);
+
+        osip_free(from);
     }
-    osip_free(from->displayname);
-
-    osip_generic_param_freelist(&from->gen_params);
-
-    osip_free(from);
 }
 
 /* parses the string as a from header.                   */

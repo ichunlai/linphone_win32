@@ -23,6 +23,7 @@
 #include <osipparser2/osip_port.h>
 #include <osipparser2/osip_list.h>
 
+// init list (no malloc)
 int
 osip_list_init(
     osip_list_t *li)
@@ -33,6 +34,7 @@ osip_list_init(
     return OSIP_SUCCESS;                   /* ok */
 }
 
+// clone_func must return 0 if success, otherwise it means fail.
 int
 osip_list_clone(
     const osip_list_t *src,
@@ -48,7 +50,7 @@ osip_list_clone(
          osip_list_iterator_has_elem(iterator);
          data = osip_list_get_next(&iterator))
     {
-        i    = clone_func(data, &data2);
+        i    = clone_func(data, &data2);    // clone node's data
         if (i != 0)
             return i;
         osip_list_add(dst, data2, -1);
@@ -56,6 +58,9 @@ osip_list_clone(
     return OSIP_SUCCESS;
 }
 
+// free all nodes of the list with special free function @free_func
+// @param li list
+// @param free_func free function used to free the data of the node
 void
 osip_list_special_free(
     osip_list_t *li,
@@ -74,6 +79,8 @@ osip_list_special_free(
     }
 }
 
+// free all nodes of the list
+// @param li list
 void
 osip_list_ofchar_free(
     osip_list_t *li)
@@ -91,6 +98,9 @@ osip_list_ofchar_free(
     }
 }
 
+// Get how many nodes in the list @li
+// @li list
+// @return the number of nodes in the list
 int
 osip_list_size(
     const osip_list_t *li)
@@ -101,6 +111,10 @@ osip_list_size(
     return li->nb_elt;
 }
 
+// Get if position @i is at the end of list @li
+// @li list
+// @i position
+// @return 1: yes, 0: no, nagative value: error code
 int
 osip_list_eol(
     const osip_list_t *li,
@@ -114,11 +128,16 @@ osip_list_eol(
 }
 
 /* index starts from 0; */
+// add a node with content @el at position @pos
+// @param li list
+// @param el data
+// @param pos position to be inserted. if this value is -1, insert at the end.
+// @return position
 int
 osip_list_add(
-    osip_list_t *li,
-    void        *el,
-    int         pos)
+    osip_list_t *li,    
+    void        *el,    
+    int         pos)    
 {
     __node_t *ntmp;
     int      i = 0;
@@ -126,7 +145,7 @@ osip_list_add(
     if (li == NULL)
         return OSIP_BADPARAMETER;
 
-    if (li->nb_elt == 0)
+    if (li->nb_elt == 0)    // if list is empty
     {
         li->node          = (__node_t *) osip_malloc(sizeof(__node_t));
         if (li->node == NULL)
@@ -142,8 +161,7 @@ osip_list_add(
         pos = li->nb_elt;
     }
 
-    ntmp = li->node;            /* exist because nb_elt>0  */
-
+    ntmp = li->node;            /* exist because nb_elt>0  */   // ntmp = the first node in list
     if (pos == 0)               /* pos = 0 insert before first elt  */
     {
         li->node = (__node_t *) osip_malloc(sizeof(__node_t));
@@ -199,6 +217,10 @@ osip_list_add(
 }
 
 /* index starts from 0 */
+// Get the data of node at position @pos
+// @param li list
+// @param pos position
+// @return the data of node at position @pos
 void *
 osip_list_get(
     const osip_list_t *li,
@@ -214,7 +236,7 @@ osip_list_get(
         /* element does not exist */
         return NULL;
 
-    ntmp = li->node;            /* exist because nb_elt>0 */
+    ntmp = li->node;            /* exist because nb_elt>0 */    // ntmp = the first node of the list
 
     while (pos > i)
     {
@@ -225,13 +247,14 @@ osip_list_get(
 }
 
 /* added by bennewit@cs.tu-berlin.de */
+// init the iterator and return the first node's data
 void *
 osip_list_get_first(
     osip_list_t          *li,
     osip_list_iterator_t *iterator)
 {
-    if (0 >= li->nb_elt)
-    {
+    if (0 >= li->nb_elt)    
+    {   // empty list
         iterator->actual = 0;
         return OSIP_SUCCESS;
     }
@@ -245,6 +268,7 @@ osip_list_get_first(
 }
 
 /* added by bennewit@cs.tu-berlin.de */
+// iterate to the next node and return the next node's data
 void *
 osip_list_get_next(
     osip_list_iterator_t *iterator)
@@ -263,6 +287,9 @@ osip_list_get_next(
 }
 
 /* added by bennewit@cs.tu-berlin.de */
+// Remove and free current node without freeing the data of the node
+// @param iterator iterator
+// @return the data of current node in the list
 void *
 osip_list_iterator_remove(
     osip_list_iterator_t *iterator)
@@ -270,22 +297,24 @@ osip_list_iterator_remove(
     if (osip_list_iterator_has_elem(*iterator))
     {
         --(iterator->li->nb_elt);
-
         *(iterator->prev) = iterator->actual->next;
 
-        osip_free(iterator->actual);
+        osip_free(iterator->actual);    // free current node's structure but not data
         iterator->actual  = *(iterator->prev);
     }
 
     if (osip_list_iterator_has_elem(*iterator))
     {
-        return iterator->actual->element;
+        return iterator->actual->element;   // return current node's data
     }
 
     return OSIP_SUCCESS;
 }
 
 /* return -1 if failed */
+// Remove and free the node at position @pos without freeing the data of the node
+// @param li list
+// @param pos the position of the node to be removed
 int
 osip_list_remove(
     osip_list_t *li,
@@ -301,7 +330,7 @@ osip_list_remove(
         /* element does not exist */
         return OSIP_UNDEFINED_ERROR;
 
-    ntmp = li->node;            /* exist because nb_elt>0 */
+    ntmp = li->node;            /* exist because nb_elt>0 */    // ntmp = the first node of the list
 
     if ((pos == 0))             /* special case  */
     {

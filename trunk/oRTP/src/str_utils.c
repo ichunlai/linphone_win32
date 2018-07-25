@@ -56,10 +56,13 @@ dblk_t *datab_alloc(
     dblk_t *db;
     int    total_size = sizeof(dblk_t) + size;
     db            = (dblk_t *) ortp_malloc(total_size);
-    db->db_base   = (uint8_t *)db + sizeof(dblk_t);
-    db->db_lim    = db->db_base + size;
-    db->db_ref    = 1;
-    db->db_freefn = NULL; /* the buffer pointed by db_base must never be freed !*/
+    if (db != NULL)
+    {
+        db->db_base = (uint8_t *)db + sizeof(dblk_t);
+        db->db_lim = db->db_base + size;
+        db->db_ref = 1;
+        db->db_freefn = NULL; /* the buffer pointed by db_base must never be freed !*/
+    }
     return db;
 }
 
@@ -88,12 +91,20 @@ mblk_t *allocb(
     dblk_t *datab;
 
     mp          = (mblk_t *) ortp_malloc(sizeof(mblk_t));
-    mblk_init(mp);
-    datab       = datab_alloc(size);
+    if (mp != NULL)
+    {
+        mblk_init(mp);
+        datab = datab_alloc(size);
+        if (datab == NULL)
+        { 
+            ortp_free(mp);
+            return NULL;
+        }
 
-    mp->b_datap = datab;
-    mp->b_rptr  = mp->b_wptr = datab->db_base;
-    mp->b_next  = mp->b_prev = mp->b_cont = NULL;
+        mp->b_datap = datab;
+        mp->b_rptr = mp->b_wptr = datab->db_base;
+        mp->b_next = mp->b_prev = mp->b_cont = NULL;
+    }
     return mp;
 }
 

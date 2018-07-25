@@ -48,19 +48,22 @@ struct _MSAudioEndpoint{
 
 MSAudioConference * ms_audio_conference_new(const MSAudioConferenceParams *params){
 	MSAudioConference *obj=ms_new0(MSAudioConference,1);
-	int tmp=1;
-	obj->ticker=ms_ticker_new();
-	ms_ticker_set_name(obj->ticker,"Audio conference MSTicker");
-	ms_ticker_set_priority(obj->ticker,__ms_get_default_prio(FALSE));
-	obj->mixer=ms_filter_new(MS_AUDIO_MIXER_ID);
-	obj->params=*params;
-	ms_filter_call_method(obj->mixer,MS_AUDIO_MIXER_ENABLE_CONFERENCE_MODE,&tmp);
-	ms_filter_call_method(obj->mixer,MS_FILTER_SET_SAMPLE_RATE,&obj->params.samplerate);
+    if (obj != NULL)
+    {
+        int tmp = 1;
+        obj->ticker = ms_ticker_new();
+        ms_ticker_set_name(obj->ticker, "Audio conference MSTicker");
+        ms_ticker_set_priority(obj->ticker, __ms_get_default_prio(FALSE));
+        obj->mixer = ms_filter_new(MS_AUDIO_MIXER_ID);
+        obj->params = *params;
+        ms_filter_call_method(obj->mixer, MS_AUDIO_MIXER_ENABLE_CONFERENCE_MODE, &tmp);
+        ms_filter_call_method(obj->mixer, MS_FILTER_SET_SAMPLE_RATE, &obj->params.samplerate);
+    }
 	return obj;
 }
 
 const MSAudioConferenceParams *ms_audio_conference_get_params(MSAudioConference *obj){
-	return &obj->params;
+	return (obj != NULL) ? (&obj->params) : NULL;
 }
 
 static MSCPoint just_before(MSFilter *f){

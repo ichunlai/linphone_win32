@@ -1,21 +1,21 @@
 /*
- The oRTP library is an RTP (Realtime Transport Protocol - rfc3550) stack.
- Copyright (C) 2001  Simon MORLAT simon.morlat@linphone.org
+   The oRTP library is an RTP (Realtime Transport Protocol - rfc3550) stack.
+   Copyright (C) 2001  Simon MORLAT simon.morlat@linphone.org
 
- This library is free software; you can redistribute it and/or
- modify it under the terms of the GNU Lesser General Public
- License as published by the Free Software Foundation; either
- version 2.1 of the License, or (at your option) any later version.
+   This library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
 
- This library is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- Lesser General Public License for more details.
+   This library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
 
- You should have received a copy of the GNU Lesser General Public
- License along with this library; if not, write to the Free Software
- Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
+   You should have received a copy of the GNU Lesser General Public
+   License along with this library; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
 
 /* ====================================================================
  * The Vovida Software License, Version 1.0
@@ -68,84 +68,87 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include "ortp-config.h"
+    #include "ortp-config.h"
 #endif
 
 #ifndef _WIN32_WCE
-#include <errno.h>
+    #include <errno.h>
 #endif
 
 #include <assert.h>
 
 #if defined(WIN32) || defined(_WIN32_WCE)
-#include <winsock2.h>
-#include <stdlib.h>
+    #include <winsock2.h>
+    #include <stdlib.h>
 
-#ifndef snprintf
-#define snprintf _snprintf
-#endif
+    #ifndef snprintf
+        #define snprintf _snprintf
+    #endif
 
- /* #include <io.h> */
-#include <time.h>
-#include <ctype.h> /*for isdigit() */
+/* #include <io.h> */
+    #include <time.h>
+    #include <ctype.h> /*for isdigit() */
 #else
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/types.h> 
-#include <arpa/inet.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/nameser.h>
-#include <resolv.h>
-#include <net/if.h>
+    #include <stdlib.h>
+    #include <unistd.h>
+    #include <string.h>
+    #include <sys/ioctl.h>
+    #include <sys/socket.h>
+    #include <sys/time.h>
+    #include <sys/types.h>
+    #include <arpa/inet.h>
+    #include <fcntl.h>
+    #include <netdb.h>
+    #include <netinet/in.h>
+    #include <arpa/nameser.h>
+    #include <resolv.h>
+    #include <net/if.h>
 
 #endif
 
-
 #if !defined(HAVE_OPENSSL_HMAC_H) || !defined(HAVE_OPENSSL_MD5_H)
-#define NOSSL 1
+    #define NOSSL 1
 #endif
 
 #include "ortp/stun_udp.h"
 #include "ortp/stun.h"
 #include "ortp/ortp.h"
 
-static char *ipaddr(const StunAddress4 *addr)
+static char *ipaddr(
+    const StunAddress4 *addr)
 {
-    static char tmp[512];
+    static char    tmp[512];
     struct in_addr inaddr;
-    char *atmp;
+    char           *atmp;
     inaddr.s_addr = htonl(addr->addr);
-    atmp = (char *)inet_ntoa(inaddr);
+    atmp          = (char *)inet_ntoa(inaddr);
 
     snprintf(tmp, 512, "%s:%i", atmp, addr->port);
     return tmp;
 }
 
 static bool_t
-stunParseAtrAddress(char* body, unsigned int hdrLen, StunAtrAddress4 *result)
+stunParseAtrAddress(
+    char *body, unsigned int hdrLen, StunAtrAddress4 *result)
 {
     if (hdrLen != 8)
     {
         ortp_error("stun: hdrLen wrong for Address\n");
         return FALSE;
     }
-    result->pad = *body++;
+    result->pad    = *body++;
     result->family = *body++;
     if (result->family == IPv4Family)
     {
         uint16_t nport;
         uint32_t naddr;
-        memcpy(&nport, body, 2); body += 2;
+        memcpy(&nport, body, 2);
+        body             += 2;
         result->ipv4.port = ntohs(nport);
 
-        memcpy(&naddr, body, 4); body += 4;
+        memcpy(&naddr, body, 4);
+        body             += 4;
         result->ipv4.addr = ntohl(naddr);
         return TRUE;
     }
@@ -162,12 +165,12 @@ stunParseAtrAddress(char* body, unsigned int hdrLen, StunAtrAddress4 *result)
 }
 
 static bool_t
-stunParseAtrChangeRequest(char* body, unsigned int hdrLen, StunAtrChangeRequest *result)
+stunParseAtrChangeRequest(
+    char *body, unsigned int hdrLen, StunAtrChangeRequest *result)
 {
     if (hdrLen != 4)
     {
         /* ortp_error("stun: hdr length = %i expecting %i\n",hdrLen, sizeof(result)); */
-
         ortp_error("stun: Incorrect size for SA_CHANGEREQUEST");
         return FALSE;
     }
@@ -180,7 +183,8 @@ stunParseAtrChangeRequest(char* body, unsigned int hdrLen, StunAtrChangeRequest 
 }
 
 static bool_t
-stunParseAtrError(char* body, unsigned int hdrLen, StunAtrError *result)
+stunParseAtrError(
+    char *body, unsigned int hdrLen, StunAtrError *result)
 {
     if (hdrLen < 4 || hdrLen >= 128 + 4)
     {
@@ -189,12 +193,13 @@ stunParseAtrError(char* body, unsigned int hdrLen, StunAtrError *result)
     }
     else
     {
-        memcpy(&result->pad, body, 2); body += 2;
-        result->pad = ntohs(result->pad);
-        result->errorClass = *body++;
-        result->number = *body++;
+        memcpy(&result->pad, body, 2);
+        body                              += 2;
+        result->pad                        = ntohs(result->pad);
+        result->errorClass                 = *body++;
+        result->number                     = *body++;
 
-        result->sizeReason = hdrLen - 4;
+        result->sizeReason                 = hdrLen - 4;
         memcpy(&result->reason, body, result->sizeReason);
         result->reason[result->sizeReason] = 0;
         return TRUE;
@@ -202,7 +207,8 @@ stunParseAtrError(char* body, unsigned int hdrLen, StunAtrError *result)
 }
 
 static bool_t
-stunParseAtrUnknown(char* body, unsigned int hdrLen, StunAtrUnknown *result)
+stunParseAtrUnknown(
+    char *body, unsigned int hdrLen, StunAtrUnknown *result)
 {
     if (hdrLen >= sizeof(*result))
     {
@@ -216,7 +222,8 @@ stunParseAtrUnknown(char* body, unsigned int hdrLen, StunAtrUnknown *result)
         result->numAttributes = hdrLen / 4;
         for (i = 0; i < result->numAttributes; i++)
         {
-            memcpy(&result->attrType[i], body, 2); body += 2;
+            memcpy(&result->attrType[i], body, 2);
+            body               += 2;
             result->attrType[i] = ntohs(result->attrType[i]);
         }
         return TRUE;
@@ -224,7 +231,8 @@ stunParseAtrUnknown(char* body, unsigned int hdrLen, StunAtrUnknown *result)
 }
 
 static bool_t
-stunParseAtrString(char* body, unsigned int hdrLen, StunAtrString *result)
+stunParseAtrString(
+    char *body, unsigned int hdrLen, StunAtrString *result)
 {
     if (hdrLen >= STUN_MAX_STRING)
     {
@@ -233,16 +241,16 @@ stunParseAtrString(char* body, unsigned int hdrLen, StunAtrString *result)
     }
     else
     {
-        result->sizeValue = hdrLen;
+        result->sizeValue     = hdrLen;
         memcpy(&result->value, body, hdrLen);
         result->value[hdrLen] = 0;
         return TRUE;
     }
 }
 
-
 static bool_t
-stunParseAtrIntegrity(char* body, unsigned int hdrLen, StunAtrIntegrity *result)
+stunParseAtrIntegrity(
+    char *body, unsigned int hdrLen, StunAtrIntegrity *result)
 {
     if (hdrLen != 20)
     {
@@ -257,7 +265,8 @@ stunParseAtrIntegrity(char* body, unsigned int hdrLen, StunAtrIntegrity *result)
 }
 
 static bool_t
-turnParseAtrChannelNumber(char* body, unsigned int hdrLen, TurnAtrChannelNumber *result)
+turnParseAtrChannelNumber(
+    char *body, unsigned int hdrLen, TurnAtrChannelNumber *result)
 {
     if (hdrLen >= sizeof(*result))
     {
@@ -268,17 +277,18 @@ turnParseAtrChannelNumber(char* body, unsigned int hdrLen, TurnAtrChannelNumber 
     {
         if (hdrLen % 4 != 0) return FALSE;
         memcpy(&result->channelNumber, body, 2);
-        body += 2;
+        body                 += 2;
         result->channelNumber = ntohs(result->channelNumber);
-        memcpy(&result->rffu, body, 2);
-        body += 2;
-        result->rffu = ntohs(result->rffu);
+        memcpy(&result->rffu,          body, 2);
+        body                 += 2;
+        result->rffu          = ntohs(result->rffu);
         return TRUE;
     }
 }
 
 static bool_t
-turnParseAtrLifetime(char* body, unsigned int hdrLen, TurnAtrLifetime *result)
+turnParseAtrLifetime(
+    char *body, unsigned int hdrLen, TurnAtrLifetime *result)
 {
     if (hdrLen != sizeof(*result))
     {
@@ -294,7 +304,8 @@ turnParseAtrLifetime(char* body, unsigned int hdrLen, TurnAtrLifetime *result)
 }
 
 static bool_t
-turnParseAtrData(char* body, unsigned int hdrLen, TurnAtrData *result)
+turnParseAtrData(
+    char *body, unsigned int hdrLen, TurnAtrData *result)
 {
     if (hdrLen >= 1500)
     {
@@ -303,7 +314,7 @@ turnParseAtrData(char* body, unsigned int hdrLen, TurnAtrData *result)
     }
     else
     {
-        result->sizeValue = hdrLen;
+        result->sizeValue     = hdrLen;
         memcpy(&result->value, body, hdrLen);
         result->value[hdrLen] = 0;
         return TRUE;
@@ -311,7 +322,8 @@ turnParseAtrData(char* body, unsigned int hdrLen, TurnAtrData *result)
 }
 
 static bool_t
-turnParseAtrRequestedTransport(char* body, unsigned int hdrLen, TurnAtrRequestedTransport *result)
+turnParseAtrRequestedTransport(
+    char *body, unsigned int hdrLen, TurnAtrRequestedTransport *result)
 {
     if (hdrLen != 4)
     {
@@ -319,33 +331,38 @@ turnParseAtrRequestedTransport(char* body, unsigned int hdrLen, TurnAtrRequested
         return FALSE;
     }
     result->proto = *body++;
-    result->pad1 = *body++;
-    result->pad2 = *body++;
-    result->pad3 = *body++;
+    result->pad1  = *body++;
+    result->pad2  = *body++;
+    result->pad3  = *body++;
     return TRUE;
 }
 
 #if defined(htonq)
 #elif defined(ORTP_BIGENDIAN)
-#define htonq(n) n
-#define ntohq(n) n
+    #define htonq(n) n
+    #define ntohq(n) n
 #else /* little endian */
 static inline uint64_t
-htonq(uint64_t v)
+htonq(
+    uint64_t v)
 {
     return htonl((uint32_t)(v >> 32))
-        | (uint64_t)htonl((uint32_t)v) << 32;
+           | (uint64_t)htonl((uint32_t)v) << 32;
 }
+
 static inline uint64_t
-ntohq(uint64_t v)
+ntohq(
+    uint64_t v)
 {
     return ntohl((uint32_t)(v >> 32))
-        | (uint64_t)ntohl((uint32_t)v) << 32;
+           | (uint64_t)ntohl((uint32_t)v) << 32;
 }
+
 #endif /* little endian */
 
 static bool_t
-turnParseAtrReservationToken(char* body, unsigned int hdrLen, TurnAtrReservationToken *result)
+turnParseAtrReservationToken(
+    char *body, unsigned int hdrLen, TurnAtrReservationToken *result)
 {
     if (hdrLen != 8)
     {
@@ -358,7 +375,8 @@ turnParseAtrReservationToken(char* body, unsigned int hdrLen, TurnAtrReservation
 }
 
 static bool_t
-stunParseAtrFingerprint(char* body, unsigned int hdrLen, StunAtrFingerprint *result)
+stunParseAtrFingerprint(
+    char *body, unsigned int hdrLen, StunAtrFingerprint *result)
 {
     if (hdrLen != 4)
     {
@@ -372,7 +390,8 @@ stunParseAtrFingerprint(char* body, unsigned int hdrLen, StunAtrFingerprint *res
 }
 
 static bool_t
-iceParseAtrPriority(char* body, unsigned int hdrLen, IceAtrPriority *result)
+iceParseAtrPriority(
+    char *body, unsigned int hdrLen, IceAtrPriority *result)
 {
     if (hdrLen != 4)
     {
@@ -386,7 +405,8 @@ iceParseAtrPriority(char* body, unsigned int hdrLen, IceAtrPriority *result)
 }
 
 static bool_t
-iceParseAtrIceControll(char* body, unsigned int hdrLen, IceAtrIceControll *result)
+iceParseAtrIceControll(
+    char *body, unsigned int hdrLen, IceAtrIceControll *result)
 {
     if (hdrLen != 8)
     {
@@ -399,9 +419,10 @@ iceParseAtrIceControll(char* body, unsigned int hdrLen, IceAtrIceControll *resul
 }
 
 bool_t
-stunParseMessage(char* buf, unsigned int bufLen, StunMessage *msg)
+stunParseMessage(
+    char *buf, unsigned int bufLen, StunMessage *msg)
 {
-    char* body;
+    char         *body;
     unsigned int size;
     ortp_debug("stun: Received stun message: %i bytes\n", bufLen);
     memset(msg, 0, sizeof(*msg));
@@ -413,7 +434,7 @@ stunParseMessage(char* buf, unsigned int bufLen, StunMessage *msg)
     }
 
     memcpy(&msg->msgHdr, buf, sizeof(StunMsgHdr));
-    msg->msgHdr.msgType = ntohs(msg->msgHdr.msgType);
+    msg->msgHdr.msgType   = ntohs(msg->msgHdr.msgType);
     msg->msgHdr.msgLength = ntohs(msg->msgHdr.msgLength);
 
     if (msg->msgHdr.msgLength + sizeof(StunMsgHdr) != bufLen)
@@ -431,10 +452,10 @@ stunParseMessage(char* buf, unsigned int bufLen, StunMessage *msg)
     {
         /* !jf! should check that there are enough bytes left in the buffer */
 
-        StunAtrHdr* attr = (StunAtrHdr*)body; /*reinterpret_cast<StunAtrHdr*>(body);*/
+        StunAtrHdr   *attr   = (StunAtrHdr *)body; /*reinterpret_cast<StunAtrHdr*>(body);*/
 
         unsigned int attrLen = ntohs(attr->length);
-        int atrType = ntohs(attr->type);
+        int          atrType = ntohs(attr->type);
 
         if (attrLen + 4 > size)
         {
@@ -457,7 +478,6 @@ stunParseMessage(char* buf, unsigned int bufLen, StunMessage *msg)
             {
                 ortp_debug("stun: SA_MAPPEDADDRESS = %s\n", ipaddr(&msg->mappedAddress.ipv4));
             }
-
         }
         else if (atrType == SA_RESPONSEADDRESS)
         {
@@ -557,11 +577,10 @@ stunParseMessage(char* buf, unsigned int bufLen, StunMessage *msg)
             else
             {
                 ortp_debug("stun: SA_ERRORCODE = %i %i %s\n",
-                    msg->errorCode.errorClass,
-                    msg->errorCode.number,
-                    msg->errorCode.reason);
+                           msg->errorCode.errorClass,
+                           msg->errorCode.number,
+                           msg->errorCode.reason);
             }
-
         }
         else if (atrType == SA_UNKNOWNATTRIBUTE)
         {
@@ -617,10 +636,10 @@ stunParseMessage(char* buf, unsigned int bufLen, StunMessage *msg)
             }
             else
             {
-                uint32_t cookie = 0x2112A442;
+                uint32_t cookie   = 0x2112A442;
                 uint16_t cookie16 = 0x2112A442 >> 16;
-                msg->xorMappedAddress.ipv4.port = msg->xorMappedAddress.ipv4.port^cookie16;
-                msg->xorMappedAddress.ipv4.addr = msg->xorMappedAddress.ipv4.addr^cookie;
+                msg->xorMappedAddress.ipv4.port = msg->xorMappedAddress.ipv4.port ^ cookie16;
+                msg->xorMappedAddress.ipv4.addr = msg->xorMappedAddress.ipv4.addr ^ cookie;
                 ortp_debug("stun: SA_XORMAPPEDADDRESS = %s\n", ipaddr(&msg->xorMappedAddress.ipv4));
             }
         }
@@ -689,8 +708,7 @@ stunParseMessage(char* buf, unsigned int bufLen, StunMessage *msg)
                 return FALSE;
             }
             else
-            {
-            }
+            {}
         }
         else if (atrType == TA_XORRELAYEDADDRESS)
         {
@@ -796,54 +814,58 @@ stunParseMessage(char* buf, unsigned int bufLen, StunMessage *msg)
     return TRUE;
 }
 
-
-static char*
-encode16(char* buf, uint16_t data)
+static char *
+encode16(
+    char *buf, uint16_t data)
 {
     uint16_t ndata = htons(data);
     memcpy(buf, &ndata, sizeof(uint16_t));
     return buf + sizeof(uint16_t);
 }
 
-static char*
-encode32(char* buf, uint32_t data)
+static char *
+encode32(
+    char *buf, uint32_t data)
 {
     uint32_t ndata = htonl(data);
     memcpy(buf, &ndata, sizeof(uint32_t));
     return buf + sizeof(uint32_t);
 }
 
-static char*
-encode64(char* buf, uint64_t data)
+static char *
+encode64(
+    char *buf, uint64_t data)
 {
     uint64_t ndata = htonq(data);
     memcpy(buf, &ndata, sizeof(uint64_t));
     return buf + sizeof(uint64_t);
 }
 
-static char*
-encode(char* buf, const char* data, unsigned int length)
+static char *
+encode(
+    char *buf, const char *data, unsigned int length)
 {
     memcpy(buf, data, length);
     return buf + length;
 }
 
-
-static char*
-encodeAtrAddress4(char* ptr, uint16_t type, const StunAtrAddress4 *atr)
+static char *
+encodeAtrAddress4(
+    char *ptr, uint16_t type, const StunAtrAddress4 *atr)
 {
-    ptr = encode16(ptr, type);
-    ptr = encode16(ptr, 8);
+    ptr    = encode16(ptr, type);
+    ptr    = encode16(ptr, 8);
     *ptr++ = atr->pad;
     *ptr++ = IPv4Family;
-    ptr = encode16(ptr, atr->ipv4.port);
-    ptr = encode32(ptr, atr->ipv4.addr);
+    ptr    = encode16(ptr, atr->ipv4.port);
+    ptr    = encode32(ptr, atr->ipv4.addr);
 
     return ptr;
 }
 
-static char*
-encodeAtrChangeRequest(char* ptr, const StunAtrChangeRequest *atr)
+static char *
+encodeAtrChangeRequest(
+    char *ptr, const StunAtrChangeRequest *atr)
 {
     ptr = encode16(ptr, SA_CHANGEREQUEST);
     ptr = encode16(ptr, 4);
@@ -851,18 +873,19 @@ encodeAtrChangeRequest(char* ptr, const StunAtrChangeRequest *atr)
     return ptr;
 }
 
-static char*
-encodeAtrError(char* ptr, const StunAtrError *atr)
+static char *
+encodeAtrError(
+    char *ptr, const StunAtrError *atr)
 {
     int padding;
     int i;
 
-    ptr = encode16(ptr, SA_ERRORCODE);
-    ptr = encode16(ptr, 4 + atr->sizeReason);
-    ptr = encode16(ptr, atr->pad);
-    *ptr++ = atr->errorClass;
-    *ptr++ = atr->number;
-    ptr = encode(ptr, atr->reason, atr->sizeReason);
+    ptr     = encode16(ptr, SA_ERRORCODE);
+    ptr     = encode16(ptr, 4 + atr->sizeReason);
+    ptr     = encode16(ptr, atr->pad);
+    *ptr++  = atr->errorClass;
+    *ptr++  = atr->number;
+    ptr     = encode(ptr, atr->reason, atr->sizeReason);
 
     padding = (atr->sizeReason + 4) % 4;
     if (padding > 0)
@@ -875,9 +898,9 @@ encodeAtrError(char* ptr, const StunAtrError *atr)
     return ptr;
 }
 
-
-static char*
-encodeAtrUnknown(char* ptr, const StunAtrUnknown *atr)
+static char *
+encodeAtrUnknown(
+    char *ptr, const StunAtrUnknown *atr)
 {
     int i;
     ptr = encode16(ptr, SA_UNKNOWNATTRIBUTE);
@@ -889,15 +912,16 @@ encodeAtrUnknown(char* ptr, const StunAtrUnknown *atr)
     return ptr;
 }
 
-static char*
-encodeAtrString(char* ptr, uint16_t type, const StunAtrString *atr)
+static char *
+encodeAtrString(
+    char *ptr, uint16_t type, const StunAtrString *atr)
 {
     int padding;
     int i;
 
-    ptr = encode16(ptr, type);
-    ptr = encode16(ptr, atr->sizeValue);
-    ptr = encode(ptr, atr->value, atr->sizeValue);
+    ptr     = encode16(ptr, type);
+    ptr     = encode16(ptr, atr->sizeValue);
+    ptr     = encode(ptr, atr->value, atr->sizeValue);
 
     padding = atr->sizeValue % 4;
     if (padding > 0)
@@ -910,9 +934,9 @@ encodeAtrString(char* ptr, uint16_t type, const StunAtrString *atr)
     return ptr;
 }
 
-
-static char*
-encodeAtrIntegrity(char* ptr, const StunAtrIntegrity *atr)
+static char *
+encodeAtrIntegrity(
+    char *ptr, const StunAtrIntegrity *atr)
 {
     ptr = encode16(ptr, SA_MESSAGEINTEGRITY);
     ptr = encode16(ptr, 20);
@@ -920,24 +944,26 @@ encodeAtrIntegrity(char* ptr, const StunAtrIntegrity *atr)
     return ptr;
 }
 
-static char*
-encodeAtrFingerprint(char* ptr, const StunAtrFingerprint *atr)
+static char *
+encodeAtrFingerprint(
+    char *ptr, const StunAtrFingerprint *atr)
 {
     uint32_t val;
-    ptr = encode16(ptr, SA_FINGERPRINT);
-    ptr = encode16(ptr, 4);
+    ptr  = encode16(ptr, SA_FINGERPRINT);
+    ptr  = encode16(ptr, 4);
 
-    val = atr->fingerprint;
+    val  = atr->fingerprint;
     val ^= 0x5354554E;
-    ptr = encode32(ptr, val);
+    ptr  = encode32(ptr, val);
     return ptr;
 }
 
-static char*
-encodeAtrRequestedTransport(char* ptr, const TurnAtrRequestedTransport *atr)
+static char *
+encodeAtrRequestedTransport(
+    char *ptr, const TurnAtrRequestedTransport *atr)
 {
-    ptr = encode16(ptr, TA_REQUESTEDTRANSPORT);
-    ptr = encode16(ptr, 4);
+    ptr    = encode16(ptr, TA_REQUESTEDTRANSPORT);
+    ptr    = encode16(ptr, 4);
     *ptr++ = atr->proto;
     *ptr++ = atr->pad1;
     *ptr++ = atr->pad2;
@@ -945,8 +971,9 @@ encodeAtrRequestedTransport(char* ptr, const TurnAtrRequestedTransport *atr)
     return ptr;
 }
 
-static char*
-encodeAtrLifeTime(char* ptr, const TurnAtrLifetime *atr)
+static char *
+encodeAtrLifeTime(
+    char *ptr, const TurnAtrLifetime *atr)
 {
     ptr = encode16(ptr, TA_LIFETIME);
     ptr = encode16(ptr, 4);
@@ -954,24 +981,27 @@ encodeAtrLifeTime(char* ptr, const TurnAtrLifetime *atr)
     return ptr;
 }
 
-static char*
-encodeAtrDontFragment(char* ptr)
+static char *
+encodeAtrDontFragment(
+    char *ptr)
 {
     ptr = encode16(ptr, TA_DONTFRAGMENT);
     ptr = encode16(ptr, 0);
     return ptr;
 }
 
-static char*
-encodeAtrUseCandidate(char* ptr)
+static char *
+encodeAtrUseCandidate(
+    char *ptr)
 {
     ptr = encode16(ptr, ICEA_USECANDIDATE);
     ptr = encode16(ptr, 0);
     return ptr;
 }
 
-static char*
-encodeAtrPriority(char* ptr, const IceAtrPriority *atr)
+static char *
+encodeAtrPriority(
+    char *ptr, const IceAtrPriority *atr)
 {
     ptr = encode16(ptr, ICEA_PRIORITY);
     ptr = encode16(ptr, 4);
@@ -979,8 +1009,9 @@ encodeAtrPriority(char* ptr, const IceAtrPriority *atr)
     return ptr;
 }
 
-static char*
-encodeAtrIceControll(char* ptr, uint16_t type, const IceAtrIceControll *atr)
+static char *
+encodeAtrIceControll(
+    char *ptr, uint16_t type, const IceAtrIceControll *atr)
 {
     ptr = encode16(ptr, type);
     ptr = encode16(ptr, 8);
@@ -989,18 +1020,19 @@ encodeAtrIceControll(char* ptr, uint16_t type, const IceAtrIceControll *atr)
 }
 
 unsigned int
-stunEncodeMessage(const StunMessage *msg,
-    char* buf,
-    unsigned int bufLen,
+stunEncodeMessage(
+    const StunMessage   *msg,
+    char                *buf,
+    unsigned int        bufLen,
     const StunAtrString *password)
 {
-    char* ptr = buf;
-    char* lengthp;
-    ptr = encode16(ptr, msg->msgHdr.msgType);
+    char *ptr = buf;
+    char *lengthp;
+    ptr     = encode16(ptr, msg->msgHdr.msgType);
     lengthp = ptr;
-    ptr = encode16(ptr, 0);
-    ptr = encode32(ptr, msg->msgHdr.magic_cookie);
-    ptr = encode(ptr, (const char*)msg->msgHdr.tr_id.octet, sizeof(msg->msgHdr.tr_id));
+    ptr     = encode16(ptr, 0);
+    ptr     = encode32(ptr, msg->msgHdr.magic_cookie);
+    ptr     = encode(ptr, (const char *)msg->msgHdr.tr_id.octet, sizeof(msg->msgHdr.tr_id));
 
     ortp_debug("stun: Encoding stun message: ");
 
@@ -1057,9 +1089,9 @@ stunEncodeMessage(const StunMessage *msg,
     if (msg->hasErrorCode)
     {
         ortp_debug("stun: Encoding SA_ERRORCODE: class=%i number=%i reason=%s\n"
-            , msg->errorCode.errorClass
-            , msg->errorCode.number
-            , msg->errorCode.reason);
+                   , msg->errorCode.errorClass
+                   , msg->errorCode.number
+                   , msg->errorCode.reason);
 
         ptr = encodeAtrError(ptr, &msg->errorCode);
     }
@@ -1118,7 +1150,7 @@ stunEncodeMessage(const StunMessage *msg,
     }
 
     if (msg->hasMessageIntegrity
-        &&password != NULL && password->sizeValue > 0
+        && password != NULL && password->sizeValue > 0
         && msg->username.sizeValue > 0
         && msg->realmName.sizeValue > 0)
     {
@@ -1127,19 +1159,19 @@ stunEncodeMessage(const StunMessage *msg,
 
         encode16(lengthp, (uint16_t)(ptr - buf - sizeof(StunMsgHdr) + 24));
         stunCalculateIntegrity_longterm(integrity.hash, buf, (int)(ptr - buf),
-            msg->username.value, msg->realmName.value, password->value);
+                                        msg->username.value, msg->realmName.value, password->value);
         ptr = encodeAtrIntegrity(ptr, &integrity);
     }
     else if (msg->hasMessageIntegrity
-        &&password != NULL && password->sizeValue > 0
-        && msg->username.sizeValue > 0)
+             && password != NULL && password->sizeValue > 0
+             && msg->username.sizeValue > 0)
     {
         StunAtrIntegrity integrity;
         //ortp_debug("stun: HMAC with password: %s\n", password->value );
 
         encode16(lengthp, (uint16_t)(ptr - buf - sizeof(StunMsgHdr) + 24));
         stunCalculateIntegrity_shortterm(integrity.hash, buf, (int)(ptr - buf),
-            password->value);
+                                         password->value);
         ptr = encodeAtrIntegrity(ptr, &integrity);
     }
 
@@ -1150,14 +1182,15 @@ stunEncodeMessage(const StunMessage *msg,
 
         encode16(lengthp, (uint16_t)(ptr - buf - sizeof(StunMsgHdr) + 8));
         fingerprint.fingerprint = stunCalculateFingerprint(buf, (int)(ptr - buf));
-        ptr = encodeAtrFingerprint(ptr, &fingerprint);
+        ptr                     = encodeAtrFingerprint(ptr, &fingerprint);
     }
     encode16(lengthp, (uint16_t)(ptr - buf - sizeof(StunMsgHdr)));
     return (int)(ptr - buf);
 }
 
 int
-stunRand(void)
+stunRand(
+    void)
 {
     /* return 32 bits of random stuff */
     /* assert( sizeof(int) == 4 ); */
@@ -1165,7 +1198,7 @@ stunRand(void)
     if (!init)
     {
         uint64_t tick;
-        int seed;
+        int      seed;
         init = TRUE;
 
 #if defined(_WIN32_WCE)
@@ -1181,30 +1214,30 @@ stunRand(void)
                 mov lowtick, eax
                 mov hightick, edx
             }
-            tick = hightick;
+            tick   = hightick;
             tick <<= 32;
-            tick |= lowtick;
+            tick  |= lowtick;
         }
-#elif defined(__MACH__) 
+#elif defined(__MACH__)
         {
             int fd = open("/dev/random", O_RDONLY);
             read(fd, &tick, sizeof(tick));
             closesocket(fd);
         }
-#elif defined(__GNUC__) && ( defined(__i686__) || defined(__i386__) )
-        asm("rdtsc" : "=A" (tick));
+#elif defined(__GNUC__) && ( defined(__i686__) || defined(__i386__))
+        asm ("rdtsc" : "=A" (tick));
 #elif defined(__GNUC__) && defined(__amd64__)
-        asm("rdtsc" : "=A" (tick));
-#elif defined (__SUNPRO_CC) && defined( __sparc__ )	
+        asm ("rdtsc" : "=A" (tick));
+#elif defined (__SUNPRO_CC) && defined( __sparc__ )
         tick = gethrtime();
-#elif defined(__linux) || defined(__linux__) || defined(HAVE_DEV_RANDOM) 
+#elif defined(__linux) || defined(__linux__) || defined(HAVE_DEV_RANDOM)
         {
-            fd_set fdSet;
-            int maxFd = 0;
+            fd_set         fdSet;
+            int            maxFd = 0;
             struct timeval tv;
-            int e;
+            int            e;
 
-            int fd = open("/dev/random", O_RDONLY);
+            int            fd = open("/dev/random", O_RDONLY);
 
             if (fd < 0)
             {
@@ -1213,12 +1246,12 @@ stunRand(void)
             }
             FD_ZERO(&fdSet);
             FD_SET(fd, &fdSet);
-            maxFd = fd + 1;
+            maxFd      = fd + 1;
 
-            tv.tv_sec = 0;
+            tv.tv_sec  = 0;
             tv.tv_usec = 500;
 
-            e = select(maxFd, &fdSet, NULL, NULL, &tv);
+            e          = select(maxFd, &fdSet, NULL, NULL, &tv);
             if (e <= 0)
             {
                 ortp_error("stun: Failed to get data from random device\n");
@@ -1229,21 +1262,21 @@ stunRand(void)
             closesocket(fd);
         }
 #else
-#     error Need some way to seed the random number generator 
-#endif 
+    #error Need some way to seed the random number generator
+#endif
         seed = (int)(tick);
-#if	defined(_WIN32) || defined(_WIN32_WCE)
+#if defined(_WIN32) || defined(_WIN32_WCE)
         srand(seed);
 #else
         srandom(seed);
 #endif
     }
 
-#if	defined(_WIN32) || defined(_WIN32_WCE)
+#if defined(_WIN32) || defined(_WIN32_WCE)
     /* assert( RAND_MAX == 0x7fff ); */
     {
-        int r1 = rand();
-        int r2 = rand();
+        int r1  = rand();
+        int r2  = rand();
         int ret = (r1 << 16) + r2;
 
         return ret;
@@ -1252,7 +1285,6 @@ stunRand(void)
     return random();
 #endif
 }
-
 
 /* return a random number to use as a port */
 static int
@@ -1268,60 +1300,65 @@ randomPort()
     return ret;
 }
 
-
 #ifdef NOSSL
 void
-stunCalculateIntegrity_longterm(char* hmac, const char* input, int length,
+stunCalculateIntegrity_longterm(
+    char *hmac, const char *input, int length,
     const char *username, const char *realm, const char *password)
 {
     strncpy(hmac, "hmac-not-implemented", 20);
 }
+
 void
-stunCalculateIntegrity_shortterm(char* hmac, const char* input, int length, const char* key)
+stunCalculateIntegrity_shortterm(
+    char *hmac, const char *input, int length, const char *key)
 {
     strncpy(hmac, "hmac-not-implemented", 20);
 }
 
 #else
-#include <openssl/hmac.h>
-#include <openssl/md5.h>
+    #include <openssl/hmac.h>
+    #include <openssl/md5.h>
 
 void
-stunCalculateIntegrity_longterm(char* hmac, const char* input, int length,
+stunCalculateIntegrity_longterm(
+    char *hmac, const char *input, int length,
     const char *username, const char *realm, const char *password)
 {
-    unsigned int resultSize = 0;
+    unsigned int  resultSize = 0;
     unsigned char HA1[16];
-    char HA1_text[1024];
+    char          HA1_text[1024];
 
     snprintf(HA1_text, sizeof(HA1_text), "%s:%s:%s", username, realm, password);
     MD5((unsigned char *)HA1_text, strlen(HA1_text), HA1);
 
     HMAC(EVP_sha1(),
-        HA1, 16,
-        (const unsigned char*)input, length,
-        (unsigned char*)hmac, &resultSize);
+         HA1, 16,
+         (const unsigned char *)input, length,
+         (unsigned char *)hmac, &resultSize);
 }
 
 void
-stunCalculateIntegrity_shortterm(char* hmac, const char* input, int length, const char* key)
+stunCalculateIntegrity_shortterm(
+    char *hmac, const char *input, int length, const char *key)
 {
     unsigned int resultSize = 0;
     HMAC(EVP_sha1(),
-        key, strlen(key),
-        (const unsigned char*)input, length,
-        (unsigned char*)hmac, &resultSize);
+         key, strlen(key),
+         (const unsigned char *)input, length,
+         (unsigned char *)hmac, &resultSize);
 }
 
 #endif
 
 uint32_t
-stunCalculateFingerprint(const char* input, int length)
+stunCalculateFingerprint(
+    const char *input, int length)
 {
     /*-
-    2  *  COPYRIGHT (C) 1986 Gary S. Brown.  You may use this program, or
-    3  *  code or tables extracted from it, as desired without restriction.
-    4  */
+       2  *  COPYRIGHT (C) 1986 Gary S. Brown.  You may use this program, or
+       3  *  code or tables extracted from it, as desired without restriction.
+       4  */
     static uint32_t crc32_tab[] = {
         0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
         0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
@@ -1367,8 +1404,8 @@ stunCalculateFingerprint(const char* input, int length)
         0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94,
         0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
     };
-    const uint8_t *p = (uint8_t*)input;
-    uint32_t crc;
+    const uint8_t   *p = (uint8_t *)input;
+    uint32_t        crc;
 
     crc = ~0U;
     while (length--)
@@ -1377,10 +1414,11 @@ stunCalculateFingerprint(const char* input, int length)
 }
 
 uint64_t
-stunGetSystemTimeSecs(void)
+stunGetSystemTimeSecs(
+    void)
 {
-    uint64_t time = 0;
-#if	defined(_WIN32) || defined(_WIN32_WCE)
+    uint64_t   time = 0;
+#if defined(_WIN32) || defined(_WIN32_WCE)
     SYSTEMTIME t;
     /*  CJ TODO - this probably has bug on wrap around every 24 hours */
     GetSystemTime(&t);
@@ -1394,27 +1432,27 @@ stunGetSystemTimeSecs(void)
     return time;
 }
 
-
 /* returns TRUE if it scucceeded */
 bool_t
-stunParseHostName(const char* peerName,
-    uint32_t* ip,
-    uint16_t* portVal,
-    uint16_t defaultPort)
+stunParseHostName(
+    const char *peerName,
+    uint32_t   *ip,
+    uint16_t   *portVal,
+    uint16_t   defaultPort)
 {
     struct in_addr sin_addr;
 
-    char host[512];
-    char* port = NULL;
-    int portNum = defaultPort;
-    char* sep;
-    struct hostent* h;
+    char           host[512];
+    char           *port   = NULL;
+    int            portNum = defaultPort;
+    char           *sep;
+    struct hostent *h;
 
     strncpy(host, peerName, 512);
     host[512 - 1] = '\0';
 
     /* pull out the port part if present. */
-    sep = strchr(host, ':');
+    sep           = strchr(host, ':');
 
     if (sep == NULL)
     {
@@ -1422,11 +1460,10 @@ stunParseHostName(const char* peerName,
     }
     else
     {
-        char* endPtr = NULL;
-        *sep = '\0';
-        port = sep + 1;
+        char *endPtr = NULL;
+        *sep    = '\0';
+        port    = sep + 1;
         /* set port part */
-
 
         portNum = strtol(port, &endPtr, 10);
 
@@ -1444,8 +1481,8 @@ stunParseHostName(const char* peerName,
 
     /* figure out the host part */
 
-#if	defined(_WIN32) || defined(_WIN32_WCE)
-   /* assert( strlen(host) >= 1 ); */
+#if defined(_WIN32) || defined(_WIN32_WCE)
+    /* assert( strlen(host) >= 1 ); */
     if (isdigit(host[0]))
     {
         /* assume it is a ip address */
@@ -1473,8 +1510,8 @@ stunParseHostName(const char* peerName,
         }
         else
         {
-            sin_addr = *(struct in_addr*)h->h_addr;
-            *ip = ntohl(sin_addr.s_addr);
+            sin_addr = *(struct in_addr *)h->h_addr;
+            *ip      = ntohl(sin_addr.s_addr);
         }
     }
 
@@ -1483,16 +1520,16 @@ stunParseHostName(const char* peerName,
     if (h == NULL)
     {
         /*
-       int err = getErrno();
-       ortp_message("stun: error was %i\n", err);
-        */
+           int err = getErrno();
+           ortp_message("stun: error was %i\n", err);
+         */
         *ip = ntohl(0x7F000001L);
         return FALSE;
     }
     else
     {
-        sin_addr = *(struct in_addr*)h->h_addr;
-        *ip = ntohl(sin_addr.s_addr);
+        sin_addr = *(struct in_addr *)h->h_addr;
+        *ip      = ntohl(sin_addr.s_addr);
     }
 #endif
 
@@ -1501,9 +1538,9 @@ stunParseHostName(const char* peerName,
     return TRUE;
 }
 
-
 bool_t
-stunParseServerName(const char* name, StunAddress4 *addr)
+stunParseServerName(
+    const char *name, StunAddress4 *addr)
 {
     /* assert(name); */
 
@@ -1517,74 +1554,79 @@ stunParseServerName(const char* name, StunAddress4 *addr)
     return ret;
 }
 
-
 static void
-stunCreateErrorResponse(StunMessage *response, int cl, int number, const char* msg)
+stunCreateErrorResponse(
+    StunMessage *response, int cl, int number, const char *msg)
 {
-    response->msgHdr.msgType = (STUN_METHOD_BINDING | STUN_ERR_RESP);
-    response->hasErrorCode = TRUE;
+    response->msgHdr.msgType       = (STUN_METHOD_BINDING | STUN_ERR_RESP);
+    response->hasErrorCode         = TRUE;
     response->errorCode.errorClass = cl;
-    response->errorCode.number = number;
+    response->errorCode.number     = number;
     strcpy(response->errorCode.reason, msg);
 }
 
 #if 0
 static void
-stunCreateSharedSecretErrorResponse(StunMessage& response, int cl, int number, const char* msg)
+stunCreateSharedSecretErrorResponse(
+    StunMessage& response, int cl, int number, const char *msg)
 {
-    response.msgHdr.msgType = SharedSecretErrorResponseMsg;
-    response.hasErrorCode = TRUE;
+    response.msgHdr.msgType       = SharedSecretErrorResponseMsg;
+    response.hasErrorCode         = TRUE;
     response.errorCode.errorClass = cl;
-    response.errorCode.number = number;
+    response.errorCode.number     = number;
     strcpy(response.errorCode.reason, msg);
 }
+
 #endif
 
 #if 0
 static void
-stunCreateSharedSecretResponse(const StunMessage *request, const StunAddress4 *source, StunMessage *response)
+stunCreateSharedSecretResponse(
+    const StunMessage *request, const StunAddress4 *source, StunMessage *response)
 {
     response->msgHdr.msgType = SharedSecretResponseMsg;
-    response->msgHdr.tr_id = request->msgHdr.tr_id;
+    response->msgHdr.tr_id   = request->msgHdr.tr_id;
 
-    response->hasUsername = TRUE;
+    response->hasUsername    = TRUE;
     stunCreateUserName(source, &response->username);
 
-    response->hasPassword = TRUE;
+    response->hasPassword    = TRUE;
     stunCreatePassword(&response->username, &response->password);
 }
+
 #endif
 
 /* This funtion takes a single message sent to a stun server, parses
    and constructs an apropriate repsonse - returns TRUE if message is
    valid */
 bool_t
-stunServerProcessMsg(char* buf,
-    unsigned int bufLen,
-    StunAddress4 *from,
-    StunAddress4 *myAddr,
-    StunAddress4 *altAddr,
-    StunMessage *resp,
-    StunAddress4 *destination,
+stunServerProcessMsg(
+    char          *buf,
+    unsigned int  bufLen,
+    StunAddress4  *from,
+    StunAddress4  *myAddr,
+    StunAddress4  *altAddr,
+    StunMessage   *resp,
+    StunAddress4  *destination,
     StunAtrString *hmacPassword,
-    bool_t* changePort,
-    bool_t* changeIp)
+    bool_t        *changePort,
+    bool_t        *changeIp)
 {
-    int i;
-    StunMessage req;
+    int          i;
+    StunMessage  req;
     StunAddress4 mapped;
     StunAddress4 respondTo;
-    uint32_t flags;
-    bool_t ok;
+    uint32_t     flags;
+    bool_t       ok;
     /* set up information for default response */
 
     memset(&req, 0, sizeof(req));
     memset(resp, 0, sizeof(*resp));
 
-    *changeIp = FALSE;
+    *changeIp   = FALSE;
     *changePort = FALSE;
 
-    ok = stunParseMessage(buf, bufLen, &req);
+    ok          = stunParseMessage(buf, bufLen, &req);
 
     if (!ok)      /* Complete garbage, drop it on the floor */
     {
@@ -1593,9 +1635,9 @@ stunServerProcessMsg(char* buf,
     }
     //ortp_debug("stun: Request parsed ok");
 
-    mapped = req.mappedAddress.ipv4;
+    mapped    = req.mappedAddress.ipv4;
     respondTo = req.responseAddress.ipv4;
-    flags = req.changeRequest.value;
+    flags     = req.changeRequest.value;
 
     if (req.msgHdr.msgType == (STUN_METHOD_BINDING | STUN_REQUEST))
     {
@@ -1641,9 +1683,9 @@ stunServerProcessMsg(char* buf,
                             unsigned int hmacSize = 20;
 
                             HMAC(EVP_sha1(),
-                                "1234", 4,
-                                (const unsigned char*)buf, bufLen - 20 - 4,
-                                hmac, &hmacSize);
+                                 "1234", 4,
+                                 (const unsigned char *)buf, bufLen - 20 - 4,
+                                 hmac, &hmacSize);
                         }
 #endif
 
@@ -1657,8 +1699,8 @@ stunServerProcessMsg(char* buf,
                         /* need to compute this later after message is filled in */
                         resp->hasMessageIntegrity = TRUE;
                         /* assert(req.hasUsername); */
-                        resp->hasUsername = TRUE;
-                        resp->username = req.username; /* copy username in */
+                        resp->hasUsername         = TRUE;
+                        resp->username            = req.username; /* copy username in */
                     }
                 }
                 else
@@ -1682,7 +1724,7 @@ stunServerProcessMsg(char* buf,
             memcpy(&mapped, from, sizeof(StunAddress4));
         }
 
-        *changeIp = (flags & ChangeIpFlag) ? TRUE : FALSE;
+        *changeIp   = (flags & ChangeIpFlag) ? TRUE : FALSE;
         *changePort = (flags & ChangePortFlag) ? TRUE : FALSE;
 
         //ortp_debug("stun: Request is valid:\n");
@@ -1694,7 +1736,7 @@ stunServerProcessMsg(char* buf,
         //ortp_debug("stun: \t mapped= %i\n", mapped.addr );
 
         /* form the outgoing message */
-        resp->msgHdr.msgType = (STUN_METHOD_BINDING | STUN_SUCCESS_RESP);
+        resp->msgHdr.msgType      = (STUN_METHOD_BINDING | STUN_SUCCESS_RESP);
         resp->msgHdr.magic_cookie = ntohl(req.msgHdr.magic_cookie);
         for (i = 0; i < 12; i++)
         {
@@ -1704,20 +1746,20 @@ stunServerProcessMsg(char* buf,
         if (1) /* do xorMapped address or not */
         {
             uint32_t cookie = 0x2112A442;
-            resp->hasXorMappedAddress = TRUE;
+            resp->hasXorMappedAddress        = TRUE;
             resp->xorMappedAddress.ipv4.port = mapped.port ^ (cookie >> 16);
-            resp->xorMappedAddress.ipv4.addr = mapped.addr^cookie;
+            resp->xorMappedAddress.ipv4.addr = mapped.addr ^ cookie;
         }
 
-        resp->hasMappedAddress = TRUE;
-        resp->mappedAddress.ipv4.port = mapped.port;
-        resp->mappedAddress.ipv4.addr = mapped.addr;
+        resp->hasMappedAddress         = TRUE;
+        resp->mappedAddress.ipv4.port  = mapped.port;
+        resp->mappedAddress.ipv4.addr  = mapped.addr;
 
-        resp->hasSourceAddress = TRUE;
-        resp->sourceAddress.ipv4.port = (*changePort) ? altAddr->port : myAddr->port;
-        resp->sourceAddress.ipv4.addr = (*changeIp) ? altAddr->addr : myAddr->addr;
+        resp->hasSourceAddress         = TRUE;
+        resp->sourceAddress.ipv4.port  = (*changePort) ? altAddr->port : myAddr->port;
+        resp->sourceAddress.ipv4.addr  = (*changeIp) ? altAddr->addr : myAddr->addr;
 
-        resp->hasChangedAddress = TRUE;
+        resp->hasChangedAddress        = TRUE;
         resp->changedAddress.ipv4.port = altAddr->port;
         resp->changedAddress.ipv4.addr = altAddr->addr;
 
@@ -1731,7 +1773,7 @@ stunServerProcessMsg(char* buf,
             resp->username.sizeValue = req.username.sizeValue;
         }
 
-        if (1) /* add ServerName */
+        if (1)                                                /* add ServerName */
         {
             const char serverName[] = "oRTP   " STUN_VERSION; /* must pad to mult of 4 */
             resp->hasSoftware = TRUE;
@@ -1758,7 +1800,7 @@ stunServerProcessMsg(char* buf,
             /* assert( sizeof(int) == sizeof(uint32_t) ); */
 
             sscanf(req.username.value, "%x", &source);
-            resp->hasReflectedFrom = TRUE;
+            resp->hasReflectedFrom        = TRUE;
             resp->reflectedFrom.ipv4.port = 0;
             resp->reflectedFrom.ipv4.addr = source;
         }
@@ -1779,7 +1821,8 @@ stunServerProcessMsg(char* buf,
 }
 
 bool_t
-stunInitServer(StunServerInfo *info, const StunAddress4 *myAddr, const StunAddress4 *altAddr, int startMediaPort)
+stunInitServer(
+    StunServerInfo *info, const StunAddress4 *myAddr, const StunAddress4 *altAddr, int startMediaPort)
 {
     /* assert( myAddr.port != 0 ); */
     /* assert( altAddr.port!= 0 ); */
@@ -1787,17 +1830,17 @@ stunInitServer(StunServerInfo *info, const StunAddress4 *myAddr, const StunAddre
     /* assert( altAddr.addr != 0 ); */
 
     /* info->myAddr = myAddr; */
-    info->myAddr.port = myAddr->port;
-    info->myAddr.addr = myAddr->addr;
+    info->myAddr.port  = myAddr->port;
+    info->myAddr.addr  = myAddr->addr;
 
     /* info->altAddr = altAddr; */
     info->altAddr.port = altAddr->port;
     info->altAddr.addr = altAddr->addr;
 
-    info->myFd = INVALID_SOCKET;
-    info->altPortFd = INVALID_SOCKET;
-    info->altIpFd = INVALID_SOCKET;
-    info->altIpPortFd = INVALID_SOCKET;
+    info->myFd         = INVALID_SOCKET;
+    info->altPortFd    = INVALID_SOCKET;
+    info->altIpFd      = INVALID_SOCKET;
+    info->altIpPortFd  = INVALID_SOCKET;
 
     memset(info->relays, 0, sizeof(info->relays));
     if (startMediaPort > 0)
@@ -1807,9 +1850,9 @@ stunInitServer(StunServerInfo *info, const StunAddress4 *myAddr, const StunAddre
 
         for (i = 0; i < MAX_MEDIA_RELAYS; ++i)
         {
-            StunMediaRelay* relay = &info->relays[i];
-            relay->relayPort = startMediaPort + i;
-            relay->fd = 0;
+            StunMediaRelay *relay = &info->relays[i];
+            relay->relayPort  = startMediaPort + i;
+            relay->fd         = 0;
             relay->expireTime = 0;
         }
     }
@@ -1832,7 +1875,6 @@ stunInitServer(StunServerInfo *info, const StunAddress4 *myAddr, const StunAddre
         stunStopServer(info);
         return FALSE;
     }
-
 
     info->altIpFd = INVALID_SOCKET;
     if (altAddr->addr != 0)
@@ -1860,7 +1902,8 @@ stunInitServer(StunServerInfo *info, const StunAddress4 *myAddr, const StunAddre
 }
 
 void
-stunStopServer(StunServerInfo *info)
+stunStopServer(
+    StunServerInfo *info)
 {
     if (info->myFd > 0) closesocket(info->myFd);
     if (info->altPortFd > 0) closesocket(info->altPortFd);
@@ -1872,7 +1915,7 @@ stunStopServer(StunServerInfo *info)
         int i;
         for (i = 0; i < MAX_MEDIA_RELAYS; ++i)
         {
-            StunMediaRelay* relay = &info->relays[i];
+            StunMediaRelay *relay = &info->relays[i];
             if (relay->fd)
             {
                 closesocket(relay->fd);
@@ -1883,46 +1926,47 @@ stunStopServer(StunServerInfo *info)
 }
 
 int
-stunFindLocalInterfaces(uint32_t* addresses, int maxRet)
+stunFindLocalInterfaces(
+    uint32_t *addresses, int maxRet)
 {
 #if defined(WIN32) || defined(_WIN32_WCE) || defined(__sparc__)
     return 0;
 #else
     struct ifconf ifc;
-    int e;
+    int           e;
 
-    int s = socket(AF_INET, SOCK_DGRAM, 0);
-    int len = 100 * sizeof(struct ifreq);
+    int           s   = socket(AF_INET, SOCK_DGRAM, 0);
+    int           len = 100 * sizeof(struct ifreq);
 
-    char buf[100 * sizeof(struct ifreq)];
-    char *ptr;
-    int tl;
-    int count = 0;
+    char          buf[100 * sizeof(struct ifreq)];
+    char          *ptr;
+    int           tl;
+    int           count = 0;
 
     ifc.ifc_len = len;
     ifc.ifc_buf = buf;
 
-    e = ioctl(s, SIOCGIFCONF, &ifc);
-    ptr = buf;
-    tl = ifc.ifc_len;
+    e           = ioctl(s, SIOCGIFCONF, &ifc);
+    ptr         = buf;
+    tl          = ifc.ifc_len;
 
     while ((tl > 0) && (count < maxRet))
     {
-        struct ifreq* ifr = (struct ifreq *)ptr;
-        struct ifreq ifr2;
-        struct sockaddr a;
-        struct sockaddr_in* addr;
+        struct ifreq       *ifr = (struct ifreq *)ptr;
+        struct ifreq       ifr2;
+        struct sockaddr    a;
+        struct sockaddr_in *addr;
 
-        uint32_t ai;
-        int si = sizeof(ifr->ifr_name) + sizeof(struct sockaddr);
-        tl -= si;
+        uint32_t           ai;
+        int                si = sizeof(ifr->ifr_name) + sizeof(struct sockaddr);
+        tl  -= si;
         ptr += si;
         /* char* name = ifr->ifr_ifrn.ifrn_name; */
         /* cerr << "name = " << name ); */
 
         ifr2 = *ifr;
 
-        e = ioctl(s, SIOCGIFADDR, &ifr2);
+        e    = ioctl(s, SIOCGIFADDR, &ifr2);
         if (e == -1)
         {
             break;
@@ -1930,15 +1974,14 @@ stunFindLocalInterfaces(uint32_t* addresses, int maxRet)
 
         /* cerr << "ioctl addr e = " << e ; */
 
-        a = ifr2.ifr_addr;
-        addr = (struct sockaddr_in*) &a;
+        a    = ifr2.ifr_addr;
+        addr = (struct sockaddr_in *) &a;
 
-        ai = ntohl(addr->sin_addr.s_addr);
+        ai   = ntohl(addr->sin_addr.s_addr);
         if ((int)((ai >> 24) & 0xFF) != 127)
         {
             addresses[count++] = ai;
         }
-
     }
 
     closesocket(s);
@@ -1947,9 +1990,9 @@ stunFindLocalInterfaces(uint32_t* addresses, int maxRet)
 #endif
 }
 
-
 void
-stunBuildReqSimple(StunMessage* msg,
+stunBuildReqSimple(
+    StunMessage *msg,
     const StunAtrString *username,
     bool_t changePort, bool_t changeIp, unsigned int id)
 {
@@ -1957,7 +2000,7 @@ stunBuildReqSimple(StunMessage* msg,
     /* assert( msg ); */
     memset(msg, 0, sizeof(*msg));
 
-    msg->msgHdr.msgType = (STUN_METHOD_BINDING | STUN_REQUEST);
+    msg->msgHdr.msgType      = (STUN_METHOD_BINDING | STUN_REQUEST);
 
     msg->msgHdr.magic_cookie = 0x2112A442;
     for (i = 0; i < 12; i = i + 4)
@@ -1977,9 +2020,9 @@ stunBuildReqSimple(StunMessage* msg,
 
     if (changePort == TRUE || changeIp == TRUE)
     {
-        msg->hasChangeRequest = TRUE;
+        msg->hasChangeRequest    = TRUE;
         msg->changeRequest.value = (changeIp ? ChangeIpFlag : 0) |
-            (changePort ? ChangePortFlag : 0);
+                                   (changePort ? ChangePortFlag : 0);
     }
 
     if (username != NULL && username->sizeValue > 0)
@@ -1990,21 +2033,21 @@ stunBuildReqSimple(StunMessage* msg,
     }
 }
 
-
 static void
-stunSendTest(Socket myFd, StunAddress4 *dest,
+stunSendTest(
+    Socket myFd, StunAddress4 *dest,
     const StunAtrString *username, const StunAtrString *password,
     int testNum)
 {
     /* assert( dest.addr != 0 ); */
     /* assert( dest.port != 0 ); */
 
-    bool_t changePort = FALSE;
-    bool_t changeIP = FALSE;
+    bool_t      changePort = FALSE;
+    bool_t      changeIP   = FALSE;
 
     StunMessage req;
-    char buf[STUN_MAX_MESSAGE_SIZE];
-    int len = STUN_MAX_MESSAGE_SIZE;
+    char        buf[STUN_MAX_MESSAGE_SIZE];
+    int         len = STUN_MAX_MESSAGE_SIZE;
 
     switch (testNum)
     {
@@ -2014,18 +2057,18 @@ stunSendTest(Socket myFd, StunAddress4 *dest,
         break;
     case 2:
         /* changePort=TRUE; */
-        changeIP = TRUE;
+        changeIP   = TRUE;
         break;
     case 3:
         changePort = TRUE;
         break;
     case 4:
-        changeIP = TRUE;
+        changeIP   = TRUE;
         break;
-        /* case 5:
-            discard=TRUE;
-            break;
-               */
+    /* case 5:
+        discard=TRUE;
+        break;
+     */
     default:
         ortp_error("stun: Test %i is unkown\n", testNum);
         return; /* error */
@@ -2034,36 +2077,36 @@ stunSendTest(Socket myFd, StunAddress4 *dest,
     memset(&req, 0, sizeof(StunMessage));
 
     stunBuildReqSimple(&req, username,
-        changePort, changeIP,
-        testNum);
+                       changePort, changeIP,
+                       testNum);
 
     len = stunEncodeMessage(&req, buf, len, password);
 
-    //ortp_debug("stun: About to send msg of len %i to %s\n", len, ipaddr(dest) );
+    ortp_debug("stun: About to send msg of len %i to %s\n", len, ipaddr(dest));
 
     sendMessage(myFd, buf, len, dest->addr, dest->port);
 
     /* add some delay so the packets don't get sent too quickly */
-#if defined(_WIN32_WCE) 
+#if defined(_WIN32_WCE)
     Sleep(10);
 #elif defined(WIN32)/* !cj! TODO - should fix this up in windows */
     {
         clock_t now = clock();
         /* assert( CLOCKS_PER_SEC == 1000 ); */
-        while (clock() <= now + 10) {};
+        while (clock() <= now + 10)
+        {}
     }
 #else
     usleep(10 * 1000);
 #endif
-
 }
-
 
 #if 0
 void
-stunGetUserNameAndPassword(const StunAddress4 *dest,
-    StunAtrString* username,
-    StunAtrString* password)
+stunGetUserNameAndPassword(
+    const StunAddress4 *dest,
+    StunAtrString      *username,
+    StunAtrString      *password)
 {
     /* !cj! This is totally bogus - need to make TLS connection to dest and get a */
     /* username and password to use */
@@ -2073,21 +2116,22 @@ stunGetUserNameAndPassword(const StunAddress4 *dest,
 #endif
 
 int
-stunTest(StunAddress4 *dest, int testNum, StunAddress4* sAddr, StunAddress4 *sMappedAddr, StunAddress4* sChangedAddr)
+stunTest(
+    StunAddress4 *dest, int testNum, StunAddress4 *sAddr, StunAddress4 *sMappedAddr, StunAddress4 *sChangedAddr)
 {
     /* assert( dest.addr != 0 ); */
     /* assert( dest.port != 0 ); */
 
-    int port = randomPort();
-    uint32_t interfaceIp = 0;
-    Socket myFd;
+    int           port        = randomPort();
+    uint32_t      interfaceIp = 0;
+    Socket        myFd;
     StunAtrString username;
     StunAtrString password;
-    char msg[STUN_MAX_MESSAGE_SIZE];
-    int msgLen = STUN_MAX_MESSAGE_SIZE;
-    StunAddress4 from;
-    StunMessage resp;
-    bool_t ok;
+    char          msg[STUN_MAX_MESSAGE_SIZE];
+    int           msgLen = STUN_MAX_MESSAGE_SIZE;
+    StunAddress4  from;
+    StunMessage   resp;
+    bool_t        ok;
 
     if (sAddr)
     {
@@ -2111,10 +2155,10 @@ stunTest(StunAddress4 *dest, int testNum, StunAddress4* sAddr, StunAddress4 *sMa
     stunSendTest(myFd, dest, &username, &password, testNum);
 
     ok = getMessage(myFd,
-        msg,
-        &msgLen,
-        &from.addr,
-        &from.port);
+                    msg,
+                    &msgLen,
+                    &from.addr,
+                    &from.port);
     closesocket(myFd);
     if (!ok)
         return -1;
@@ -2151,41 +2195,39 @@ stunTest(StunAddress4 *dest, int testNum, StunAddress4* sAddr, StunAddress4 *sMa
         return -1;
 }
 
-
-
-
 NatType
-stunNatType(StunAddress4 *dest,
-    bool_t* preservePort, /* if set, is return for if NAT preservers ports or not */
-    bool_t* hairpin,  /* if set, is the return for if NAT will hairpin packets */
-    int port, /* port to use for the test, 0 to choose random port */
-    StunAddress4* sAddr /* NIC to use */
-)
+stunNatType(
+    StunAddress4 *dest,
+    bool_t       *preservePort, /* if set, is return for if NAT preservers ports or not */
+    bool_t       *hairpin,      /* if set, is the return for if NAT will hairpin packets */
+    int          port,          /* port to use for the test, 0 to choose random port */
+    StunAddress4 *sAddr         /* NIC to use */
+    )
 {
     /* assert( dest.addr != 0 ); */
     /* assert( dest.port != 0 ); */
-    uint32_t interfaceIp = 0;
-    Socket myFd1;
-    Socket myFd2;
+    uint32_t      interfaceIp = 0;
+    Socket        myFd1;
+    Socket        myFd2;
 
-    bool_t respTestI = FALSE;
-    bool_t isNat = TRUE;
+    bool_t        respTestI    = FALSE;
+    bool_t        isNat        = TRUE;
     /*StunAddress4 testIchangedAddr;*/
-    StunAddress4 testImappedAddr;
-    bool_t respTestI2 = FALSE;
-    bool_t mappedIpSame = TRUE;
-    StunAddress4 testI2mappedAddr;
+    StunAddress4  testImappedAddr;
+    bool_t        respTestI2   = FALSE;
+    bool_t        mappedIpSame = TRUE;
+    StunAddress4  testI2mappedAddr;
     /* StunAddress4 testI2dest=dest; */
-    StunAddress4 testI2dest;
-    bool_t respTestII = FALSE;
-    bool_t respTestIII = FALSE;
-    bool_t respTestHairpin = FALSE;
+    StunAddress4  testI2dest;
+    bool_t        respTestII      = FALSE;
+    bool_t        respTestIII     = FALSE;
+    bool_t        respTestHairpin = FALSE;
     StunAtrString username;
     StunAtrString password;
-    int count = 0;
-    uint64_t second_started;
-    uint64_t second_elapsed;
-    Socket s;
+    int           count           = 0;
+    uint64_t      second_started;
+    uint64_t      second_elapsed;
+    Socket        s;
 
     if (hairpin)
     {
@@ -2220,12 +2262,11 @@ stunNatType(StunAddress4 *dest,
     username.sizeValue = 0;
     password.sizeValue = 0;
 
-#if 0 
+#if 0
     stunGetUserNameAndPassword(dest, username, password);
 #endif
 
     /* stunSendTest( myFd1, dest, username, password, 1 ); */
-
 
     second_started = stunGetSystemTimeSecs();
     second_elapsed = 1;
@@ -2233,34 +2274,37 @@ stunNatType(StunAddress4 *dest,
     while (count < 3 && second_elapsed < 5)
     {
         struct timeval tv;
-        fd_set fdSet;
-        int err;
-        int e;
+        fd_set         fdSet;
+        int            err;
+        int            e;
 
 #if defined(WIN32) || defined(_WIN32_WCE)
-        unsigned int fdSetSize;
+        unsigned int   fdSetSize;
 #else
-        int fdSetSize;
+        int            fdSetSize;
 #endif
 
         second_elapsed = stunGetSystemTimeSecs() - second_started;
 
-        FD_ZERO(&fdSet); fdSetSize = 0;
-        FD_SET(myFd1, &fdSet); fdSetSize = (myFd1 + 1 > fdSetSize) ? myFd1 + 1 : fdSetSize;
-        FD_SET(myFd2, &fdSet); fdSetSize = (myFd2 + 1 > fdSetSize) ? myFd2 + 1 : fdSetSize;
-        tv.tv_sec = 0;
-        tv.tv_usec = 500 * 1000; /* 150 ms */
+        FD_ZERO(&fdSet);
+        fdSetSize      = 0;
+        FD_SET(myFd1, &fdSet);
+        fdSetSize      = (myFd1 + 1 > fdSetSize) ? myFd1 + 1 : fdSetSize;
+        FD_SET(myFd2, &fdSet);
+        fdSetSize      = (myFd2 + 1 > fdSetSize) ? myFd2 + 1 : fdSetSize;
+        tv.tv_sec      = 0;
+        tv.tv_usec     = 500 * 1000; /* 150 ms */
         if (count == 0) tv.tv_usec = 0;
 
-        err = select(fdSetSize, &fdSet, NULL, NULL, &tv);
-        e = getErrno();
+        err            = select(fdSetSize, &fdSet, NULL, NULL, &tv);
+        e              = getErrno();
         if (err == SOCKET_ERROR)
         {
             /* error occured */
 #if !defined(_WIN32_WCE)
             ortp_error("stun: Error %i %s in select\n", e, strerror(e));
 #else
-            ortp_error("stun: Error %i in select\n", e);
+            ortp_error("stun: Error %i in select\n",    e);
 #endif
             closesocket(myFd1); /* AMD */
             closesocket(myFd2); /* AMD */
@@ -2303,7 +2347,6 @@ stunNatType(StunAddress4 *dest,
                     stunSendTest(myFd1, &testImappedAddr, &username, &password, 11);
                 }
             }
-
         }
         else
         {
@@ -2326,95 +2369,90 @@ stunNatType(StunAddress4 *dest,
                 {
                     if (FD_ISSET(myFd, &fdSet))
                     {
-                        char msg[STUN_MAX_MESSAGE_SIZE];
-                        int msgLen = sizeof(msg);
+                        char         msg[STUN_MAX_MESSAGE_SIZE];
+                        int          msgLen = sizeof(msg);
 
                         StunAddress4 from;
-                        StunMessage resp;
+                        StunMessage  resp;
 
                         getMessage(myFd,
-                            msg,
-                            &msgLen,
-                            &from.addr,
-                            &from.port);
+                                   msg,
+                                   &msgLen,
+                                   &from.addr,
+                                   &from.port);
 
                         memset(&resp, 0, sizeof(StunMessage));
-
                         stunParseMessage(msg, msgLen, &resp);
 
                         //ortp_debug("stun: Received message of type %i id=%i\n",
-                                //resp.msgHdr.msgType,
-                                //(int)(resp.msgHdr.tr_id.octet[0]) );
+                        //resp.msgHdr.msgType,
+                        //(int)(resp.msgHdr.tr_id.octet[0]) );
 
                         switch (resp.msgHdr.tr_id.octet[0])
                         {
                         case 1:
-                        {
-                            if (!respTestI)
                             {
-
-                                /*testIchangedAddr.addr = resp.changedAddress.ipv4.addr;
-                                testIchangedAddr.port = resp.changedAddress.ipv4.port;*/
-                                testImappedAddr.addr = resp.mappedAddress.ipv4.addr;
-                                testImappedAddr.port = resp.mappedAddress.ipv4.port;
-
-                                if (preservePort)
+                                if (!respTestI)
                                 {
-                                    *preservePort = (testImappedAddr.port == port);
+                                    /*testIchangedAddr.addr = resp.changedAddress.ipv4.addr;
+                                       testIchangedAddr.port = resp.changedAddress.ipv4.port;*/
+                                    testImappedAddr.addr = resp.mappedAddress.ipv4.addr;
+                                    testImappedAddr.port = resp.mappedAddress.ipv4.port;
+
+                                    if (preservePort)
+                                    {
+                                        *preservePort = (testImappedAddr.port == port);
+                                    }
+
+                                    testI2dest.addr = resp.changedAddress.ipv4.addr;
+
+                                    if (sAddr)
+                                    {
+                                        sAddr->port = testImappedAddr.port;
+                                        sAddr->addr = testImappedAddr.addr;
+                                    }
+
+                                    count = 0;
                                 }
-
-                                testI2dest.addr = resp.changedAddress.ipv4.addr;
-
-                                if (sAddr)
-                                {
-                                    sAddr->port = testImappedAddr.port;
-                                    sAddr->addr = testImappedAddr.addr;
-                                }
-
-                                count = 0;
+                                respTestI = TRUE;
                             }
-                            respTestI = TRUE;
-                        }
-                        break;
+                            break;
                         case 2:
-                        {
-                            respTestII = TRUE;
-                        }
-                        break;
+                            {
+                                respTestII = TRUE;
+                            }
+                            break;
                         case 3:
-                        {
-                            respTestIII = TRUE;
-                        }
-                        break;
+                            {
+                                respTestIII = TRUE;
+                            }
+                            break;
                         case 10:
-                        {
-                            if (!respTestI2)
                             {
-                                testI2mappedAddr.addr = resp.mappedAddress.ipv4.addr;
-                                testI2mappedAddr.port = resp.mappedAddress.ipv4.port;
-
-                                mappedIpSame = FALSE;
-                                if ((testI2mappedAddr.addr == testImappedAddr.addr) &&
-                                    (testI2mappedAddr.port == testImappedAddr.port))
+                                if (!respTestI2)
                                 {
-                                    mappedIpSame = TRUE;
+                                    testI2mappedAddr.addr = resp.mappedAddress.ipv4.addr;
+                                    testI2mappedAddr.port = resp.mappedAddress.ipv4.port;
+
+                                    mappedIpSame          = FALSE;
+                                    if ((testI2mappedAddr.addr == testImappedAddr.addr) &&
+                                        (testI2mappedAddr.port == testImappedAddr.port))
+                                    {
+                                        mappedIpSame = TRUE;
+                                    }
                                 }
-
-
+                                respTestI2 = TRUE;
                             }
-                            respTestI2 = TRUE;
-                        }
-                        break;
+                            break;
                         case 11:
-                        {
-
-                            if (hairpin)
                             {
-                                *hairpin = TRUE;
+                                if (hairpin)
+                                {
+                                    *hairpin = TRUE;
+                                }
+                                respTestHairpin = TRUE;
                             }
-                            respTestHairpin = TRUE;
-                        }
-                        break;
+                            break;
                         }
                     }
                 }
@@ -2427,7 +2465,7 @@ stunNatType(StunAddress4 *dest,
 
     /* see if we can bind to this address */
     /* cerr << "try binding to " << testImappedAddr ); */
-    s = openPort(0/*use ephemeral*/, testImappedAddr.addr);
+    s = openPort(0 /*use ephemeral*/, testImappedAddr.addr);
     if (s != INVALID_SOCKET)
     {
         isNat = FALSE;
@@ -2445,7 +2483,7 @@ stunNatType(StunAddress4 *dest,
     //ortp_debug("stun: test II = %i\n", respTestII );
     //ortp_debug("stun: test III = %i\n", respTestIII );
     //ortp_debug("stun: test I(2) = %i\n", respTestI2 );
-    ortp_debug("stun: is nat  = %i\n", isNat);
+    ortp_debug("stun: is nat  = %i\n",        isNat);
     ortp_debug("stun: mapped IP same = %i\n", mappedIpSame);
 
     /* implement logic flow chart from draft RFC */
@@ -2497,24 +2535,25 @@ stunNatType(StunAddress4 *dest,
 }
 
 int
-stunOpenSocket(StunAddress4 *dest, StunAddress4* mapAddr,
-    int port, StunAddress4* srcAddr)
+stunOpenSocket(
+    StunAddress4 *dest, StunAddress4 *mapAddr,
+    int port, StunAddress4 *srcAddr)
 {
     /* assert( dest.addr != 0 ); */
     /* assert( dest.port != 0 ); */
     /* assert( mapAddr );*/
-    unsigned int interfaceIp = 0;
-    Socket myFd;
-    char msg[STUN_MAX_MESSAGE_SIZE];
-    int msgLen = sizeof(msg);
+    unsigned int  interfaceIp = 0;
+    Socket        myFd;
+    char          msg[STUN_MAX_MESSAGE_SIZE];
+    int           msgLen      = sizeof(msg);
 
     StunAtrString username;
     StunAtrString password;
 
-    StunAddress4 from;
-    StunMessage resp;
-    bool_t ok;
-    StunAddress4 mappedAddr;
+    StunAddress4  from;
+    StunMessage   resp;
+    bool_t        ok;
+    StunAddress4  mappedAddr;
 
     if (port == 0)
     {
@@ -2561,43 +2600,43 @@ stunOpenSocket(StunAddress4 *dest, StunAddress4* mapAddr,
         mappedAddr = resp.mappedAddress.ipv4;
 
     /*
-      ortp_message("stun: --- stunOpenSocket --- ");
-      ortp_message("stun: \treq  id=" << req.id );
-      ortp_message("stun: \tresp id=" << id );
-      ortp_message("stun: \tmappedAddr=" << mappedAddr );
-    */
+       ortp_message("stun: --- stunOpenSocket --- ");
+       ortp_message("stun: \treq  id=" << req.id );
+       ortp_message("stun: \tresp id=" << id );
+       ortp_message("stun: \tmappedAddr=" << mappedAddr );
+     */
 
     *mapAddr = mappedAddr;
 
     return myFd;
 }
 
-
 bool_t
-stunOpenSocketPair(StunAddress4 *dest,
-    StunAddress4* mapAddr_rtp,
-    StunAddress4* mapAddr_rtcp,
-    int* fd1, int* fd2,
-    int port, StunAddress4* srcAddr)
+stunOpenSocketPair(
+    StunAddress4 *dest,
+    StunAddress4 *mapAddr_rtp,
+    StunAddress4 *mapAddr_rtcp,
+    int *fd1, int *fd2,
+    int port, StunAddress4 *srcAddr)
 {
     /* assert( dest.addr!= 0 ); */
     /* assert( dest.port != 0 ); */
     /* assert( mapAddr ); */
 
-    const int NUM = 2;
-    char msg[STUN_MAX_MESSAGE_SIZE];
-    int msgLen = sizeof(msg);
+    const int     NUM    = 2;
+    char          msg[STUN_MAX_MESSAGE_SIZE];
+    int           msgLen = sizeof(msg);
 
-    StunAddress4 from;
-    int fd[2/*NUM*/];
-    int i;
+    StunAddress4  from;
+    int           fd[2 /*NUM*/];
+    int           i;
 
-    unsigned int interfaceIp = 0;
+    unsigned int  interfaceIp = 0;
 
     StunAtrString username;
     StunAtrString password;
 
-    StunAddress4 mappedAddr[2/*NUM*/];
+    StunAddress4  mappedAddr[2 /*NUM*/];
 
     if (port == 0)
     {
@@ -2634,19 +2673,19 @@ stunOpenSocketPair(StunAddress4 *dest,
 
     for (i = 0; i < NUM; i++)
     {
-        stunSendTest(fd[i], dest, &username, &password, 1/*testNum*/);
+        stunSendTest(fd[i], dest, &username, &password, 1 /*testNum*/);
     }
 
     for (i = 0; i < NUM; i++)
     {
         StunMessage resp;
-        bool_t ok;
+        bool_t      ok;
         msgLen = sizeof(msg) / sizeof(*msg);
         getMessage(fd[i],
-            msg,
-            &msgLen,
-            &from.addr,
-            &from.port);
+                   msg,
+                   &msgLen,
+                   &from.addr,
+                   &from.port);
 
         memset(&resp, 0, sizeof(StunMessage));
 
@@ -2675,10 +2714,10 @@ stunOpenSocketPair(StunAddress4 *dest,
         //ortp_debug("stun: \t mappedAddr=%s\n", ipaddr(&mappedAddr[i]) );
     }
 
-    *mapAddr_rtp = mappedAddr[0];
+    *mapAddr_rtp  = mappedAddr[0];
     *mapAddr_rtcp = mappedAddr[1];
-    *fd1 = fd[0];
-    *fd2 = fd[1];
+    *fd1          = fd[0];
+    *fd2          = fd[1];
 
     for (i = 0; i < NUM; i++)
     {
@@ -2689,31 +2728,32 @@ stunOpenSocketPair(StunAddress4 *dest,
 }
 
 static void
-turnSendAllocate(Socket myFd, StunAddress4 *dest,
+turnSendAllocate(
+    Socket myFd, StunAddress4 *dest,
     const StunAtrString *username, const StunAtrString *password,
     StunMessage *resp)
 {
     StunMessage req;
-    char buf[STUN_MAX_MESSAGE_SIZE];
-    int len = STUN_MAX_MESSAGE_SIZE;
-    const char serverName[] = "oRTP   " STUN_VERSION; /* must pad to mult of 4 */
+    char        buf[STUN_MAX_MESSAGE_SIZE];
+    int         len          = STUN_MAX_MESSAGE_SIZE;
+    const char  serverName[] = "oRTP   " STUN_VERSION; /* must pad to mult of 4 */
 
     memset(&req, 0, sizeof(StunMessage));
 
     stunBuildReqSimple(&req, username,
-        FALSE, FALSE,
-        0);
-    req.msgHdr.msgType = (TURN_MEDHOD_ALLOCATE | STUN_REQUEST);
+                       FALSE, FALSE,
+                       0);
+    req.msgHdr.msgType           = (TURN_MEDHOD_ALLOCATE | STUN_REQUEST);
 
-    req.hasSoftware = TRUE;
+    req.hasSoftware              = TRUE;
     memcpy(req.softwareName.value, serverName, sizeof(serverName));
-    req.softwareName.sizeValue = sizeof(serverName);
+    req.softwareName.sizeValue   = sizeof(serverName);
 
-    req.hasRequestedTransport = TRUE;
+    req.hasRequestedTransport    = TRUE;
     memset(&req.requestedTransport, 0, sizeof(req.requestedTransport));
     req.requestedTransport.proto = IPPROTO_UDP;
 
-    req.hasDontFragment = TRUE;
+    req.hasDontFragment          = TRUE;
 
     if (resp != NULL
         && username != NULL && username->sizeValue > 0
@@ -2721,14 +2761,14 @@ turnSendAllocate(Socket myFd, StunAddress4 *dest,
         && resp->hasRealm == TRUE
         && resp->hasNonce == TRUE)
     {
-        req.hasUsername = TRUE;
+        req.hasUsername         = TRUE;
         memcpy(req.username.value, username->value, username->sizeValue);
-        req.username.sizeValue = username->sizeValue;
+        req.username.sizeValue  = username->sizeValue;
 
-        req.hasNonce = TRUE;
+        req.hasNonce            = TRUE;
         memcpy(&req.nonceName, &resp->nonceName, sizeof(resp->nonceName));
 
-        req.hasRealm = TRUE;
+        req.hasRealm            = TRUE;
         memcpy(&req.realmName, &resp->realmName, sizeof(resp->realmName));
 
         req.hasMessageIntegrity = TRUE;
@@ -2741,13 +2781,15 @@ turnSendAllocate(Socket myFd, StunAddress4 *dest,
     sendMessage(myFd, buf, len, dest->addr, dest->port);
 
     /* add some delay so the packets don't get sent too quickly */
-#if defined(_WIN32_WCE) 
+#if defined(_WIN32_WCE)
     Sleep(10);
 #elif defined(WIN32)/* !cj! TODO - should fix this up in windows */
     {
         clock_t now = clock();
         /* assert( CLOCKS_PER_SEC == 1000 ); */
-        while (clock() <= now + 10) {};
+        while (clock() <= now + 10)
+        {}
+        ;
     }
 #else
     usleep(10 * 1000);
@@ -2755,26 +2797,26 @@ turnSendAllocate(Socket myFd, StunAddress4 *dest,
 }
 
 bool_t
-turnAllocateSocketPair(StunAddress4 *dest,
-    StunAddress4* mapAddr_rtp,
-    StunAddress4* mapAddr_rtcp,
-    int* fd1, int* fd2,
-    int port, StunAddress4* srcAddr)
+turnAllocateSocketPair(
+    StunAddress4 *dest,
+    StunAddress4 *mapAddr_rtp,
+    StunAddress4 *mapAddr_rtcp,
+    int *fd1, int *fd2,
+    int port, StunAddress4 *srcAddr)
 {
-    const int NUM = 2;
-    char msg[STUN_MAX_MESSAGE_SIZE];
-    int msgLen = sizeof(msg);
+    const int     NUM    = 2;
+    char          msg[STUN_MAX_MESSAGE_SIZE];
+    int           msgLen = sizeof(msg);
 
-    StunAddress4 from;
-    int fd[2/*NUM*/];
-    int i;
+    StunAddress4  from;
+    int           fd[2 /*NUM*/];
+    int           i;
 
-    unsigned int interfaceIp = 0;
+    unsigned int  interfaceIp = 0;
 
     StunAtrString username;
     StunAtrString password;
-
-    StunAddress4 mappedAddr[2/*NUM*/];
+    StunAddress4  mappedAddr[2 /*NUM*/];
 
     if (port == 0)
     {
@@ -2792,7 +2834,7 @@ turnAllocateSocketPair(StunAddress4 *dest,
     for (i = 0; i < NUM; i++)
     {
         fd[i] = openPort((port == 0) ? 0 : (port + i),
-            interfaceIp);
+                         interfaceIp);
         if (fd[i] < 0)
         {
             while (i > 0)
@@ -2816,13 +2858,13 @@ turnAllocateSocketPair(StunAddress4 *dest,
     for (i = 0; i < NUM; i++)
     {
         StunMessage resp;
-        bool_t ok;
+        bool_t      ok;
         msgLen = sizeof(msg) / sizeof(*msg);
         getMessage(fd[i],
-            msg,
-            &msgLen,
-            &from.addr,
-            &from.port);
+                   msg,
+                   &msgLen,
+                   &from.addr,
+                   &from.port);
 
         memset(&resp, 0, sizeof(StunMessage));
 
@@ -2871,10 +2913,10 @@ turnAllocateSocketPair(StunAddress4 *dest,
         ortp_message("stun: stunOpenSocketPair mappedAddr=%s\n", ipaddr(&mappedAddr[i]));
     }
 
-    *mapAddr_rtp = mappedAddr[0];
+    *mapAddr_rtp  = mappedAddr[0];
     *mapAddr_rtcp = mappedAddr[1];
-    *fd1 = fd[0];
-    *fd2 = fd[1];
+    *fd1          = fd[0];
+    *fd2          = fd[1];
 
     for (i = 0; i < NUM; i++)
     {
@@ -2890,5 +2932,4 @@ turnAllocateSocketPair(StunAddress4 *dest,
    c-file-offsets:((case-label . +))
    indent-tabs-mode:nil
    End:
-*/
-
+ */

@@ -62,7 +62,6 @@ static void discard_well_choosed_samples(mblk_t *m, int nsamples, int todrop){
 	int16_t *samples=(int16_t*)m->b_rptr;
 	int min_diff=32768;
 	int pos=0;
-
 	
 #ifdef TWO_SAMPLES_CRITERIA
 	for(i=0;i<nsamples-1;++i){
@@ -118,7 +117,6 @@ mblk_t * audio_flow_controller_process(AudioFlowController *ctl, mblk_t *m){
 	return m;
 }
 
-
 //#define EC_DUMP 1
 #ifdef ANDROID
 #define EC_DUMP_PREFIX "/sdcard"
@@ -129,7 +127,6 @@ mblk_t * audio_flow_controller_process(AudioFlowController *ctl, mblk_t *m){
 static const float smooth_factor=0.05;
 static const int framesize=64;
 static const int flow_control_interval_ms=5000;
-
 
 typedef struct SpeexECState{
 	SpeexEchoState *ecstate;
@@ -159,6 +156,8 @@ typedef struct SpeexECState{
 
 static void speex_ec_init(MSFilter *f){
 	SpeexECState *s=(SpeexECState *)ms_new(SpeexECState,1);
+    if (s == NULL)
+        return;
 
 	s->samplerate=8000;
 	ms_bufferizer_init(&s->delayed_ref);
@@ -193,15 +192,18 @@ static void speex_ec_init(MSFilter *f){
 
 static void speex_ec_uninit(MSFilter *f){
 	SpeexECState *s=(SpeexECState*)f->data;
-	if (s->state_str) ms_free(s->state_str);
-	ms_bufferizer_uninit(&s->delayed_ref);
+    if (s != NULL)
+    {
+        if (s->state_str) ms_free(s->state_str);
+        ms_bufferizer_uninit(&s->delayed_ref);
 #ifdef EC_DUMP
-	if (s->echofile)
-		fclose(s->echofile);
-	if (s->reffile)
-		fclose(s->reffile);
+        if (s->echofile)
+            fclose(s->echofile);
+        if (s->reffile)
+            fclose(s->reffile);
 #endif
-	ms_free(s);
+        ms_free(s);
+    }
 }
 
 #ifdef SPEEX_ECHO_GET_BLOB
@@ -294,6 +296,10 @@ static void speex_ec_process(MSFilter *f){
 	int nbytes=s->framesize*2;
 	mblk_t *refm;
 	uint8_t *ref,*echo;
+#if 0
+    uint64_t start = GetTickCount64();
+    static uint64_t pre = 0;
+#endif
 	
 	if (s->bypass_mode) {
 		while((refm=ms_queue_get(f->inputs[0]))!=NULL){
@@ -302,6 +308,10 @@ static void speex_ec_process(MSFilter *f){
 		while((refm=ms_queue_get(f->inputs[1]))!=NULL){
 			ms_queue_put(f->outputs[1],refm);
 		}
+#if 0
+        ms_warning("speexec time %llu, dur %llu", GetTickCount64() - start, GetTickCount64() - pre);
+        pre = GetTickCount64();
+#endif
 		return;
 	}
 	
@@ -390,6 +400,11 @@ static void speex_ec_process(MSFilter *f){
 		s->min_ref_samples=-1;
 		s->flow_control_time = f->ticker->time;
 	}
+
+#if 0
+    ms_warning("speexec time %llu, dur %llu", GetTickCount64() - start, GetTickCount64() - pre);
+    pre = GetTickCount64();
+#endif
 }
 
 static void speex_ec_postprocess(MSFilter *f){

@@ -150,7 +150,6 @@ static void add_local_endpoint(LinphoneConference *conf,LinphoneCore *lc){
 	conf->local_participant=st;
 	conf->local_endpoint=ms_audio_endpoint_get_from_stream(st,FALSE);
 	ms_audio_conference_add_member(conf->conf,conf->local_endpoint);
-	
 }
 
 /**
@@ -165,7 +164,6 @@ float linphone_core_get_conference_local_input_volume(LinphoneCore *lc){
 		float vol=0;
 		ms_filter_call_method(st->volsend,MS_VOLUME_GET,&vol);
 		return vol;
-		
 	}
 	return LINPHONE_VOLUME_DB_LOWEST;
 }

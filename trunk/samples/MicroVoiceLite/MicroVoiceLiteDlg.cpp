@@ -149,7 +149,8 @@ media_quality(LinphoneCore *lc, int jitter, float packet_lost)
 #endif
 
 #ifdef _DEBUG
-    #define new DEBUG_NEW
+    //#define new DEBUG_NEW
+    //#define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
 #endif
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
@@ -242,7 +243,6 @@ BEGIN_MESSAGE_MAP(CMicroVoiceLiteDlg, CDialog)
     ON_CBN_SELCHANGE(IDC_COMBO_CAM_LIST, &CMicroVoiceLiteDlg::OnCbnSelchangeComboCamList)
 END_MESSAGE_MAP()
 
-// CMicroVoiceLiteDlg 消息处理程序
 
 BOOL
 CMicroVoiceLiteDlg::OnInitDialog()
@@ -277,7 +277,7 @@ CMicroVoiceLiteDlg::OnInitDialog()
     mUsername.SetWindowText(_T("ichunlai"));        // local user id
     mPassword.SetWindowText(_T("mmbbs"));
     mHost.SetWindowText(_T("192.168.190.20"));       // local ip address
-    mDialNum.SetWindowText(_T("6002"));             // target user id
+    mDialNum.SetWindowText(_T("asuspad"));             // target user id
 //	mDTMF.SetWindowText("#");
     linphone_core_enable_logs_with_cb(linphone_log_handler);
 
@@ -288,8 +288,6 @@ CMicroVoiceLiteDlg::OnInitDialog()
     vTable.display_status          = displayStatusCb;
     vTable.display_message         = displayMessageCb;
     vTable.display_warning         = displayMessageCb;
-    vTable.network_quality_monitor = network_quality;
-    vTable.media_quality_monitor   = media_quality;
 
     the_core                       = linphone_core_new(&vTable
                                                        , config_file
@@ -321,6 +319,7 @@ CMicroVoiceLiteDlg::OnInitDialog()
 
     //设置本地视频窗口
     linphone_core_set_native_video_window_id(the_core, (unsigned long)mVideoWnd.m_hWnd);
+    //CMicroVoiceLiteDlg::OnBnClickedBntMakecall(); //
 
     if (the_core)
     {
@@ -390,6 +389,7 @@ CMicroVoiceLiteDlg::OnDestroy()
 
     if (the_core != NULL)
     {
+        //linphone_core_terminate_all_calls(the_core);
         linphone_core_destroy(the_core);
         the_core = NULL;
     }
@@ -518,12 +518,12 @@ CMicroVoiceLiteDlg::OnBnClickedBntRegister()
     // add username password
     LinphoneAddress  *from = linphone_address_new(identity);
     LinphoneAuthInfo *info;
-    if (from != 0)
+    if (from != NULL)
     {
         info = linphone_auth_info_new(linphone_address_get_username(from), NULL, secret, NULL, NULL);
         linphone_core_add_auth_info(the_core, info);
+        linphone_address_destroy(from);
     }
-    linphone_address_destroy(from);
 
     // configure proxy entries
     linphone_proxy_config_set_identity(proxyCfg, identity);

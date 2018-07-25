@@ -383,7 +383,7 @@ int video_stream_start(
             ms_web_cam_manager_get());
     }
 
-    pt = rtp_profile_get_payload(profile, payload);
+        pt = rtp_profile_get_payload(profile, payload);
     if (pt == NULL)
     {
         ms_error("videostream.c: undefined payload type.");
@@ -417,6 +417,7 @@ int video_stream_start(
         if (rem_rtp_port > 0) ms_filter_call_method(stream->ms.rtpsend, MS_RTP_SEND_SET_SESSION, stream->ms.session);
         if (stream->source_performs_encoding == FALSE)
         {
+            ms_warning("mime_type: %s, sampling rate: %d", pt->mime_type, pt->clock_rate);
             stream->ms.encoder = ms_filter_create_encoder(pt->mime_type);
             if ((stream->ms.encoder == NULL))
             {

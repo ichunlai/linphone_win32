@@ -2249,7 +2249,6 @@ sdp_message_free(
     osip_free(sdp->u_uri);
 
     osip_list_ofchar_free(&sdp->e_emails);
-
     osip_list_ofchar_free(&sdp->p_phones);
 
     sdp_connection_free(sdp->c_connection);

@@ -703,7 +703,7 @@ void ortp_shm_close(void *mem){
 void ortp_get_cur_time(ortpTimeSpec *ret){
 #if defined(_WIN32_WCE) || defined(WIN32)
 #ifdef WINAPI_FAMILY_PHONE_APP
-	ULONGLONG timemillis = GetTickCount64();
+	ULONGLONG timemillis = GetTickCount64();    // Retrieves the number of milliseconds that have elapsed since the system was started.
 	ret->tv_sec = timemillis / 1000;
 	ret->tv_nsec = (timemillis % 1000) * 1000000LL;
 #else

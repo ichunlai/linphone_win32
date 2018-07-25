@@ -29,5 +29,3 @@ void rtp_timer_set_interval(RtpTimer *timer, struct timeval *interval)
 	timer->interval.tv_sec=interval->tv_sec;
 	timer->interval.tv_usec=interval->tv_usec;
 }
-
-

@@ -115,8 +115,11 @@ MSEventQueue *ms_event_queue_new()
 void ms_event_queue_destroy(
     MSEventQueue *q)
 {
-    ms_mutex_destroy(&q->mutex);
-    ms_free(q);
+    if (q != NULL)
+    {
+        ms_mutex_destroy(&q->mutex);
+        ms_free(q);
+    }
 }
 
 static MSEventQueue *ms_global_event_queue = NULL;
@@ -130,11 +133,14 @@ void ms_set_global_event_queue(
 void ms_event_queue_skip(
     MSEventQueue *q)
 {
-    int bufsize = q->size;
-    q->lim      = q->buffer + bufsize;
-    q->freeroom = bufsize;
-    q->wptr     = q->rptr = q->buffer;
-    q->endptr   = q->lim;
+    if (q != NULL)
+    {
+        int bufsize = q->size;
+        q->lim = q->buffer + bufsize;
+        q->freeroom = bufsize;
+        q->wptr = q->rptr = q->buffer;
+        q->endptr = q->lim;
+    }
 }
 
 void ms_event_queue_pump(
@@ -147,7 +153,7 @@ void ms_event_queue_pump(
 void ms_filter_notify(
     MSFilter *f, unsigned int id, void *arg)
 {
-    if (f->notify != NULL)
+    if (f != NULL && f->notify != NULL)
     {
         if (ms_global_event_queue == NULL)
         {
@@ -164,7 +170,7 @@ void ms_filter_notify(
 void ms_filter_notify_synchronous(
     MSFilter *f, unsigned int id, void *arg)
 {
-    if (f->notify)
+    if (f != NULL && f->notify != NULL)
     {
         f->notify(f->notify_ud, f, id, arg);
     }

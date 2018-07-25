@@ -1010,27 +1010,30 @@ void rtp_session_flush_sockets(
 
         while (session->rtp.tr->t_recvfrom(session->rtp.tr, trashmp, 0, (struct sockaddr *)&from, &fromlen) > 0)
         {}
-        ;
 
         if (session->rtcp.tr)
             while (session->rtcp.tr->t_recvfrom(session->rtcp.tr, trashmp, 0, (struct sockaddr *)&from, &fromlen) > 0)
             {}
-        ;
+        
         freemsg(trashmp);
         return;
     }
 
     if (session->rtp.socket != (ortp_socket_t)-1)
     {
+        if (0)
+        {
+            char *ip = inet_ntoa(((struct sockaddr_in*)&from)->sin_addr);
+            int port = htons(((struct sockaddr_in*)&from)->sin_port);
+            ortp_error("%s(%d): recvfrom %s:%d\n", __FILE__, __LINE__, ip, port);
+        }
         while (recvfrom(session->rtp.socket, (char *)trash, sizeof(trash), 0, (struct sockaddr *)&from, &fromlen) > 0)
         {}
-        ;
     }
     if (session->rtcp.socket != (ortp_socket_t)-1)
     {
         while (recvfrom(session->rtcp.socket, (char *)trash, sizeof(trash), 0, (struct sockaddr *)&from, &fromlen) > 0)
         {}
-        ;
     }
 }
 
@@ -1062,7 +1065,6 @@ static int rtp_sendmsg(
     error              = sendmsg(sock, &msg, 0);
     return error;
 }
-
 #endif
 
 #define IP_UDP_OVERHEAD  (20 + 8)
@@ -1108,6 +1110,9 @@ rtp_session_rtp_send(
     struct sockaddr *destaddr = (struct sockaddr *)&session->rtp.rem_addr;
     socklen_t       destlen   = session->rtp.rem_addrlen;
     ortp_socket_t   sockfd    = session->rtp.socket;
+#if 0
+    uint32_t timestamp = 0;
+#endif
 
     hdr = (rtp_header_t *) m->b_rptr;
     if (hdr->version == 0)
@@ -1117,6 +1122,9 @@ rtp_session_rtp_send(
     else
     {
         /* perform host to network conversions */
+#if 0
+        timestamp = hdr->timestamp;
+#endif
         hdr->ssrc       = htonl(hdr->ssrc);
         hdr->timestamp  = htonl(hdr->timestamp);
         hdr->seq_number = htons(hdr->seq_number);
@@ -1141,10 +1149,31 @@ rtp_session_rtp_send(
 #else
         if (m->b_cont != NULL)
             msgpullup(m, -1);
-
-        ortp_error("%s(%d): sendto\r\n", __FILE__, __LINE__);
+#if 0
+        {
+            static uint32_t pretimestamp[65536];
+            static uint64_t pretime[65536];
+            char *ip = inet_ntoa(((struct sockaddr_in*)destaddr)->sin_addr);
+            int port = htons(((struct sockaddr_in*)destaddr)->sin_port);
+            rtp_header_t * rtp = (rtp_header_t *)m->b_rptr;
+            if (hdr->version != 0)
+            ortp_error("%s(%d): sendto %s:%d, timestamp(%lu)dur(%lu), GetTickCount64(%llu)dur(%llu)\n", 
+                __FILE__, __LINE__, ip, port, timestamp, timestamp - pretimestamp[port],
+                GetTickCount64(), GetTickCount64() - pretime[port]);
+            pretimestamp[port] = timestamp;
+            pretime[port] = GetTickCount64();
+            //free(ip);
+        }
+#endif
+#if 0
+        uint64_t start = GetTickCount64();
+#endif
         error = sendto(sockfd, (char *)m->b_rptr, (int) (m->b_wptr - m->b_rptr),
                        0, destaddr, destlen);
+#if 0
+        ortp_error("rtp-send: dur(%llu)\n",
+            GetTickCount64() - start);
+#endif
 #endif
     }
     if (error < 0)
@@ -1199,7 +1228,13 @@ rtp_session_rtcp_send(
                 msgpullup(m, -1);
             }
 
-            ortp_error("%s(%d): sendto\r\n", __FILE__, __LINE__);
+            if (0)
+            {
+                char *ip = inet_ntoa(((struct sockaddr_in*)destaddr)->sin_addr);
+                int port = htons(((struct sockaddr_in*)destaddr)->sin_port);
+                ortp_error("%s(%d): sendto %s:%d\n", __FILE__, __LINE__, ip, port);
+                //free(ip);
+            }
             error = sendto(sockfd, (char *)m->b_rptr,
                            (int) (m->b_wptr - m->b_rptr), 0,
                            destaddr, destlen);
@@ -1283,6 +1318,13 @@ int rtp_session_rtp_recv_abstract(
         *fromlen = msghdr.namelen;
     if (ret >= 0)
     {
+        if (1)
+        {
+            char *ip = inet_ntoa(((struct sockaddr_in*)msghdr.name)->sin_addr);
+            int port = htons(((struct sockaddr_in*)msghdr.name)->sin_port);
+            //if (port == 9078)
+            //ortp_error("%s(%d): recvfrom %s:%d", __FILE__, __LINE__, ip, port);
+        }
         ret = bytes_received;
 #endif
         for (cmsghdr = CMSG_FIRSTHDR(&msghdr); cmsghdr != NULL; cmsghdr = CMSG_NXTHDR(&msghdr, cmsghdr))

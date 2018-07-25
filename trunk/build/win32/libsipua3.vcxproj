@@ -119,7 +119,6 @@
     <ClCompile Include="..\..\linphone\coreapi\conference.c" />
     <ClCompile Include="..\..\linphone\coreapi\enum.c" />
     <ClCompile Include="..\..\linphone\coreapi\friend.c" />
-    <ClCompile Include="..\..\linphone\coreapi\general_state.c" />
     <ClCompile Include="..\..\linphone\coreapi\linphonecall.c" />
     <ClCompile Include="..\..\linphone\coreapi\linphonecore.c" />
     <ClCompile Include="..\..\linphone\coreapi\linphone_tunnel.cc" />

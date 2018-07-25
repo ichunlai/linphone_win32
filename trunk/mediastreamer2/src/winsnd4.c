@@ -1161,7 +1161,7 @@ static void winsnd_write_process(MSFilter *f){
 		return;
 	}
 	if (d->overrun){
-		ms_warning("nbufs_playing=%i",d->nbufs_playing);
+		//ms_warning("nbufs_playing=%i",d->nbufs_playing);
 		if (d->nbufs_playing>0){
 			ms_queue_flush(f->inputs[0]);
 			return;

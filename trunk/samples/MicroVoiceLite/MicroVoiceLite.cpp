@@ -6,7 +6,8 @@
 #include "MicroVoiceLiteDlg.h"
 
 #ifdef _DEBUG
-    #define new DEBUG_NEW
+    //#define new DEBUG_NEW
+    //#define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
 #endif
 
 // CMicroVoiceLiteApp
@@ -41,7 +42,8 @@ BOOL CMicroVoiceLiteApp::InitInstance()
     InitCtrls.dwICC  = ICC_WIN95_CLASSES;
     InitCommonControlsEx(&InitCtrls);
 
-    //_CrtSetBreakAlloc(12149);
+    //_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+    //_CrtSetBreakAlloc(1523);
 
     CWinAppEx::InitInstance();
 

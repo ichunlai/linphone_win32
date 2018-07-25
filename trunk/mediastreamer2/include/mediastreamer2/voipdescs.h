@@ -1,3 +1,6 @@
+#ifndef VOIPDESCS_H
+#define VOIPDESCS_H
+
 #include "mediastreamer2/msfilter.h"
 
 extern MSFilterDesc ms_alaw_dec_desc;
@@ -45,7 +48,7 @@ extern MSFilterDesc ms_channel_adapter_desc;
 extern MSFilterDesc ms_pix_conv_desc;
 extern MSFilterDesc ms_size_conv_desc;
 extern MSFilterDesc ms_dd_display_desc;
-MSFilterDesc * ms_filter_descs[]={
+MSFilterDesc * ms_voip_filter_descs[]={
 &ms_alaw_dec_desc,
 &ms_alaw_enc_desc,
 &ms_ulaw_dec_desc,
@@ -96,3 +99,4 @@ MSFilterDesc * ms_filter_descs[]={
 NULL
 };
 
+#endif

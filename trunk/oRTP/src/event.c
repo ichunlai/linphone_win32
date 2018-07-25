@@ -23,24 +23,30 @@
 // create new rtp endpoint
 RtpEndpoint *rtp_endpoint_new(struct sockaddr *addr, socklen_t addrlen){
 	RtpEndpoint *ep=ortp_new(RtpEndpoint,1);
-	if (sizeof(ep->addr)<addrlen){
-		ortp_free(ep);
-		ortp_fatal("Bad socklen_t size !");
-		return NULL;
-	}
-	memcpy(&ep->addr,addr,addrlen);
-	ep->addrlen=addrlen;
+    if (ep != NULL)
+    {
+        if (sizeof(ep->addr) < addrlen) {
+            ortp_free(ep);
+            ortp_fatal("Bad socklen_t size !");
+            return NULL;
+        }
+        memcpy(&ep->addr, addr, addrlen);
+        ep->addrlen = addrlen;
+    }
 	return ep;
 }
 
 // destroy rtp endpoint
 void rtp_endpoint_destroy(RtpEndpoint *ep){
-	ortp_free(ep);
+    if (ep != NULL)
+	    ortp_free(ep);
 }
 
 // clone rtp endpoint
 RtpEndpoint *rtp_endpoint_dup(const RtpEndpoint *ep){
-	return rtp_endpoint_new((struct sockaddr*)&ep->addr,ep->addrlen);
+	return ep != NULL
+        ? rtp_endpoint_new((struct sockaddr*)&ep->addr,ep->addrlen)
+        : NULL;
 }
 
 // create ortp event
@@ -48,10 +54,14 @@ OrtpEvent * ortp_event_new(unsigned long type){
 	OrtpEventData *ed;
 	const int size=sizeof(OrtpEventType)+sizeof(OrtpEventData);
 	mblk_t *m=allocb(size,0);
-	memset(m->b_wptr,0,size);
-	*((OrtpEventType*)m->b_wptr)=type;
-	ed = ortp_event_get_data(m);
-	ortp_get_cur_time(&ed->ts);
+    if (m != NULL)
+    {
+        ortp_warning("ortp_event_new: event type(%d)", type);
+        memset(m->b_wptr, 0, size);
+        *((OrtpEventType*)m->b_wptr) = type;
+        ed = ortp_event_get_data(m);
+        ortp_get_cur_time(&ed->ts);
+    }
 	return m;
 }
 
@@ -73,24 +83,32 @@ OrtpEventType ortp_event_get_type(const OrtpEvent *ev){
 
 // get ortp event data
 OrtpEventData * ortp_event_get_data(OrtpEvent *ev){
-	return (OrtpEventData*)(ev->b_rptr+sizeof(OrtpEventType));
+	return ev != NULL
+        ? (OrtpEventData*)(ev->b_rptr+sizeof(OrtpEventType))
+        : NULL;
 }
 
 // destroy ortp event
 void ortp_event_destroy(OrtpEvent *ev){
-	OrtpEventData *d=ortp_event_get_data(ev);
-	if (ev->b_datap->db_ref==1){
-		if (d->packet) 	freemsg(d->packet);
-		if (d->ep) rtp_endpoint_destroy(d->ep);
-	}
-	freemsg(ev);
+    if (ev != NULL)
+    {
+        OrtpEventData *d = ortp_event_get_data(ev);
+        if (d != NULL && ev->b_datap->db_ref == 1) {
+            if (d->packet) 	freemsg(d->packet);
+            if (d->ep) rtp_endpoint_destroy(d->ep);
+        }
+        ortp_free(ev);  // memory leak? need to check this function again...
+    }
 }
 
 // create ortp event queue
 OrtpEvQueue * ortp_ev_queue_new(){
 	OrtpEvQueue *q=ortp_new(OrtpEvQueue,1);
-	qinit(&q->q);
-	ortp_mutex_init(&q->mutex,NULL);
+    if (q != NULL)
+    {
+        qinit(&q->q);
+        ortp_mutex_init(&q->mutex, NULL);
+    }
 	return q;
 }
 
@@ -104,23 +122,33 @@ void ortp_ev_queue_flush(OrtpEvQueue * qp){
 
 // get first ortp event (dequeue) from ortp event queue
 OrtpEvent * ortp_ev_queue_get(OrtpEvQueue *q){
-	OrtpEvent *ev;
-	ortp_mutex_lock(&q->mutex);
-	ev=getq(&q->q);
-	ortp_mutex_unlock(&q->mutex);
-	return ev;
+    if (q != NULL)
+    {
+        OrtpEvent *ev;
+        ortp_mutex_lock(&q->mutex);
+        ev = getq(&q->q);
+        ortp_mutex_unlock(&q->mutex);
+        return ev;
+    }
+    return NULL;
 }
 
 void ortp_ev_queue_destroy(OrtpEvQueue * qp){
-	ortp_ev_queue_flush(qp);
-	ortp_mutex_destroy(&qp->mutex);
-	ortp_free(qp);
+    if (qp != NULL)
+    {
+        ortp_ev_queue_flush(qp);
+        ortp_mutex_destroy(&qp->mutex);
+        ortp_free(qp);
+    }
 }
 
 // put ortp event (queue) to ortp event queue
 void ortp_ev_queue_put(OrtpEvQueue *q, OrtpEvent *ev){
-	ortp_mutex_lock(&q->mutex);
-	putq(&q->q,ev);
-	ortp_mutex_unlock(&q->mutex);
+    if (q != NULL)
+    {
+        ortp_mutex_lock(&q->mutex);
+        putq(&q->q, ev);
+        ortp_mutex_unlock(&q->mutex);
+    }
 }
 

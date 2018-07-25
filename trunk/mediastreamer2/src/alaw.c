@@ -28,9 +28,12 @@ typedef struct _AlawEncData{
 
 static AlawEncData * alaw_enc_data_new(){
 	AlawEncData *obj=(AlawEncData *)ms_new(AlawEncData,1);
-	obj->bz=ms_bufferizer_new();
-	obj->ptime=0;
-	obj->ts=0;
+    if (obj != NULL)
+    {
+        obj->bz = ms_bufferizer_new();
+        obj->ptime = 0;
+        obj->ts = 0;
+    }
 	return obj;
 }
 

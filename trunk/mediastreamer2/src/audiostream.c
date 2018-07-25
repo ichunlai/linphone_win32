@@ -296,7 +296,7 @@ int audio_stream_start_full(
     stream->ms.session = rtps;
 
     if ((stream->features & AUDIO_STREAM_FEATURE_DTMF) != 0)
-    stream->dtmfgen    = ms_filter_new(MS_DTMF_GEN_ID);
+        stream->dtmfgen = ms_filter_new(MS_DTMF_GEN_ID);
     else
         stream->dtmfgen = NULL;
     rtp_session_signal_connect(rtps, "telephone-event",      (RtpCallback)on_dtmf_received,                 (unsigned long)stream);
@@ -352,6 +352,7 @@ int audio_stream_start_full(
         return -1;
     }
 
+    ms_warning("mime_type: %s, sampling rate: %d", pt->mime_type, sample_rate);
     stream->ms.encoder = ms_filter_create_encoder(pt->mime_type);
     stream->ms.decoder = ms_filter_create_decoder(pt->mime_type);
     if ((stream->ms.encoder == NULL) || (stream->ms.decoder == NULL))
@@ -575,7 +576,6 @@ int audio_stream_start_full(
 
     stream->ms.start_time   = ms_time(NULL);
     stream->ms.is_beginning = TRUE;
-
     return 0;
 }
 
@@ -759,7 +759,7 @@ AudioStream *audio_stream_new(
 #if defined(BUILD_WEBRTC_AECM)
         stream->ec = ms_filter_new(MS_WEBRTC_AEC_ID);
 #else
-        stream->ec = ms_filter_new(MS_SPEEX_EC_ID);
+        //stream->ec = ms_filter_new(MS_SPEEX_EC_ID);   // iclai: this filter's [erformance is not good, so I remove it.
 #endif
 
     stream->ms.evq     = ortp_ev_queue_new();

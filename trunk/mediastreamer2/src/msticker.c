@@ -48,11 +48,13 @@ static uint64_t get_cur_time_ms(void *);
 static int wait_next_tick(void *, uint64_t virt_ticker_time);
 static void remove_tasks_for_filter(MSTicker *ticker, MSFilter *f);
 
+// Retrieves the number of milliseconds that have elapsed since the system was started.
 uint64_t ms_get_current_ms_time()
 {
     return get_cur_time_ms(NULL);
 }
 
+// called by ms_ticker_init()
 static void ms_ticker_start(
     MSTicker *s)
 {
@@ -63,16 +65,18 @@ static void ms_ticker_start(
 static void ms_ticker_init(
     MSTicker *ticker, const MSTickerParams *params)
 {
+    //static int exec_id;
     ms_mutex_init(&ticker->lock, NULL);
-    ticker->execution_list    = NULL;
+    ticker->execution_list      = NULL;
     ticker->task_list           = NULL;
-    ticker->ticks             = 1;
-    ticker->time              = 0;
+    ticker->ticks               = 1;
+    ticker->time                = 0;
     ticker->interval            = TICKER_INTERVAL;
-    ticker->run               = FALSE;
-    ticker->exec_id           = 0;
-    ticker->get_cur_time_ptr  = &get_cur_time_ms;
-    ticker->get_cur_time_data = NULL;
+    ticker->run                 = FALSE;
+    ticker->exec_id             = 0;
+    //ticker->exec_id = exec_id++;
+    ticker->get_cur_time_ptr    = &get_cur_time_ms;
+    ticker->get_cur_time_data   = NULL;
     ticker->name                = ms_strdup(params->name);
     ticker->av_load             = 0;
     ticker->prio                = params->prio;
@@ -93,7 +97,10 @@ MSTicker *ms_ticker_new_with_params(
     const MSTickerParams *params)
 {
     MSTicker *obj = (MSTicker *)ms_new(MSTicker, 1);
-    ms_ticker_init(obj, params);
+    if (obj != NULL)
+    {
+        ms_ticker_init(obj, params);
+    }
     return obj;
 }
 
@@ -104,7 +111,7 @@ static void ms_ticker_stop(
     s->run = FALSE;
     ms_mutex_unlock(&s->lock);
     if (s->thread)
-    ms_thread_join(s->thread, NULL);
+        ms_thread_join(s->thread, NULL);
 }
 
 void ms_ticker_set_name(
@@ -363,6 +370,7 @@ static void remove_tasks_for_filter(
     }
 }
 
+// Retrieves the number of milliseconds that have elapsed since the system was started.
 static uint64_t get_cur_time_ms(
     void *unused)
 {
@@ -376,6 +384,7 @@ static void sleepMs(
 {
 #ifdef WIN32
     Sleep(ms);
+    //ms_warning("sleep (%d)", ms);
 #else
     struct timespec ts;
     ts.tv_sec  = 0;
@@ -387,39 +396,39 @@ static void sleepMs(
 static int set_high_prio(
     MSTicker *obj)
 {
-    int      precision = 2;
+    int precision = 2;
     int prio      = obj->prio;
 
     if (prio > MS_TICKER_PRIO_NORMAL)
     {
 #ifdef WIN32
-    MMRESULT mm;
-    TIMECAPS ptc;
-    mm = timeGetDevCaps(&ptc, sizeof(ptc));
-    if (mm == 0)
-    {
-        if (ptc.wPeriodMin < (UINT)precision)
-            ptc.wPeriodMin = precision;
-        else
-            precision = ptc.wPeriodMin;
-        mm = timeBeginPeriod(ptc.wPeriodMin);
-        if (mm != TIMERR_NOERROR)
+        MMRESULT mm;
+        TIMECAPS ptc;
+        mm = timeGetDevCaps(&ptc, sizeof(ptc));
+        if (mm == 0)
         {
-            ms_warning("timeBeginPeriod failed.");
+            if (ptc.wPeriodMin < (UINT)precision)
+                ptc.wPeriodMin = precision;
+            else
+                precision = ptc.wPeriodMin;
+            mm = timeBeginPeriod(ptc.wPeriodMin);
+            if (mm != TIMERR_NOERROR)
+            {
+                ms_warning("timeBeginPeriod failed.");
+            }
+            ms_message("win32 timer resolution set to %i ms", ptc.wPeriodMin);
         }
-        ms_message("win32 timer resolution set to %i ms", ptc.wPeriodMin);
-    }
-    else
-    {
-        ms_warning("timeGetDevCaps failed.");
-    }
+        else
+        {
+            ms_warning("timeGetDevCaps failed.");
+        }
 
-    if (!SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST))
-    {
+        if (!SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST))
+        {
             ms_warning("SetThreadPriority() failed (%d)\n", (int)GetLastError());
-    }
+        }
 #else
-    struct sched_param param;
+        struct sched_param param;
         int                policy = SCHED_RR;
         memset(&param, 0, sizeof(param));
         int                result = 0;
@@ -517,6 +526,10 @@ void *ms_ticker_run(
     int      lastlate  = 0;
     int      precision = 2;
     int      late;
+#if 0
+    uint64_t start = 0;
+    uint64_t pre = 0;
+#endif
 
     precision = set_high_prio(s);
 
@@ -534,6 +547,9 @@ void *ms_ticker_run(
             MSTimeSpec begin, end;/*used to measure time spent in processing one tick*/
             double     iload;
 
+#if 0
+            start = GetTickCount64();
+#endif
             ms_get_cur_time(&begin);
 #endif
             run_tasks(s);
@@ -542,6 +558,11 @@ void *ms_ticker_run(
             ms_get_cur_time(&end);
             iload      = 100 * ((end.tv_sec - begin.tv_sec) * 1000.0 + (end.tv_nsec - begin.tv_nsec) / 1000000.0) / (double)s->interval;
             s->av_load = (smooth_coef * s->av_load) + ((1.0 - smooth_coef) * iload);
+#if 0
+            ms_warning("%s: time %llu, dur %llu\n", s->name, GetTickCount64() - start, GetTickCount64() - pre);
+            pre = GetTickCount64();
+#endif
+           // ms_warning("%s: get_cur_time_ms(%llu) s->time(%llu).", s->name, get_cur_time_ms(NULL), s->time);
 #endif
         }
         ms_mutex_unlock(&s->lock);
@@ -679,30 +700,39 @@ static uint64_t get_wallclock_ms(
 
 static const double clock_coef = .01;
 
+// no use..remove it?
 MSTickerSynchronizer *ms_ticker_synchronizer_new(
     void)
 {
     MSTickerSynchronizer *obj = (MSTickerSynchronizer *)ms_new(MSTickerSynchronizer, 1);
-    obj->av_skew = 0;
-    obj->offset  = 0;
+    if (obj != NULL)
+    {
+        obj->av_skew = 0;
+        obj->offset = 0;
+    }
     return obj;
 }
 
+// no use..remove it?
 double ms_ticker_synchronizer_set_external_time(
     MSTickerSynchronizer *ts, const MSTimeSpec *time)
 {
-    int64_t  sound_time;
-    int64_t  diff;
-    uint64_t wc = get_wallclock_ms();
-    uint64_t ms = get_ms(time);
-    if (ts->offset == 0)
+    if (ts != NULL && time != NULL)
     {
-        ts->offset = wc - ms;
+        int64_t  sound_time;
+        int64_t  diff;
+        uint64_t wc = get_wallclock_ms();
+        uint64_t ms = get_ms(time);
+        if (ts->offset == 0)
+        {
+            ts->offset = wc - ms;
+        }
+        sound_time = ts->offset + ms;
+        diff = wc - sound_time;
+        ts->av_skew = (ts->av_skew * (1.0 - clock_coef)) + ((double)diff * clock_coef);
+        return ts->av_skew;
     }
-    sound_time  = ts->offset + ms;
-    diff        = wc - sound_time;
-    ts->av_skew = (ts->av_skew * (1.0 - clock_coef)) + ((double) diff * clock_coef);
-    return ts->av_skew;
+    return 0;
 }
 
 uint64_t ms_ticker_synchronizer_get_corrected_time(
@@ -716,5 +746,6 @@ uint64_t ms_ticker_synchronizer_get_corrected_time(
 void ms_ticker_synchronizer_destroy(
     MSTickerSynchronizer *ts)
 {
-    ms_free(ts);
+    if (ts != NULL)
+        ms_free(ts);
 }

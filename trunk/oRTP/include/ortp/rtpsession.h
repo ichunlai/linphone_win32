@@ -137,7 +137,7 @@ typedef struct _RtpStream
 	uint32_t snd_time_offset;/*the scheduler time when the application send its first timestamp*/	
 	uint32_t snd_ts_offset;	/* the first application timestamp sent by the application */
 	uint32_t snd_rand_offset;	/* a random number added to the user offset to make the stream timestamp*/
-	uint32_t snd_last_ts;	/* the last stream timestamp sended */
+	uint32_t snd_last_ts;	/* the last stream timestamp sent */
 	uint32_t rcv_time_offset; /*the scheduler time when the application ask for its first timestamp*/
 	uint32_t rcv_ts_offset;  /* the first stream timestamp */
 	uint32_t rcv_query_ts_offset;	/* the first user timestamp asked by the application */

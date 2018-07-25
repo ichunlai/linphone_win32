@@ -260,8 +260,8 @@ typedef unsigned char bool_t;
 #define FALSE 0
 
 typedef struct ortpTimeSpec{
-	int64_t tv_sec;
-	int64_t tv_nsec;
+	int64_t tv_sec;     // second
+	int64_t tv_nsec;    // nano second
 }ortpTimeSpec;
 
 #ifdef __cplusplus

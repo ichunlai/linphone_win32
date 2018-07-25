@@ -54,6 +54,7 @@ void ms_filter_register(
         ms_fatal("MSFilterId for %s not set !", desc->name);
     }
     /*lastly registered encoder/decoders may replace older ones*/
+    //ortp_warning("filter name(%s)\n", desc->name);
     desc_list = ms_list_prepend(desc_list, desc);
 }
 
@@ -199,10 +200,23 @@ MSFilter *ms_filter_new_from_desc(
 {
     MSFilter *obj;
     obj       = (MSFilter *)ms_new0(MSFilter, 1);
+    if (obj == NULL)
+        return NULL;
+
     ms_mutex_init(&obj->lock, NULL);
     obj->desc = desc;
-    if (desc->ninputs > 0) obj->inputs = (MSQueue **)ms_new0(MSQueue *, desc->ninputs);
-    if (desc->noutputs > 0) obj->outputs = (MSQueue **)ms_new0(MSQueue *, desc->noutputs);
+    if (desc->ninputs > 0)
+    {
+        obj->inputs = (MSQueue **)ms_new0(MSQueue *, desc->ninputs);
+        if (obj->inputs == NULL)
+            goto error;
+    }
+    if (desc->noutputs > 0)
+    {
+        obj->outputs = (MSQueue **)ms_new0(MSQueue *, desc->noutputs); 
+        if (obj->outputs == NULL)
+            goto error;
+    }
 
     if (statistics_enabled)
     {
@@ -210,7 +224,14 @@ MSFilter *ms_filter_new_from_desc(
     }
     if (obj->desc->init != NULL)
         obj->desc->init(obj);
+
     return obj;
+error:
+    ms_mutex_destroy(&obj->lock);
+    if (obj->inputs != NULL) ms_free(obj->inputs);
+    if (obj->outputs != NULL) ms_free(obj->outputs);
+    ms_free(obj);
+    return NULL;
 }
 
 MSFilter *ms_filter_new(
@@ -306,30 +327,33 @@ static inline bool_t is_interface_method(
 int ms_filter_call_method(
     MSFilter *f, unsigned int id, void *arg)
 {
-    MSFilterMethod *methods = f->desc->methods;
-    int            i;
-    unsigned int   magic    = MS_FILTER_METHOD_GET_FID(id);
-    if (!is_interface_method(magic) && magic != f->desc->id)
+    if (f != NULL)
     {
-        ms_fatal("Method type checking failed when calling %u on filter %s", id, f->desc->name);
-        return -1;
-    }
-    for (i = 0; methods != NULL && methods[i].method != NULL; i++)
-    {
-        unsigned int mm = MS_FILTER_METHOD_GET_FID(methods[i].id);
-        if (mm != f->desc->id && !is_interface_method(mm))
+        MSFilterMethod *methods = f->desc->methods;
+        int            i;
+        unsigned int   magic = MS_FILTER_METHOD_GET_FID(id);
+        if (!is_interface_method(magic) && magic != f->desc->id)
         {
-            ms_fatal("Bad method definition on filter %s. fid=%u , mm=%u", f->desc->name, f->desc->id, mm);
+            ms_fatal("Method type checking failed when calling %u on filter %s", id, f->desc->name);
             return -1;
         }
-        if (methods[i].id == id)
+        for (i = 0; methods != NULL && methods[i].method != NULL; i++)
         {
-            return methods[i].method(f, arg);
+            unsigned int mm = MS_FILTER_METHOD_GET_FID(methods[i].id);
+            if (mm != f->desc->id && !is_interface_method(mm))
+            {
+                ms_fatal("Bad method definition on filter %s. fid=%u , mm=%u", f->desc->name, f->desc->id, mm);
+                return -1;
+            }
+            if (methods[i].id == id)
+            {
+                return methods[i].method(f, arg);
+            }
         }
+        if (magic != MS_FILTER_BASE_ID)
+            ms_error("no such method on filter %s, fid=%i method index=%i", f->desc->name, magic,
+                MS_FILTER_METHOD_GET_INDEX(id));
     }
-    if (magic != MS_FILTER_BASE_ID)
-        ms_error("no such method on filter %s, fid=%i method index=%i", f->desc->name, magic,
-                 MS_FILTER_METHOD_GET_INDEX(id));
     return -1;
 }
 
@@ -445,10 +469,13 @@ void ms_filter_postpone_task(
         return;
     }
     task              = ms_new(MSFilterTask, 1);
-    task->f           = f;
-    task->taskfunc    = taskfunc;
-    ticker->task_list = ms_list_prepend(ticker->task_list, task);
-    f->postponed_task++;
+    if (task != NULL)
+    {
+        task->f = f;
+        task->taskfunc = taskfunc;
+        ticker->task_list = ms_list_prepend(ticker->task_list, task);
+        f->postponed_task++;
+    }
 }
 
 static void find_filters(

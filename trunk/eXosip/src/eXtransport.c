@@ -51,7 +51,6 @@ _eXosip_find_protocol(
     else if (0 == osip_strcasecmp(via->protocol, "TCP"))
         return IPPROTO_TCP;
     return -1;
-    ;
 }
 
 int

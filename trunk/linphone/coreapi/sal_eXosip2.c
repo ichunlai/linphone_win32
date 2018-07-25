@@ -178,7 +178,8 @@ void sal_exosip_fix_route(
         osip_route_t     *rt       = NULL;
         osip_uri_param_t *lr_param = NULL;
 
-        osip_route_init(&rt);
+        if (OSIP_SUCCESS != osip_route_init(&rt))
+            return;
         if (osip_route_parse(rt, sal_op_get_route(op)) < 0)
         {
             ms_warning("Bad route  %s!", sal_op_get_route(op));
@@ -310,7 +311,7 @@ static void _osip_trace_func(
     }
     if (ortp_log_level_enabled(level))
     {
-        char *chfrdup = ortp_strdup_printf("%s(%d): %s\r\n", fi, li, chfr);
+        char *chfrdup = ortp_strdup_printf("%s(%d): %s", fi, li, chfr);
         int  len = strlen(chfrdup);
         /*need to remove endline*/
         if (len > 1)
@@ -2960,10 +2961,16 @@ int sal_unregister(
     return 0;
 }
 
+/**
+* Constructs a SalAddress object by parsing the user supplied address,
+* given as a string.
+**/
 SalAddress *sal_address_new(
     const char *uri)
 {
     osip_from_t *from;
+    if (uri == NULL)
+        return NULL;
     osip_from_init(&from);
 
     // Remove front spaces
@@ -3158,12 +3165,17 @@ void sal_address_destroy(
 void sal_use_tcp_tls_keepalive(
     Sal *ctx, bool_t enabled)
 {
+    if (ctx == NULL)
+        return;
     ctx->tcp_tls_keepalive = enabled;
 }
 
 void sal_set_keepalive_period(
     Sal *ctx, unsigned int value)
 {
+    if (ctx == NULL)
+        return;
+
     switch (ctx->transport)
     {
     case SalTransportUDP:
@@ -3183,6 +3195,9 @@ void sal_set_keepalive_period(
 unsigned int sal_get_keepalive_period(
     Sal *ctx)
 {
+    if (ctx == NULL)
+        return 0;
+
     return ctx->keepalive_period;
 }
 

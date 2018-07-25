@@ -40,6 +40,7 @@ extern "C" {
 #include "mediastreamer2/ice.h"
 #include "mediastreamer2/mediastream.h"
 #include "mediastreamer2/msconference.h"
+#include "mediastreamer2/mscommon.h"
 #ifdef BUILD_UPNP
     #include "upnp.h"
 #endif //BUILD_UPNP

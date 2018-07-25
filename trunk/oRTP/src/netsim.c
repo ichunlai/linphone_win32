@@ -30,8 +30,11 @@ static OrtpNetworkSimulatorCtx* simulator_ctx_new(void){
 }
 
 void ortp_network_simulator_destroy(OrtpNetworkSimulatorCtx *sim){
-	flushq(&sim->q,0);
-	ortp_free(sim);
+    if (sim != NULL)
+    {
+        flushq(&sim->q, 0);
+        ortp_free(sim);
+    }
 }
 
 void rtp_session_enable_network_simulation(RtpSession *session, const OrtpNetworkSimulatorParams *params){
@@ -41,7 +44,7 @@ void rtp_session_enable_network_simulation(RtpSession *session, const OrtpNetwor
 		sim->params=*params;
 		session->net_sim_ctx=sim;
 	}else{
-		if (sim!=NULL) ortp_network_simulator_destroy(sim);
+		ortp_network_simulator_destroy(sim);
 		session->net_sim_ctx=NULL;
 	}
 }

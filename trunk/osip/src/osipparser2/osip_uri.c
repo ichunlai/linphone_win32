@@ -705,31 +705,32 @@ void
 osip_uri_free(
     osip_uri_t *url)
 {
-    int pos = 0;
-
-    if (url == NULL)
-        return;
-    osip_free(url->scheme);
-    osip_free(url->username);
-    osip_free(url->password);
-    osip_free(url->host);
-    osip_free(url->port);
-
-    osip_uri_param_freelist(&url->url_params);
-
+    if (url != NULL)
     {
-        osip_uri_header_t *u_header;
+        int pos = 0;
 
-        while (!osip_list_eol(&url->url_headers, pos))
+        osip_free(url->scheme);
+        osip_free(url->username);
+        osip_free(url->password);
+        osip_free(url->host);
+        osip_free(url->port);
+
+        osip_uri_param_freelist(&url->url_params);
+
         {
-            u_header = (osip_uri_header_t *) osip_list_get(&url->url_headers, pos);
-            osip_list_remove(&url->url_headers, pos);
-            osip_uri_header_free(u_header);
-        }
-    }
+            osip_uri_header_t *u_header;
 
-    osip_free(url->string);
-    osip_free(url);
+            while (!osip_list_eol(&url->url_headers, pos))
+            {
+                u_header = (osip_uri_header_t *)osip_list_get(&url->url_headers, pos);
+                osip_list_remove(&url->url_headers, pos);
+                osip_uri_header_free(u_header);
+            }
+        }
+
+        osip_free(url->string);
+        osip_free(url);
+    }
 }
 
 int

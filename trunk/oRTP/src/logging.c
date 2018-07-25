@@ -45,6 +45,7 @@ void ortp_set_log_handler(
     ortp_logv_out = func;
 }
 
+//static unsigned int __ortp_log_mask = ORTP_WARNING | ORTP_ERROR | ORTP_FATAL | ORTP_DEBUG | ORTP_MESSAGE;
 static unsigned int __ortp_log_mask = ORTP_WARNING | ORTP_ERROR | ORTP_FATAL;
 
 /**

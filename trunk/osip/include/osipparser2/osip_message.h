@@ -114,7 +114,7 @@ struct osip_message {
 /**
  * You can re-define your own maximum length for SIP message.
  */
-    #define SIP_MESSAGE_MAX_LENGTH 4000
+    #define SIP_MESSAGE_MAX_LENGTH 5000
 #endif
 
 #ifndef BODY_MESSAGE_MAX_SIZE

@@ -28,6 +28,8 @@
 #elif defined(WIN32)
     #include <windns.h>
     #include <malloc.h>
+#pragma comment(lib, "Dnsapi.lib")
+#pragma comment(lib, "IPHLPAPI.lib")
 #else
     #include <netinet/in.h>
     #include <sys/socket.h>

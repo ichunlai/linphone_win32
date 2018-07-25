@@ -55,7 +55,8 @@ SalTransport sal_transport_parse(
 SalMediaDescription *sal_media_description_new()
 {
     SalMediaDescription *md = ms_new0(SalMediaDescription, 1);
-    md->refcount = 1;
+    if (md != NULL)
+        md->refcount = 1;
     return md;
 }
 
@@ -412,51 +413,47 @@ void __sal_op_set_remote_contact(
 void __sal_op_free(
     SalOp *op)
 {
-    SalOpBase *b = (SalOpBase *)op;
-    if (b->from)
+    if (op != NULL)
     {
-        ms_free(b->from);
-        b->from = NULL;
+        SalOpBase *b = (SalOpBase *)op;
+        if (b->from)
+        {
+            ms_free(b->from);
+        }
+        if (b->to)
+        {
+            ms_free(b->to);
+        }
+        if (b->route)
+        {
+            ms_free(b->route);
+        }
+        if (b->contact)
+        {
+            ms_free(b->contact);
+        }
+        if (b->origin)
+        {
+            ms_free(b->origin);
+        }
+        if (b->remote_ua)
+        {
+            ms_free(b->remote_ua);
+        }
+        if (b->remote_contact)
+        {
+            ms_free(b->remote_contact);
+        }
+        if (b->local_media)
+            sal_media_description_unref(b->local_media);
+        if (b->remote_media)
+            sal_media_description_unref(b->remote_media);
+        if (b->call_id)
+            ms_free(b->call_id);
+        if (b->custom_headers)
+            sal_custom_header_free(b->custom_headers);
+        ms_free(op);
     }
-    if (b->to)
-    {
-        ms_free(b->to);
-        b->to = NULL;
-    }
-    if (b->route)
-    {
-        ms_free(b->route);
-        b->route = NULL;
-    }
-    if (b->contact)
-    {
-        ms_free(b->contact);
-        b->contact = NULL;
-    }
-    if (b->origin)
-    {
-        ms_free(b->origin);
-        b->origin = NULL;
-    }
-    if (b->remote_ua)
-    {
-        ms_free(b->remote_ua);
-        b->remote_ua = NULL;
-    }
-    if (b->remote_contact)
-    {
-        ms_free(b->remote_contact);
-        b->remote_contact = NULL;
-    }
-    if (b->local_media)
-        sal_media_description_unref(b->local_media);
-    if (b->remote_media)
-        sal_media_description_unref(b->remote_media);
-    if (b->call_id)
-        ms_free(b->call_id);
-    if (b->custom_headers)
-        sal_custom_header_free(b->custom_headers);
-    ms_free(op);
 }
 
 SalAuthInfo *sal_auth_info_new()
@@ -511,8 +508,8 @@ const char *sal_custom_header_find(
 static void sal_custom_header_uninit(
     SalCustomHeader *ch)
 {
-    ms_free(ch->header_name);
-    ms_free(ch->header_value);
+    if (ch->header_name != NULL) ms_free(ch->header_name);
+    if (ch->header_value != NULL) ms_free(ch->header_value);
 }
 
 void sal_custom_header_free(
