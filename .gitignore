@@ -35,7 +35,7 @@ tags
 *.git/*
 *.old
 *.log
-*.dll
+;*.dll
 *.dox
 *.sbr
 Debug/*/
@@ -78,7 +78,7 @@ trunk/samples/MicroVoiceLite/Debug/*
 *.db
 *.db-shm
 *.db-wal
-*.a
+;*.a
 *.pjt
 *.lyx
 *.sgml
