@@ -25,6 +25,7 @@
 #include "ortp/ortp.h"
 #include <inttypes.h>
 #include "scheduler.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 rtp_stats_t  ortp_global_stats; // for statistics
 

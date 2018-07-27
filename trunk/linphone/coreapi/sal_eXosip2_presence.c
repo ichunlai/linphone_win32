@@ -18,6 +18,7 @@
  */
 
 #include "sal_eXosip2.h"
+#include "Ext\libMemLeakDetection.h"
 
 typedef enum {
     PIDF      = 0,

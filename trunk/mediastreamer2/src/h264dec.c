@@ -24,6 +24,7 @@
 #include "mediastreamer2/msticker.h"
 #include "ffmpeg-priv.h"
 #include "ortp/b64.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 extern "C" {
 size_t b64_decode(char const *src, size_t srcLen, void *dest, size_t destSize);

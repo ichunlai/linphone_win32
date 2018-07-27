@@ -20,6 +20,7 @@
 #include "mediastreamer2/msfilter.h"
 #include "mediastreamer2/msticker.h"
 #include "mediastreamer2/mscommon.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 static MSList *desc_list         = NULL;
 static bool_t statistics_enabled = FALSE;

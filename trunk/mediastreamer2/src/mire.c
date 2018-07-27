@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "mediastreamer2/msfilter.h"
 #include "mediastreamer2/msticker.h"
 #include "mediastreamer2/mswebcam.h"
-
+#include "../../Ext/libMemLeakDetection.h"
 
 typedef struct _MireData{
 	MSVideoSize vsize;

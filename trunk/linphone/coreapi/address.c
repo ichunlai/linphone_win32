@@ -20,6 +20,7 @@
 #include "linphonecore.h"
 #include "lpconfig.h"
 #include "private.h"
+#include "Ext\libMemLeakDetection.h"
 
 /**
  * @addtogroup linphone_address

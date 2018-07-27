@@ -4,6 +4,7 @@
     #include "ortp-config.h"
 #endif
 #include "ortp/ortp.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 typedef struct __STRUCT_SHARED_DATA__
 {

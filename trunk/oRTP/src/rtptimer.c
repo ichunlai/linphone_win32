@@ -19,6 +19,7 @@
 
 #include "ortp/ortp.h"
 #include "rtptimer.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 void rtp_timer_set_interval(RtpTimer *timer, struct timeval *interval)
 {

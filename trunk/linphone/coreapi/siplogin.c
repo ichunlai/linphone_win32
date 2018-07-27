@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "linphonecore.h"
 #include "private.h"
 #include <ctype.h>
+#include "Ext\libMemLeakDetection.h"
 
 static void sip_login_init_instance(SipSetupContext *ctx){
 	LinphoneProxyConfig *cfg=sip_setup_context_get_proxy_config(ctx);

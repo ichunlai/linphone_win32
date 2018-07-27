@@ -24,6 +24,7 @@
 #include "private.h"
 #include "offeranswer.h"
 #include "mediastreamer2/mediastream.h"
+#include "Ext\libMemLeakDetection.h"
 
 #ifdef ANDROID
 // Necessary to make it linked

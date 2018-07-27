@@ -25,6 +25,7 @@
 #include "mediastreamer2/msvideo.h"
 
 #include "ffmpeg-priv.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 #define SCALE_FACTOR         4.0f
 #define SELVIEW_POS_INACTIVE -100.0

@@ -21,6 +21,7 @@
  */
 
 #include "linphone_tunnel.h"
+#include "Ext\libMemLeakDetection.h"
 
 struct _LinphoneTunnelConfig {
 	char *host;

@@ -37,6 +37,7 @@ extern void __register_ffmpeg_encoders_if_possible(void);
 #include "mediastreamer2/basedescs.h"
 #include "mediastreamer2/mssndcard.h"
 #include "mediastreamer2/mswebcam.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 #if !defined(_WIN32_WCE)
     #include <sys/types.h>

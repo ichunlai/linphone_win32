@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #include "mediastreamer2/msfilter.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 static void join_process(MSFilter *f){
 	mblk_t *im;

@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <speex/speex_echo.h>
 #include <speex/speex_preprocess.h>
 #include "ortp/b64.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 #ifdef HAVE_CONFIG_H
 #include "mediastreamer-config.h"

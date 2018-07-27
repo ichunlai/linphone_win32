@@ -34,6 +34,7 @@
 #include "mediastreamer2/msaudiomixer.h"
 #include "mediastreamer2/mscodecutils.h"
 #include "private.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 #ifdef INET6
     #include <sys/types.h>

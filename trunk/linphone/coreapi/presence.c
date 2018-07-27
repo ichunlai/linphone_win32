@@ -19,6 +19,7 @@
 
 #include "linphonecore.h"
 #include "private.h"
+#include "Ext\libMemLeakDetection.h"
 
 extern const char *__policy_enum_to_str(LinphoneSubscribePolicy pol);
 

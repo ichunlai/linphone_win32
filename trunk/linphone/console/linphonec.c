@@ -39,6 +39,7 @@
 #include "../coreapi/linphonecore.h"
 
 #include "linphonec.h"
+#include "Ext\libMemLeakDetection.h"
 
 #ifdef WIN32
     #include <ws2tcpip.h>

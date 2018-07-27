@@ -18,6 +18,7 @@
  */
 
 #include "mediastreamer2/msvideo.h"
+#include "../../Ext/libMemLeakDetection.h"
 #if !defined(NO_FFMPEG)
     #include "ffmpeg-priv.h"
 #endif

@@ -20,7 +20,7 @@
 #include "ortp/logging.h"
 #include "ortp/payloadtype.h"
 #include "ortp/str_utils.h"
-
+#include "../../Ext/libMemLeakDetection.h"
 
 char *payload_type_get_rtpmap(PayloadType *pt)
 {

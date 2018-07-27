@@ -23,6 +23,7 @@
 #include "private.h"
 #include "mediastreamer2/mediastream.h"
 #include "lpconfig.h"
+#include "Ext\libMemLeakDetection.h"
 
 static void register_failure(SalOp *op, SalError error, SalReason reason, const char *details);
 

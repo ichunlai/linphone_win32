@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "mediastreamer2/msaudiomixer.h"
 #include "mediastreamer2/msticker.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 #ifdef _MSC_VER
 #include <malloc.h>

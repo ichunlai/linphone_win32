@@ -28,6 +28,7 @@
 #include "linphonecore.h"
 #include "private.h"
 #include "lpconfig.h"
+#include "Ext\libMemLeakDetection.h"
 
 LinphoneTunnel *linphone_core_get_tunnel(
     LinphoneCore *lc)

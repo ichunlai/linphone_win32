@@ -26,6 +26,8 @@
 #include "mediastreamer2/msvolume.h"
 #include "mediastreamer2/msequalizer.h"
 #include "mediastreamer2/dtmfgen.h"
+#include "Ext\libMemLeakDetection.h"
+
 #ifdef ENABLE_MYCRYPT
     #include "libcrypt.h"
 #endif // ENABLE_MYCRYPT

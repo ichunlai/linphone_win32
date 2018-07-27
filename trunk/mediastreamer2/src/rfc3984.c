@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "mediastreamer2/rfc3984.h"
 #include "mediastreamer2/msfilter.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 #define TYPE_FU_A 28    /*fragmented unit 0x1C*/
 #define TYPE_STAP_A 24  /*single time aggregation packet  0x18*/

@@ -28,6 +28,7 @@
 #include "mediastreamer2/msfilter.h"
 #include "mediastreamer2/msticker.h"
 #include "mediastreamer2/mswebcam.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 #ifndef NO_FFMPEG
     #include "ffmpeg-priv.h"

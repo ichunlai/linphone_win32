@@ -22,6 +22,7 @@
 #endif
 
 #include "mediastreamer2/mssndcard.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 static MSSndCardManager *scm = NULL;
 

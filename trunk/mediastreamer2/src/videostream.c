@@ -29,7 +29,7 @@
 #include "mediastreamer2/msvideoout.h"
 #include "mediastreamer2/msextdisplay.h"
 #include "private.h"
-
+#include "../../Ext/libMemLeakDetection.h"
 #include <ortp/zrtp.h>
 
 void video_stream_free(

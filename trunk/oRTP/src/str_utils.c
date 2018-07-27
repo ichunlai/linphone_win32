@@ -18,6 +18,7 @@
  */
 
 #include "ortp/str_utils.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 void qinit(
     queue_t *q)

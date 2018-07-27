@@ -28,6 +28,7 @@
 #include "ortp/port.h"
 #include "ortp/str_utils.h"
 #include "utils.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 #if	defined(_WIN32) && !defined(_WIN32_WCE)
 #include <process.h>
@@ -67,7 +68,7 @@ void ortp_set_memory_functions(OrtpMemoryFunctions *functions){
 	ortp_allocator=*functions;
 }
 
-void* ortp_malloc(size_t sz){
+void* _ortp_malloc(size_t sz){
 	allocator_used=TRUE;
 	return ortp_allocator.malloc_fun(sz);
 }
@@ -81,9 +82,15 @@ void ortp_free(void* ptr){
 	ortp_allocator.free_fun(ptr);
 }
 
-void * ortp_malloc0(size_t size){
+void * _ortp_malloc0(size_t size){
 	void *ptr=ortp_malloc(size);
 	memset(ptr,0,size);
+	return ptr;
+}
+
+void * _malloc_dbg0(size_t size, int blockType, const char *filename, int linenumber){
+	void *ptr = _malloc_dbg(size, blockType, filename, linenumber);
+	memset(ptr, 0, size);
 	return ptr;
 }
 

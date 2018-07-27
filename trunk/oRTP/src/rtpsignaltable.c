@@ -19,6 +19,7 @@
 
 #include <ortp/rtpsession.h>
 #include "utils.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 void rtp_signal_table_init(
     RtpSignalTable *table, RtpSession *session, const char *signal_name)

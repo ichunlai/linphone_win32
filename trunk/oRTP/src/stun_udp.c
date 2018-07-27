@@ -91,6 +91,7 @@
 
 #include <winsock2.h>
 #include <stdlib.h>
+#include "../../Ext/libMemLeakDetection.h"
 /* #include <io.h> */
 
 #else

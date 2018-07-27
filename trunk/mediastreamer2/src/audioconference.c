@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "mediastreamer2/msconference.h"
 #include "mediastreamer2/msaudiomixer.h"
 #include "private.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 struct _MSAudioConference{
 	MSTicker *ticker;

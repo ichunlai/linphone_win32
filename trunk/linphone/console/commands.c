@@ -36,6 +36,7 @@
 #include "linphonec.h"
 #include "../coreapi/private.h"
 #include "../coreapi/lpconfig.h"
+#include "Ext\libMemLeakDetection.h"
 
 #ifndef WIN32
     #include <sys/wait.h>

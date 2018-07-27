@@ -31,6 +31,7 @@
 #ifdef __APPLE__
     #include <CoreFoundation/CFRunLoop.h>
 #endif
+#include "../../Ext/libMemLeakDetection.h"
 
 #include "ffmpeg-priv.h"
 

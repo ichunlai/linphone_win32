@@ -20,6 +20,7 @@
 #include "sip_sal.h"
 #include "offeranswer.h"
 #include "private.h"
+#include "Ext\libMemLeakDetection.h"
 
 static bool_t only_telephone_event(
     const MSList *l)

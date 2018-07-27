@@ -20,6 +20,7 @@
 /* mtu.c : discover the mtu automatically */
 
 #include "mediastreamer2/mscommon.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 #define UDP_HEADER_SIZE  8
 #define IPV4_HEADER_SIZE 20

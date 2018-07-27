@@ -28,6 +28,7 @@
 #include "mediastreamer2/msticker.h"
 #include "mediastreamer2/ice.h"
 #include "mediastreamer2/mscommon.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 #ifndef PRId64
     #define PRId64                           "I64d"

@@ -24,6 +24,7 @@
  **/
 
 #include "sip_sal.h"
+#include "Ext\libMemLeakDetection.h"
 
 const char *sal_transport_to_string(
     SalTransport transport)

@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "mediastreamer2/msitc.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 typedef struct SourceState{
 	ms_mutex_t mutex;

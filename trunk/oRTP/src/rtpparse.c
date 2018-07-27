@@ -22,6 +22,7 @@
 #include "jitterctl.h"
 #include "utils.h"
 #include "rtpsession_priv.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 static bool_t queue_packet(queue_t *q, int maxrqsz, mblk_t *mp, rtp_header_t *rtp, int *discarded)
 {

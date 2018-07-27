@@ -35,6 +35,7 @@
 #include "mediastreamer2/msjpegwriter.h"
 #include "mediastreamer2/mseventqueue.h"
 #include "mediastreamer2/mssndcard.h"
+#include "Ext\libMemLeakDetection.h"
 
 #ifdef VIDEO_ENABLED
 static MSWebCam *get_nowebcam_device()

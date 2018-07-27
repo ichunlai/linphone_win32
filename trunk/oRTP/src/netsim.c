@@ -22,6 +22,7 @@
 #include "utils.h"
 #include "ortp/rtpsession.h"
 #include "rtpsession_priv.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 static OrtpNetworkSimulatorCtx* simulator_ctx_new(void){
 	OrtpNetworkSimulatorCtx *ctx=(OrtpNetworkSimulatorCtx*)ortp_malloc0(sizeof(OrtpNetworkSimulatorCtx));

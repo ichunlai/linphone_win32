@@ -28,6 +28,7 @@
     #include <mmreg.h>
 #endif
 #include <msacm.h>
+#include "../../Ext/libMemLeakDetection.h"
 
 #if defined(_WIN32_WCE)
 //#define DISABLE_SPEEX

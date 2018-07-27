@@ -25,6 +25,7 @@
 #include "linphonecore.h"
 #include "private.h"
 #include "lpconfig.h"
+#include "Ext\libMemLeakDetection.h"
 
 /**
  * @addtogroup authentication

@@ -23,6 +23,7 @@
 #include "lpconfig.h"
 #include "private.h"
 #include "mediastreamer2/mediastream.h"
+#include "Ext\libMemLeakDetection.h"
 
 #include <ctype.h>
 

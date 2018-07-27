@@ -61,6 +61,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include "../../Ext/libMemLeakDetection.h"
 /* /////////////////////////////////////////////////////////////////////////////
  * Constants and definitions
  */

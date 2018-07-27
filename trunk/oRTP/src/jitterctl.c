@@ -35,6 +35,7 @@
 #define JC_GAMMA (JC_BETA)
 
 #include "jitterctl.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 void jitter_control_init(
     JitterControl *ctl, int base_jiitt_time, PayloadType *payload)

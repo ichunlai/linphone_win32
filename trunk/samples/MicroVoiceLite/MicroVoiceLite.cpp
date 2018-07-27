@@ -5,11 +5,6 @@
 #include "MicroVoiceLite.h"
 #include "MicroVoiceLiteDlg.h"
 
-#ifdef _DEBUG
-    //#define new DEBUG_NEW
-    //#define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
-#endif
-
 // CMicroVoiceLiteApp
 
 BEGIN_MESSAGE_MAP(CMicroVoiceLiteApp, CWinAppEx)
@@ -17,6 +12,8 @@ BEGIN_MESSAGE_MAP(CMicroVoiceLiteApp, CWinAppEx)
 END_MESSAGE_MAP()
 
 // CMicroVoiceLiteApp 构造
+
+const int* a;
 
 CMicroVoiceLiteApp::CMicroVoiceLiteApp()
 {

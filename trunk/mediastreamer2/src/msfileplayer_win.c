@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "mediastreamer2/msfileplayer.h"
 #include "mediastreamer2/waveheader.h"
 #include "mediastreamer2/msticker.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 typedef enum {
 	CLOSED,

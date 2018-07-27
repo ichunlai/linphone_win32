@@ -27,7 +27,7 @@
 #include "linphonecore.h"
 #include "private.h"
 #include "lpconfig.h"
-
+#include "Ext\libMemLeakDetection.h"
 
 /*stubs to avoid to have #ifdef TUNNEL_ENABLED in upper layers*/
 

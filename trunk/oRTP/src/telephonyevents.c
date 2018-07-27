@@ -21,6 +21,7 @@
 #include "utils.h"
 #include "rtpsession_priv.h"
 #include <ortp/ortp.h>
+#include "../../Ext/libMemLeakDetection.h"
 
 PayloadType	payload_type_telephone_event={
 	PAYLOAD_AUDIO_PACKETIZED, /*type */

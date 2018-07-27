@@ -23,6 +23,7 @@
 
 #include "mediastreamer2/msvolume.h"
 #include "mediastreamer2/msticker.h"
+#include "../../Ext/libMemLeakDetection.h"
 #include <math.h>
 
 #ifdef HAVE_SPEEXDSP

@@ -40,6 +40,7 @@
 #define lp_new0(type, n) (type *)calloc(sizeof(type), n)
 
 #include "lpconfig.h"
+#include "Ext\libMemLeakDetection.h"
 
 typedef struct _LpItem {
     char *key;      // item's name

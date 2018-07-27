@@ -266,22 +266,34 @@ typedef struct ortpTimeSpec{
 
 #ifdef __cplusplus
 extern "C"{
-#endif
+#endif	
 
-ORTP_PUBLIC void* ortp_malloc(size_t sz);
+ORTP_PUBLIC void* _ortp_malloc(size_t sz);
 ORTP_PUBLIC void ortp_free(void *ptr);
 ORTP_PUBLIC void* ortp_realloc(void *ptr, size_t sz);
-ORTP_PUBLIC void* ortp_malloc0(size_t sz);
+ORTP_PUBLIC void* _ortp_malloc0(size_t sz);
+ORTP_PUBLIC void * _malloc_dbg0(size_t sz, int blockType, const char *filename, int linenumber);
 ORTP_PUBLIC char * ortp_strdup(const char *tmp);
 
 /*override the allocator with this method, to be called BEFORE ortp_init()*/
 typedef struct _OrtpMemoryFunctions{
 	void *(*malloc_fun)(size_t sz);
 	void *(*realloc_fun)(void *ptr, size_t sz);
-	void (*free_fun)(void *ptr);
+	void(*free_fun)(void *ptr);
 }OrtpMemoryFunctions;
 
 void ortp_set_memory_functions(OrtpMemoryFunctions *functions);
+
+
+#if defined(WIN32) && defined(_DEBUG)
+#include <stdlib.h>
+#include <crtdbg.h>
+#define ortp_malloc(s) _malloc_dbg(s, _NORMAL_BLOCK, __FILE__, __LINE__)
+#define ortp_malloc0(s) _malloc_dbg0(s, _NORMAL_BLOCK, __FILE__, __LINE__)
+#else
+#define ortp_malloc(s) _ortp_malloc(s)
+#define ortp_malloc0(s) _ortp_malloc0(s)
+#endif
 
 #define ortp_new(type,count)	(type*)ortp_malloc(sizeof(type)*(count))
 #define ortp_new0(type,count)	(type*)ortp_malloc0(sizeof(type)*(count))

@@ -21,6 +21,7 @@
 #include "utils.h"
 #include "scheduler.h"
 #include "rtpsession_priv.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 // To avoid warning during compile
 extern void rtp_session_process (RtpSession * session, uint32_t time, RtpScheduler *sched);

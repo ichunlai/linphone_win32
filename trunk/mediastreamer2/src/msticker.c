@@ -19,6 +19,7 @@
 
 #include "mediastreamer2/mediastream.h"
 #include "mediastreamer2/msticker.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 #ifndef WIN32
     #include <sys/time.h>

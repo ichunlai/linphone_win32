@@ -19,6 +19,7 @@
 
 #include "ortp/event.h"
 #include "ortp/ortp.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 // create new rtp endpoint
 RtpEndpoint *rtp_endpoint_new(struct sockaddr *addr, socklen_t addrlen){

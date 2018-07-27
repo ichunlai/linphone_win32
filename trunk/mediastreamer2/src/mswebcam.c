@@ -23,6 +23,7 @@
 
 #include "mediastreamer2/mswebcam.h"
 #include "mediastreamer2/msfilter.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 static MSWebCamManager *scm = NULL;
 

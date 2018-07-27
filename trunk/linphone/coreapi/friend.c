@@ -25,6 +25,7 @@
 #include "linphonecore.h"
 #include "private.h"
 #include "lpconfig.h"
+#include "Ext\libMemLeakDetection.h"
 
 const char *linphone_online_status_to_string(
     LinphoneOnlineStatus ss)

@@ -19,6 +19,7 @@
 
 #include "mediastreamer2/mseventqueue.h"
 #include "mediastreamer2/msfilter.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 #ifndef MS_EVENT_BUF_SIZE
     #define MS_EVENT_BUF_SIZE 8192

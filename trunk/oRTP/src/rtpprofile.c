@@ -18,6 +18,7 @@
  */
 
 #include "ortp/ortp.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 int rtp_profile_get_payload_number_from_mime(
     RtpProfile *profile, const char *mime)

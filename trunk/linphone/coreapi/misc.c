@@ -42,6 +42,7 @@
     #include <ifaddrs.h>
 #endif
 #include <math.h>
+#include "Ext\libMemLeakDetection.h"
 
 #if !defined(WIN32)
 

@@ -25,6 +25,7 @@
 
 #include "ortp/ortp.h"
 #include "rtptimer.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 #if	!defined(_WIN32) && !defined(_WIN32_WCE)
 

@@ -19,6 +19,7 @@
 
 #include "mediastreamer2/msrtp.h"
 #include "mediastreamer2/msticker.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 #include "ortp/telephonyevents.h"
 #if defined(__cplusplus)

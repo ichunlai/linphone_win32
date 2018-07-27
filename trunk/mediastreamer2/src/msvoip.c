@@ -32,6 +32,7 @@
 #include "mediastreamer2/mscommon.h"
 #include "mediastreamer2/mscodecutils.h"
 #include "mediastreamer2/msfilter.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 extern void __register_ffmpeg_encoders_if_possible(void);
 extern void ms_ffmpeg_check_init();

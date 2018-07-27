@@ -18,6 +18,7 @@
 */
 
 #include "ortp/logging.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 static FILE *__log_file = 0;
 

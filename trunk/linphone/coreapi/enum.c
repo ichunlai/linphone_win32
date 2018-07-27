@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <string.h>
 
 #include "enum.h"
+#include "Ext\libMemLeakDetection.h"
 
 #define DNS_ANSWER_MAX_SIZE 2048
 

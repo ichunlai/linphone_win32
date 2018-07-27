@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #include "linphonecore.h"
+#include "Ext\libMemLeakDetection.h"
 
 extern SipSetup linphone_sip_login;
 #ifdef BUILD_WIZARD

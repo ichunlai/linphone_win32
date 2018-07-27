@@ -21,6 +21,7 @@
 #include "utils.h"
 #include "ortp/rtpsession.h"
 #include "rtpsession_priv.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 #ifdef ENABLE_MYCRYPT
     #include "libcrypt.h"

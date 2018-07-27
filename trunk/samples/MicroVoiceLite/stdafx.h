@@ -43,7 +43,7 @@
 
 
 #include <afxsock.h>            // MFC Ì×½Ó×ÖÀ©Õ¹
-
+#include "..\..\Ext\mfcMemLeakDetection.h"
 
 
 
@@ -58,16 +58,6 @@
 #pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 #endif
-
-//#define  _CRTDBG_MAP_ALLOC
-//#include<crtdbg.h>
-//#define _DEBUG 
-//#define _CRTDBG_MAP_ALLOC
-//#include <crtdbg.h>
-//#ifdef _DEBUG
-//#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
-//#define new DEBUG_NEW
-//#endif
 
 
 

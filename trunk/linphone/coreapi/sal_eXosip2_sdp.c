@@ -22,6 +22,7 @@
 #include "ortp/ortp_srtp.h"
 #include "sip_sal.h"
 #include <eXosip2/eXosip.h>
+#include "Ext\libMemLeakDetection.h"
 
 #define keywordcmp(key, b) strcmp(key, b)
 

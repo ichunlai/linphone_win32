@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "mediastreamer2/msfilerec.h"
 #include "mediastreamer2/waveheader.h"
+#include "../../Ext/libMemLeakDetection.h"
 
 #if !defined(_WIN32_WCE)
 #include <sys/types.h>

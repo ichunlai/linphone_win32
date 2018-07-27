@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "mediastreamer2/qualityindicator.h"
-
+#include "../../Ext/libMemLeakDetection.h"
 #include <math.h>
 
 #define RATING_SCALE 5.0

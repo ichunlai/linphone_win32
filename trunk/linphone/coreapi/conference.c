@@ -27,6 +27,7 @@
 #include "lpconfig.h"
 
 #include "mediastreamer2/msvolume.h"
+#include "Ext\libMemLeakDetection.h"
 
 /**
  * @addtogroup conferencing

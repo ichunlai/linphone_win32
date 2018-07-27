@@ -76,6 +76,7 @@
 #endif
 
 #include <assert.h>
+#include "../../Ext/libMemLeakDetection.h"
 
 #if defined(WIN32) || defined(_WIN32_WCE)
     #include <winsock2.h>
