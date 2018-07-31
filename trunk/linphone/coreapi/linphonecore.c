@@ -3129,7 +3129,8 @@ void linphone_core_notify_incoming_call(
     char                *tmp;
     LinphoneAddress     *from_parsed;
     SalMediaDescription *md;
-    bool_t              propose_early_media = lp_config_get_int(lc->config, "sip", "incoming_calls_early_media", FALSE);
+    //bool_t              propose_early_media = lp_config_get_int(lc->config, "sip", "incoming_calls_early_media", FALSE);
+    bool_t              propose_early_media = TRUE; // iclai: always enable early media
     const char          *ringback_tone      = linphone_core_get_remote_ringback_tone(lc);
 
     linphone_call_make_local_media_description(lc, call);
